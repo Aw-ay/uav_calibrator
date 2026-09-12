@@ -51,6 +51,8 @@ foreach stage3_top {tb_command_gateway tb_receive_frontend tb_receive_event_prod
  dict set sources $stage3_top [concat [stage3_sv [file join $root rtl]] [list tb/system/$stage3_top.sv]]
 }
 dict set sources tb_qualified_pdw_queue {rtl/generated/calibrator_contract_pkg.sv rtl/generated/capture_event_pkg.sv rtl/capture/capture_pdw_writer.sv rtl/control/qualified_pdw_queue.sv tb/unit/tb_qualified_pdw_queue.sv}
+dict set sources tb_event_priority_arbiter {rtl/control/event_priority_arbiter.sv tb/unit/tb_event_priority_arbiter.sv}
+dict set sources tb_fault_event_path {rtl/control/fault_event_retainer.sv rtl/control/event_priority_arbiter.sv tb/system/tb_fault_event_path.sv}
 dict set sources tb_fault_event_retainer {rtl/control/fault_event_retainer.sv tb/unit/tb_fault_event_retainer.sv}
 dict set sources tb_rf_fault_queue {rtl/generated/instrument_control_pkg.sv rtl/control/rf_fault_queue.sv tb/unit/tb_rf_fault_queue.sv}
 dict set sources tb_source_event_queue {rtl/generated/instrument_control_pkg.sv rtl/control/source_event_queue.sv tb/unit/tb_source_event_queue.sv}

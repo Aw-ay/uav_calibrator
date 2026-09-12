@@ -1,0 +1,13 @@
+{
+  "module": "event_priority_arbiter",
+  "data_bits": 512,
+  "clock": "clk_rf",
+  "buffered_records": 1,
+  "priority": "fault first when admitting a new output; never preempt an already presented normal record",
+  "input_protocol": "valid/ready, producer holds data and valid until handshake",
+  "output_protocol": "registered valid/ready plus is_fault sideband stable under backpressure",
+  "reset": "coordinated hard reset flushes; no input acceptance during reset",
+  "fairness": "strict priority; continuous faults may starve normal; no general fairness guarantee",
+  "format": "opaque data, priority sideband is internal and not a finalized EVENT ABI",
+  "integration": "standalone; retainer combination tested; core/CDC/PS connection pending"
+}
