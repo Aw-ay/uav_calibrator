@@ -1,0 +1,18 @@
+// Generated from contracts/fault_event_format.json
+package fault_event_pkg;
+ localparam [31:0] FAULT_EVENT_BYTES=32'd64;
+ localparam [31:0] FAULT_EVENT_TAG=32'd262145;
+ localparam [31:0] FAULT_EVENT_TAG_OFFSET=32'd0;
+ localparam [31:0] FAULT_EVENT_FLAGS_OFFSET=32'd4;
+ localparam [31:0] FAULT_EVENT_OCCURRENCES_OFFSET=32'd8;
+ localparam [31:0] FAULT_EVENT_RESERVED_HEADER_OFFSET=32'd12;
+ localparam [31:0] FAULT_EVENT_SNAPSHOT_TAG_OFFSET=32'd16;
+ localparam [31:0] FAULT_EVENT_SNAPSHOT_FLAGS_OFFSET=32'd20;
+ localparam [31:0] FAULT_EVENT_CONFIG_ID_OFFSET=32'd24;
+ localparam [31:0] FAULT_EVENT_RF_STATE_OFFSET=32'd28;
+ localparam [31:0] FAULT_EVENT_NORMALIZED_INPUTS_OFFSET=32'd32;
+ localparam [31:0] FAULT_EVENT_LOGICAL_OUTPUTS_OFFSET=32'd36;
+ localparam [31:0] FAULT_EVENT_OBSERVATION_GSC_OFFSET=32'd40;
+ localparam [31:0] FAULT_EVENT_RESERVED_TAIL_OFFSET=32'd48;
+ localparam [31:0] FAULT_EVENT_COUNT_SATURATED=32'd1;
+endpackage

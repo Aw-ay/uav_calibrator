@@ -10,6 +10,8 @@ from datetime import datetime, timezone
 ROOT = Path(__file__).resolve().parents[1]
 VIVADO = Path('C:/AMDDesignTools/2025.2/Vivado/bin/vivado.bat')
 CASES = {
+    'tb_fault_event_encoder': 'PASS fault event encoder',
+    'tb_fault_event_transport': 'PASS fault event transport',
     'tb_event_priority_arbiter': 'PASS event priority arbiter',
     'tb_fault_event_path': 'PASS fault event path',
     'tb_fault_event_retainer': 'PASS fault event retainer',

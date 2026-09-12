@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "kind": "RF_FAULT_AGGREGATE",
+  "tag": 262145,
+  "bytes": 64,
+  "byte_order": "little",
+  "fields": [
+    [
+      "tag",
+      0,
+      4
+    ],
+    [
+      "flags",
+      4,
+      4
+    ],
+    [
+      "occurrences",
+      8,
+      4
+    ],
+    [
+      "reserved_header",
+      12,
+      4
+    ],
+    [
+      "snapshot_tag",
+      16,
+      4
+    ],
+    [
+      "snapshot_flags",
+      20,
+      4
+    ],
+    [
+      "config_id",
+      24,
+      4
+    ],
+    [
+      "rf_state",
+      28,
+      4
+    ],
+    [
+      "normalized_inputs",
+      32,
+      4
+    ],
+    [
+      "logical_outputs",
+      36,
+      4
+    ],
+    [
+      "observation_gsc",
+      40,
+      8
+    ],
+    [
+      "reserved_tail",
+      48,
+      16
+    ]
+  ],
+  "flags": {
+    "count_saturated": 0
+  },
+  "snapshot_contract": "instrument_control.json rf_fault_layout/constants",
+  "semantics": "First snapshot of aggregate only; count nonzero, saturation flag requires UINT32_MAX and means lower bound. Snapshot is observation after actual latch, not causal RF timing. Reserved bytes zero; no change to CAPTURE_PDW format."
+}

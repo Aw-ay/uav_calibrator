@@ -14,7 +14,7 @@
 
 ## 当前模块批次
 
-统一EVENT通道批次正在开发。第九阶段独立 `fault_event_retainer` 已完成：相关回归4/4、XSim1/1，125MHz模块综合WNS +6.854ns / WHS +0.071ns、失败端点0，资源447 LUT/585 FF，无BRAM/DSP，见reports/stage9_fault_retainer.md。实现为不可变待发送头记录加一个首快照/饱和计数聚合槽。只验证模块和相关组件，尚未接入数字核心。第十阶段独立event_priority_arbiter及其与retainer的组合验证已完成：相关回归5/5、XSim2/2，125MHz模块综合WNS +7.278ns / WHS +0.124ns，失败端点0、779 LUT/519 FF，无BRAM/DSP。见reports/stage10_event_priority.md。严格故障准入优先，不抢占已呈现普通记录，持续故障可阻塞普通流。后续步骤为512bit编码/传输及PS/CSR接入；这些关联模块集成完成后再运行完整核心综合。既有故障历史队列行为尚未改变，不能宣称系统高优先级fault保障已经完成。
+统一EVENT通道批次正在开发。第九阶段独立 `fault_event_retainer` 已完成：相关回归4/4、XSim1/1，125MHz模块综合WNS +6.854ns / WHS +0.071ns、失败端点0，资源447 LUT/585 FF，无BRAM/DSP，见reports/stage9_fault_retainer.md。实现为不可变待发送头记录加一个首快照/饱和计数聚合槽。只验证模块和相关组件，尚未接入数字核心。第十阶段独立event_priority_arbiter及其与retainer的组合验证已完成：相关回归5/5、XSim2/2，125MHz模块综合WNS +7.278ns / WHS +0.124ns，失败端点0、779 LUT/519 FF，无BRAM/DSP。见reports/stage10_event_priority.md。严格故障准入优先，不抢占已呈现普通记录，持续故障可阻塞普通流。第十一阶段故障聚合512bit编码、C解码与跨时钟邮箱组件验证已完成：相关回归6/6、XSim2/2、A53十个C源文件构建通过；局部综合WNS +1.676ns/WHS +0.057ns、失败端点0，CDC 0 Critical/8192 Warning/2 Info（握手邮箱数据位，未豁免）。见reports/stage11_fault_transport.md；后续仍需PS/CSR及真实生产端接线；这些关联模块集成完成后再运行完整核心综合。既有故障历史队列行为尚未改变，不能宣称系统高优先级fault保障已经完成。
 
 ## 当前阶段授权
 
