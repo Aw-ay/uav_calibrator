@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "status": "HOST_TESTED_A53_OBJECTS_COMPILED_NOT_BSP_INTEGRATED",
+  "event_api": {
+    "header": "sw/common/event_control.h",
+    "decode": "cal_event_decode consumes little-endian EVENT_BYTES using generated include/capture_event.h offsets. Unknown tag or validity bits -> CAL_EVENT_SCHEMA, nonzero reserved -> RESERVED, noncanonical unknown measurements or range -> VALUE. Output changes only on success.",
+    "mmio": "cal_event_read_next uses injected read32/write32 callbacks and existing generated register offsets. No fixed base address, OS, BSP, GPIO or physical address. Callbacks return zero only for completed ordered accesses and must provide required device barriers.",
+    "sequence": "Read EVENT_COUNT; empty returns EMPTY; write EVENT_LATCH=1; read all16 EVENT_WORD registers in order; decode; write EVENT_POP=1; publish output only after successful POP.",
+    "failure": "Read failure at any word, latch failure or schema/format failure never issues POP. POP callback failure returns IO_POP with output unchanged; its physical outcome may be ambiguous and must be reconciled by caller, never blindly retried. Unknown event remains queued for explicit version-aware handling.",
+    "concurrency": "Caller must serialize the entire COUNT/LATCH/read/POP transaction against other consumers and coordinated reset; count/latch hardware has no transaction ID or reset generation.",
+    "units": "ToA and width are coarse500MHz GSC ticks; decoded validity mask remains explicit. No host fine estimate inferred."
+  },
+  "calibration_api": {
+    "header": "sw/common/calibration_table.h",
+    "format": "calibration_table_format.json defines96-byte envelope; tools/generate_calibration_table_format.py emits include/calibration_table_format.h from it and calibration_dsp_implementation.json payload bit layout",
+    "validator": "cal_table_validate rejects wrong exact size/schema/reserved bits/payload CRC32C/record CRC32C, disabled valid flag, wrong expected identity/direction/channel/reference or invalid time interval. cal_id, generation and reference_plane_id zero are unconfigured; channels0..7 and direction0RX/1TX.",
+    "time": "Unsigned500MHz GSC ticks, half-open valid_from<=now<valid_until; no wrapped intervals. Caller snapshots trustworthy now_gsc and revalidates at commit/use if time advanced.",
+    "binding": "Valid logical table with missing trusted production binding returns UNBOUND with logical_valid=1 and calibration_valid=0. Trusted nonzero binding must match to set calibration_valid=1. This C function never drives RF enable; binding evidence remains external.",
+    "arithmetic": "Decoded signed gain18 Q16 and signed DC16 are exact; no measured calibration generated. Reserved payload upper60 bits required zero.",
+    "lifecycle": "Validation only, no loader/store. Caller validates inactive immutable table and pins generation through task/record, with atomic safe-boundary commit and no in-place change to referenced versions."
+  },
+  "verification": {
+    "command": "python tests/test_ps_control_extensions.py",
+    "host": "Installed MinGW GCC, C11 -O2 -Wall -Wextra -Werror -pedantic; real executable self-test",
+    "cross": "C:/AMDDesignTools/2025.2/gnu/aarch64/nt/aarch64-none/bin/aarch64-none-elf-gcc.exe, cortex-a53 freestanding; objdump verifies architecture aarch64",
+    "evidence": "reports/ps_control_extensions.json includes commands, output and source/object SHA256",
+    "scope": "Portable objects only; no linked board ELF, BSP or hardware validation. Reuses existing frame_decode.c cal_crc32c implementation."
+  }
+}

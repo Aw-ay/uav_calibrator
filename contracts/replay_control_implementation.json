@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "status": "LOGICAL_RTL_SIMULATION_VERIFIED_NOT_TOP_INTEGRATED",
+  "sources": ["replay_contract.json", "bank_contract.json", "channel_roles.json", "module_catalog.json"],
+  "task_abi": "Opaque 192-byte little-endian replay_task, bit zero is byte zero LSB. Field bit offsets are generated from replay_contract.json by tools/generate_replay_control_layout.py into rtl/replay/replay_control_layout_pkg.sv. Test rejects generated ABI drift.",
+  "queue": {
+    "clock": "clk, synchronous rst; control-domain requests must cross an external atomic CDC mailbox",
+    "capacity": "DEPTH elaboration parameter, default 4; queued_count excludes the one active task and held rejection disposition",
+    "admission": "push_valid is a command strobe. Registered push_accepted or push_rejected; full rejects reason 1, invalid bank/group reason 5, duplicate outstanding group/bank reason 15. Producer must already hold the bank replay reference and immutable task/profile references before submission.",
+    "ownership": "One bitmap bit per group/bank covers queued, active and rejected-awaiting-disposition lifetimes. Queue never writes RAW or emits a bank release token. Failed enqueue leaves all upstream references under producer ownership.",
+    "dispatch": "head_task/head_valid expose oldest immutable task. Root supplies head-specific live checker inputs and asserts evaluation_valid only when they refer to this exact head. dispatch_valid is an edge transfer strobe requiring reader_ready, fresh head_legal, no active reader and no held rejection. Connect directly to frozen_replay_reader task_valid; unpack task fields using generated offsets.",
+    "retirement": "retire_valid must denote the accepted real reader completion/cancellation token after last actual RAM read is drained and ownership disposition accepted, not merely dequeue, host completion, planned end or a software action. Match owner_epoch, generation, group, bank and task_id from tracked active task; stale/duplicate retire gives retire_rejected and cannot release occupancy.",
+    "rejection": "Illegal head is removed into rejected_task/reject_reason held until reject_ready. Consumer must disposition its replay and coefficient refs (no read was dispatched) before acknowledging; no queue-generated RAW release. Occupancy held until this acknowledgement.",
+    "reset": "External owner reset coordinator must quiesce/cancel/drain active reader and queued references before asserting rst. Reset is not a bank release protocol.",
+    "physical_implementation": "Portable bounded synchronous register-array FIFO. Catalog names XPM_FIFO_SYNC; this implementation does not instantiate XPM. Mapping to XPM/BRAM remains an integration/resource choice, with identical ownership and dispatch semantics required."
+  },
+  "checker": {
+    "input_context": "current_owner_epoch/generation/config_id/fir_id/source_epoch and qualification/lease/source feedback must come from the bank selected by head_task; task_profiles_valid verifies retained rx_cal_id, tx_cal_id, target_matrix_id, reference_plane_id and doppler_phase_id and all other referenced versions, not just existence of a current profile.",
+    "source": "Primary external role=1 only in groups1..3; AUX external role=2 only group4 with explicit allow_aux_replay. Roles0/3/unknown and !source_stable are forbidden. AUX remains disabled by default at integration.",
+    "time": "Unsigned u64 500MHz GSC ticks; 4 ticks per 125MHz sample. first_output_gsc=target_gsc-reference_sample_index*4-downstream_latency_ticks. Require first>=gsc+8, matching low2 phase, no arithmetic wrap, and last sample within u64. No PRI ceiling. Integer reference scheduling mirrors frozen_replay_reader; nonzero fraction_q32 requires explicit fractional_supported and validated downstream timing.",
+    "safety": "data_ready and qualified cover full frozen capture plus statistics; guard_clear and planned_slot_clear must cover entire physical TX interval including tails/turnaround; unknown future schedule must not be represented as clear. rf_safe, binding_valid and resources_ready are current trusted hardware/resource decisions.",
+    "reason_codes": {"0":"OK","2":"UNSAFE_OR_UNBOUND","3":"UNQUALIFIED_OR_SOURCE","4":"CONTEXT_OR_PROFILE","5":"BOUNDS","6":"LATENCY_OR_FRACTION","7":"TIME_RANGE","8":"ALIGNMENT","9":"LATE","13":"GUARD_OR_SLOT","14":"RESOURCE"},
+    "while_active": "Checker gates admission only. Existing reader retains its runtime abort/time-continuity logic, and RF safety interlock must remain continuously connected downstream."
+  },
+  "tests": {"command":"python tests/test_replay_control.py","tool":"C:/iverilog/bin/iverilog.exe and vvp.exe","bench":"tb/unit/tb_replay_control.sv","result":"PASS","log":"../reports/replay_control.log"},
+  "remaining": ["Root CDC and bank-context mux wiring", "Pinned-profile registry and complete TX-slot/guard resolver", "Reader accepted-token retirement connection", "Vivado synthesis/resource/timing verification", "Production board RF binding remains UNBOUND"]
+}

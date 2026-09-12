@@ -8,7 +8,7 @@ module tx_processing_chain(
  input wire [31:0] config_id,
  input wire [63:0] live_data,drfm_data,dds_data,awg_data,
  input wire live_valid,drfm_valid,dds_valid,awg_valid,
- output wire [2:0] active_mode,output wire mode_accepted,mode_rejected,
+ output wire [2:0] active_mode,output wire mode_accepted,mode_rejected,pipeline_ready,
  output reg config_accepted,config_rejected,output reg [31:0] active_config_id,
  output wire [127:0] calibrated_i,calibrated_q,
  output wire [7:0] calibrated_valid,calibration_saturated,tx_saturated,native_dac_valid,
@@ -16,24 +16,38 @@ module tx_processing_chain(
 );
  reg [127:0] dc_i_hold,dc_q_hold;reg [143:0] gain_i_hold,gain_q_hold;
  reg [7:0] cal_valid_hold,enable_hold;
- wire config_allowed=safe_boundary&&(active_mode==0)&&!mode_request;
+ // Bound from 38 FIR75 input-history beats + 5 HB19 history beats +
+ // 8+6 filter pipeline registers + one calibration register = 58 RF clocks.
+ localparam [5:0] TX_DRAIN_CYCLES=6'd58;
+ reg [5:0] tail_count;reg restart_inhibit,local_mode_rejected;
+ wire mux_mode_rejected;
+ wire mode_admissible=(requested_mode==0)||((active_mode==0||active_mode==requested_mode)&&tail_count==0&&!restart_inhibit);
+ assign mode_rejected=mux_mode_rejected||local_mode_rejected;
+ assign pipeline_ready=!rst&&!restart_inhibit&&rf_permit&&!hard_fault;
+ wire config_allowed=safe_boundary&&(active_mode==0)&&tail_count==0&&!mode_request;
  wire load_config=config_commit&&config_allowed;
  wire [63:0] selected_data;wire selected_valid;
  wire [255:0] routed;wire [7:0] routed_valid;
  wire [511:0] interpolated_i,interpolated_q;wire [7:0] interpolated_valid;
- tx_source_mux sources(.clk(clk_rf),.rst(rst),.request(mode_request),.requested_mode(requested_mode),
-  .safe_boundary(safe_boundary&&!config_commit),.rf_permit(rf_permit&&!hard_fault),.single_antenna_ota(single_antenna_ota),
+ tx_source_mux sources(.clk(clk_rf),.rst(rst),.request(mode_request&&mode_admissible),.requested_mode(requested_mode),
+  .safe_boundary((safe_boundary&&!config_commit)||(mode_request&&requested_mode==0)),.rf_permit(pipeline_ready),.single_antenna_ota(single_antenna_ota),
   .live_data(live_data),.drfm_data(drfm_data),.dds_data(dds_data),.awg_data(awg_data),
   .live_valid(live_valid),.drfm_valid(drfm_valid),.dds_valid(dds_valid),.awg_valid(awg_valid),
-  .active_mode(active_mode),.accepted(mode_accepted),.rejected(mode_rejected),.out_data(selected_data),.out_valid(selected_valid));
- tx_channel_router router(.clk(clk_rf),.rst(rst),.in_valid(selected_valid&&(active_mode!=0)),
+  .active_mode(active_mode),.accepted(mode_accepted),.rejected(mux_mode_rejected),.out_data(selected_data),.out_valid(selected_valid));
+ tx_channel_router router(.clk(clk_rf),.rst(rst),.in_valid(selected_valid&&(active_mode!=0)&&pipeline_ready),
   .route_commit(load_config),.safe_boundary(config_allowed),.shadow_select(route_select),.shadow_enable(route_enable),
   .in_hv(selected_data),.out_valid(),.commit_ack(),.commit_rejected(),.lane_valid(routed_valid),.out_lanes(routed));
  always @(posedge clk_rf)begin
   if(rst)begin
    dc_i_hold<=0;dc_q_hold<=0;gain_i_hold<=0;gain_q_hold<=0;cal_valid_hold<=0;enable_hold<=0;
    active_config_id<=0;config_accepted<=0;config_rejected<=0;
+   tail_count<=0;restart_inhibit<=0;local_mode_rejected<=0;
   end else begin
+   local_mode_rejected<=mode_request&&!mode_admissible;
+   if(|routed_valid)tail_count<=TX_DRAIN_CYCLES;
+   else if(tail_count!=0)tail_count<=tail_count-1'b1;
+   if(!rf_permit||hard_fault||(mode_request&&requested_mode==0))restart_inhibit<=1;
+   else if(tail_count==0)restart_inhibit<=0;
    config_accepted<=load_config;config_rejected<=config_commit&&!config_allowed;
    if(load_config)begin
     dc_i_hold<=dc_i;dc_q_hold<=dc_q;gain_i_hold<=gain_i;gain_q_hold<=gain_q;
@@ -55,6 +69,6 @@ module tx_processing_chain(
   assign tx_saturated[c]=interpolated_valid[c]&&(|sat);
  end endgenerate
  dac_stream_adapter dac(.iq_i(interpolated_i),.iq_q(interpolated_q),.iq_valid(interpolated_valid),
-  .enable_mask(enable_hold&cal_valid_hold),.permit(rf_permit&&!rst&&(active_mode!=0)),.fault(hard_fault),
+  .enable_mask(enable_hold&cal_valid_hold),.permit(pipeline_ready&&(active_mode!=0)),.fault(hard_fault),
   .native_data(native_dac_data),.native_valid(native_dac_valid));
 endmodule

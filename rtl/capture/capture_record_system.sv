@@ -12,7 +12,7 @@
 // Shared hard rst_n requires external DMA isolation + both-domain quiescence;
 // it discards FIFO contents and is not an independent clock-domain reset protocol.
 module capture_record_system #(
- parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=0,FIFO_ADDR_W=12
+ parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=0,FIFO_ADDR_W=12,STATS_PORT_ENABLED=0
 )(
  input wire clk_rf,clk_mem,rst_n,arm_enable,reset_request,replay_quiescent,
  input wire sample_valid,input wire [63:0] sample_seq,input wire [255:0] group_data,
@@ -25,6 +25,8 @@ module capture_record_system #(
  input wire [63:0] ack_replay_epoch,ack_replay_generation,
  input wire [15:0] replay_enable,input wire [223:0] replay_address,
  output wire [1023:0] replay_data,output wire [15:0] replay_valid,
+ input wire [15:0] pending_stats_enable,input wire [223:0] pending_stats_address,
+ output wire [1023:0] pending_stats_data,output wire [15:0] pending_stats_valid,
  input wire [3:0] desc_valid,output wire [3:0] desc_ready,
  input wire [4095:0] desc_headers,input wire [7:0] desc_banks,
  input wire [255:0] source_expected_epoch,source_expected_generation,
@@ -54,6 +56,23 @@ module capture_record_system #(
  wire [15:0] record_enable,record_lease;
  wire [207:0] record_address;
  wire [2047:0] record_data;
+ // PENDING and FROZEN are mutually exclusive owner states. The same physical
+ // A port serves pending statistics first, then frozen replay after publish.
+ wire [15:0] stats_reads=STATS_PORT_ENABLED ? (pending_stats_enable&pending) : 16'd0;
+ wire [15:0] a_enable=stats_reads|(replay_enable&frozen);
+ wire [223:0] a_address;wire [1023:0] a_data;wire [15:0] a_valid;
+ reg [15:0] stats_response_owner,replay_response_owner;
+ always @(posedge clk_rf or negedge rst_n)begin
+  if(!rst_n)begin stats_response_owner<=0;replay_response_owner<=0;end
+  else begin stats_response_owner<=stats_reads;replay_response_owner<=replay_enable&frozen;end
+ end
+ assign replay_data=a_data;assign pending_stats_data=a_data;
+ assign replay_valid=a_valid&replay_response_owner;
+ assign pending_stats_valid=a_valid&stats_response_owner;
+ genvar a;
+ generate for(a=0;a<16;a=a+1)begin: a_port_owner
+  assign a_address[a*14+:14]=stats_reads[a]?pending_stats_address[a*14+:14]:replay_address[a*14+:14];
+ end endgenerate
  // Track the record reference separately: a replay-pinned FROZEN bank must not
  // be uploaded twice when an upstream source remains asserted after completion.
  reg [15:0] submitted;
@@ -118,8 +137,8 @@ module capture_record_system #(
  capture_bank_array #(.ADDR_W(14)) storage(
   .clk_rf(clk_rf),.clk_mem(clk_mem),.quiesce_rf(!rst_n),.quiesce_mem(!rst_n),
   .group_data(group_data),.write_enable(write_enable),.write_address(sample_seq[13:0]),
-  .frozen_rf(frozen),.frozen_mem(record_lease),
-  .replay_enable(replay_enable),.replay_address(replay_address),.replay_data(replay_data),.replay_valid(replay_valid),
+  .frozen_rf(frozen|(STATS_PORT_ENABLED?pending:16'd0)),.frozen_mem(record_lease),
+  .replay_enable(a_enable),.replay_address(a_address),.replay_data(a_data),.replay_valid(a_valid),
   .record_enable(record_enable),.record_address(record_address),.record_data(record_data),.record_valid());
  record_upload_groups #(.FIFO_ADDR_W(FIFO_ADDR_W)) upload(
   .clk_rf(clk_rf),.clk_mem(clk_mem),.rst_n(rst_n),

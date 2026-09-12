@@ -1,0 +1,77 @@
+{
+  "schema_version": "0.5-channel-monitor-implementation-1",
+  "status": "STANDALONE_RTL_FUNCTIONAL_PASS_INTEGRATION_PENDING",
+  "clock_hz": 125000000,
+  "modules": {
+    "channel_epoch_aligner": {
+      "file": "rtl/frontend/channel_epoch_aligner.sv",
+      "interface": "8 canonical channels, four complex samples/beat; iq_i and iq_q channel*64+lane*16, channel_seq/channel_gsc channel*64; expected_seq and gsc_base from trusted common timekeeper",
+      "latency_registered_stages": 1,
+      "behavior": "Compare each channel sequence and GSC to common expected values; combine with channel_valid and per-channel MTS-lock; preserve data and common tags without stalling or reordering; consumers must obey valid_mask",
+      "primary_mask": "0x77 channels0,1,2,4,5,6",
+      "aux_mask": "0x88 channels3,7",
+      "aux_isolation": "aux_switch_event[0]/aux_settling[0] affects only channel3, [1] only channel7. Each event increments its packed 32-bit aux_source_epoch counter independently, even with no beat. Event inputs must be one-cycle strobes.",
+      "common_fault": "common_clock_good && common_mts_good false invalidates all channels. Each transition from good to bad increments clock_epoch once, even without input beats. Recovery requires externally verified lock and matching tags.",
+      "primary_valid": "out_valid && all six primary valid_mask bits; independent of AUX validity",
+      "limits": [
+        "checker/pass-through, not elastic skew-correction FIFO; mismatch remains explicit invalid",
+        "all inputs already synchronous to clk_rf; status CDC belongs upstream",
+        "clk_rf disappearance itself cannot be detected by this stopped clock domain; external fail-safe/watchdog remains required",
+        "32-bit epochs wrap; system reset/ownership policy must prevent reuse ambiguity",
+        "common expected tags must advance independently of channel/DMA validity"
+      ],
+      "rtl_sha256": "e8bc8b0d254c08e96d8d285913721b82652f2f1483f5d67b4607c0bedb428c80"
+    },
+    "tx_reference_analyzer": {
+      "file": "rtl/monitor/tx_reference_analyzer.sv",
+      "interface": "filtered125MS/s H_I,H_Q,V_I,V_Q at16 bits each; sample_valid bit0 H bit1 V",
+      "window": "tx_event_start includes current sample; tx_event_end excludes current sample. event ID and first GSC latch on accepted start. Only one event in flight; busy start rejected via protocol_error; idle end or simultaneous idle start/end rejected. Output report_valid is a pulse with held snapshot.",
+      "provenance": "tx_event_* must represent actual pipeline/RF-associated events from trusted PL instrumentation, never software schedule or DMA completion. reference_connected must be asserted only for validated AUX reference routing.",
+      "statistics": "independent H/V I^2+Q^2, unsigned33-bit peak power, saturating64-bit sum energy, saturating32-bit accepted sample count. Full negative signed16 endpoints are exact. Units are digital code squared, not watts.",
+      "measurement_valid": "false for any missing sample, unconnected/settling reference, source_epoch change, saturation or empty accepted window. Good samples may still accumulate in an invalid window, but must not be called a complete measurement.",
+      "calibrated_valid": "requires measurement_valid and calibration_valid throughout included window. calibration_valid is authoritative upstream evidence that incoming IQ already has valid reference-plane calibration; this module does not apply analog gain correction. Tie low until that path exists.",
+      "overflow": "sticky within window, reported per H/V; count and energy saturate rather than wrap",
+      "safety": "observation-only: no source-select, replay-enable, physical RF control or DRFM connection",
+      "limits": [
+        "No conversion to physical power or gain without validated external reference calibration",
+        "No automatic event-delay/analog propagation attribution; upstream must align event times to AUX samples",
+        "No CDC/event queue inside module; consumer must capture report_valid",
+        "No claim to identify common analog compression from clean digital statistics"
+      ],
+      "rtl_sha256": "b005c4f04ae76c067c95fca373f5933b0d626b2bbc8816fd0a82cfe81aaf7de3"
+    }
+  },
+  "verification": {
+    "runner": "python tests/test_channel_monitor.py",
+    "icarus": "PASS",
+    "vivado_ooc": "SYNTHESIS_PASS_BOTH_MODULES",
+    "ooc_script": "hw/tcl/channel_monitor_ooc.tcl",
+    "ooc_part": "xczu27dr-fsve1156-2-i reference only",
+    "not_claimed": [
+      "top-level integration",
+      "routed timing",
+      "physical reference calibration",
+      "MTS hardware alignment completion"
+    ],
+    "tool": "Vivado2025.2 SW Build6299465",
+    "resources": {
+      "channel_epoch_aligner": {
+        "lut": 375.0,
+        "ff": 1267.0,
+        "bram_tile": 0.0,
+        "dsp": 0.0
+      },
+      "tx_reference_analyzer": {
+        "lut": 401.0,
+        "ff": 883.0,
+        "bram_tile": 0.0,
+        "dsp": 4.0
+      }
+    },
+    "warnings": [
+      "Synth8-6014 removed unused intermediate sum register; result logic retained",
+      "Netlist29-101 flattened hierarchy floorplanning advisory",
+      "Timing38-242 missing OOC clock buffer location; external IO unconstrained; no routed-timing claim"
+    ]
+  }
+}

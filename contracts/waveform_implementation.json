@@ -1,0 +1,139 @@
+{
+  "schema_version": "0.5-waveform-implementation-1",
+  "status": "STANDALONE_RTL_VALIDATED_INTEGRATION_PENDING",
+  "clock_hz": 125000000,
+  "gsc_ticks_per_sample": 4,
+  "hv_word_layout": "[15:0] H_I; [31:16] H_Q; [47:32] V_I; [63:48] V_Q",
+  "modules": {
+    "dds_burst_control": {
+      "file": "rtl/source/dds_burst_control.sv",
+      "clock": "clk_rf",
+      "command": "cmd_valid one-cycle request; accepted/rejected pulse; accepted only idle, positive PW/count, PRI>=PW, future GSC with same modulo-4 phase, train-end representable",
+      "snapshot": [
+        "start_gsc",
+        "pw_samples",
+        "pri_samples",
+        "pulse_count",
+        "initial_pinc",
+        "chirp_step",
+        "reset_each_pulse"
+      ],
+      "time": "start_gsc is source-stage sample time, not physical RF reference; integration must deduct NCO/TXCAL/interpolation/adapter latency",
+      "envelope": "rectangular, end-exclusive, PW and PRI in 125MHz samples",
+      "chirp": "48-bit modular PINC increment on each active sample; PINC returns to initial at each pulse end and holds initial through PRI gap",
+      "phase": "phase_reset at first train sample and optionally each pulse; nco_enable continues through PRI gaps, allowing phase accumulation at initial PINC; reset_each_pulse=0 preserves deterministic continuous phase across gaps",
+      "abort": "combinational gate/enable suppression, busy clears and done pulses next edge",
+      "limitations": [
+        "GSC must be monotonic +4 in one stable clock epoch; reset/abort on epoch change",
+        "No pulse shaping beyond rectangular envelope",
+        "No internal command CDC"
+      ],
+      "rtl_sha256": "8c80a168e22abee18307dfdd1edbf3d31211911967cb64e065188cc1ca4f143c"
+    },
+    "dds_nco_wrapper": {
+      "file": "rtl/source/dds_nco_wrapper.sv",
+      "implementation": "CUSTOM_SYNTHESIZABLE_ROM_NCO",
+      "catalog_deviation": "Standalone fallback selected rather than generated AMD DDS Compiler; no claim that catalog IP wrapper has been generated",
+      "phase_bits": 48,
+      "phase_address_bits": 10,
+      "output_bits": 16,
+      "peak_code": 32767,
+      "rom_entries": 1024,
+      "rom_contents": "round(32767*sin(2*pi*k/1024)); literal compile-time case table",
+      "latency_registered_stages": 1,
+      "semantics": "On enabled edge, output current selected phase (zero if phase_reset), then accumulate PINC. Positive PINC rotates cos+j sin counterclockwise; reset ignored when disabled; disabled emits zero and invalid. Envelope=0 emits valid zero while phase advances.",
+      "precision": "10-bit phase truncation, no interpolation/dither/SFDR or full-band analog certification",
+      "enable": "Connect dds_burst_control nco_enable, envelope, phase_reset, pinc; no stream backpressure",
+      "rtl_sha256": "1809b9ceae07487c77fd639f6079caad5849e0760aeb2b897c954b3d032e08cb"
+    },
+    "awg_reader": {
+      "file": "rtl/source/awg_reader.sv",
+      "default_depth": 16384,
+      "banks": 2,
+      "word_bits": 64,
+      "load_domain": "clk_rf ONLY: upstream clk_ctrl asynchronous FIFO/handshake bridge REQUIRED",
+      "load_protocol": "load_begin with length/CRC snapshot, then exactly length words on load_valid && load_ready; sequential writes only inactive bank; new load may replace uncommitted candidate; ready deasserts on final word",
+      "crc": "CRC32C reflected polynomial 0x82f63b78, init 0xffffffff, final complement, low byte and low bit first within each 64-bit word",
+      "commit_protocol": "commit requests a verified complete table; pending blocks load; safe_boundary && !playing && !play atomically swaps bank and pulses commit_ack; old active table remains usable on failed load",
+      "playback": "play pulse while active_valid and !playing; first registered word one edge after accepted play; exactly active_len consecutive words, no ready/backpressure; out_last on final word; idle outputs zero/invalid",
+      "limitations": [
+        "No clk_ctrl/AXI/PS bridge inside module; this is a single-domain memory core, not complete dual-clock catalog wrapper",
+        "No absolute GSC scheduler inside AWG; upstream must align play with fixed one-edge first-word latency",
+        "No looping or per-table gain; these need scheduler/processing integration"
+      ],
+      "rtl_sha256": "8592f76dd98e74e6967f838d76d434ecd992b44b107ba57c8bb276533843dd63"
+    },
+    "tx_source_mux": {
+      "file": "rtl/source/tx_source_mux.sv",
+      "modes": {
+        "MUTE": 0,
+        "LIVE": 1,
+        "DRFM": 2,
+        "DDS": 3,
+        "AWG": 4
+      },
+      "request": "single pending slot; latch request until safe_boundary; accepted pulses on applied switch; pending/full/invalid/OTA-LIVE rejects explicitly",
+      "safety": "rf_permit=0 or reset produces immediate zero codes and valid; selected LIVE also forced zero whenever single_antenna_ota asserted; no physical RF control",
+      "valid": "MUTE/safety zero valid=1; enabled selected input propagates valid, invalid input always data=0",
+      "integration": "output -> tx_channel_router -> per-DAC tx_cal_executor -> tx_interp4_wrapper -> rfdac_stream_adapter; all source modes share this path",
+      "latency_registered_stages": 0,
+      "rtl_sha256": "061e4d20840dfdd6e01f5a26da4e33807a65d522c58fd70310bcd365114b9fc2"
+    }
+  },
+  "verification": {
+    "runner": "python tests/test_waveform_sources.py",
+    "testbenches": [
+      "tb/unit/tb_waveform_sources.sv",
+      "tb/unit/tb_awg_reader.sv"
+    ],
+    "icarus": "PASS",
+    "vivado_ooc": "SYNTHESIS_PASS_ALL_FOUR_MODULES",
+    "ooc_script": "hw/tcl/waveform_ooc.tcl",
+    "ooc_part": "xczu27dr-fsve1156-2-i reference target only; not board-qualified",
+    "not_claimed": [
+      "full-top integration",
+      "routed 125MHz timing closure",
+      "clock-domain crossing closure",
+      "physical RF validity",
+      "AMD DDS IP equivalence"
+    ],
+    "tool_version": "Vivado 2025.2 SW Build 6299465",
+    "resource_results": {
+      "dds_burst_control": {
+        "lut": 820.0,
+        "ff": 441.0,
+        "bram_tile": 0.0,
+        "dsp": 4.0
+      },
+      "dds_nco_wrapper": {
+        "lut": 54.0,
+        "ff": 49.0,
+        "bram_tile": 1.0,
+        "dsp": 0.0
+      },
+      "awg_reader": {
+        "lut": 548.0,
+        "ff": 235.0,
+        "bram_tile": 57.0,
+        "dsp": 0.0
+      },
+      "tx_source_mux": {
+        "lut": 145.0,
+        "ff": 9.0,
+        "bram_tile": 0.0,
+        "dsp": 0.0
+      }
+    },
+    "logs": [
+      "reports/waveform_ooc.log",
+      "reports/waveform_ooc_final.log",
+      "reports/tb_waveform_sources.log",
+      "reports/tb_awg_reader.log"
+    ],
+    "warnings": [
+      "Timing 38-242: OOC clock buffer location absent; top-level clock skew not estimated",
+      "Netlist 29-101: AWG hierarchy flattened; floorplanning advisory",
+      "External I/O timing unconstrained; post-synthesis estimates do not prove routed timing"
+    ]
+  }
+}

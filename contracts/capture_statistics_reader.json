@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "status": "REAL_OWNER_AND_RAM_UNIT_SIMULATION_VERIFIED",
+  "module": "rtl/capture/capture_statistics_reader.sv",
+  "clock": "clk, synchronous rst; no internal CDC",
+  "parameters": "ADDR_W defaults14 for16384 samples; tested reduced-depth instance ADDR_W3; integration range2..14",
+  "request": {
+    "handshake": "request_valid && request_ready, only idle with no held result and no abort_request",
+    "bank_map": "request_bank_ids packs three2-bit bank IDs in primary group order; actual slot=4*group_index+bank_id. request_generations packs three independent64-bit generations, never substitutes one transaction generation for all groups.",
+    "key": "request_key/result_key256 retains established MSB-to-LSB pulse_id64,owner_epoch64,transaction_generation64,config_version64. Pulse and epoch are compared with actual bank context; lower128 bits are preserved unchanged.",
+    "bad": "request_bad_channels6 is captured at admission in H_HIGH,H_MID,H_LOW,V_HIGH,V_MID,V_LOW order. External clip/gap/calibration quality flags must be frozen for the complete captured window, including pretrigger history. Owner truncated bits are ORed into both H/V channels of affected groups throughout scanning."
+  },
+  "live_context": "Full16bank pending/frozen/truncated masks, generation/pulse_id/start_seq1024 each, sample_count16*(ADDR_W+1), owner_epoch64. Selected banks must remain PENDING and not FROZEN with matching epoch/generation/pulse from admission through final accumulation. Three absolute start sequences and counts must agree and remain unchanged; count1..min(2^ADDR_W,16384).",
+  "port": {
+    "output": "ram_read_enable16 and ram_read_address16*ADDR_W (default224 bits)",
+    "input": "ram_read_data1024, ram_read_valid16, fixed one-cycle read response",
+    "schedule": "Three primary selected banks read concurrently. ISSUE edge accepts one A-port read; RESPONSE edge consumes its registered data. No next read is issued until response consumed. Full capture scans start_seq low address through count samples with natural circular address wrap, including pretrigger data. Latency2*count+1 cycles after accepted request for successful result.",
+    "arbitration": "No third RAM port. Root capture_record_system enables A-port statistics only for PENDING and replay only for FROZEN. PENDING is not writable. RAM B remains existing record/DMA access. All unrelated bank enable bits stay zero."
+  },
+  "result": {
+    "handshake": "result_valid held with immutable key/map/generations/stats/peaks/error until result_ready; no further RAM reads. busy is scan/inflight work only, not held-result occupancy. Root must keep PENDING bank ownership until qualification/disposition, and existing publish bridge revalidates identity before owner mutation.",
+    "stats512": "qualification_payload.json: six46-bit unsigned energies at275:0, common15-bit count at290:276, bad_channels6 at296:291, completed groups111 at299:297, upper reserved zero",
+    "peaks192": "Six32-bit unsigned peak powers, same six-channel order; separate output because current stats512 ABI has no peak field",
+    "arithmetic": "RAM64 contains HI16,HQ16,VI16,VQ16. Signed16 I and Q are squared and summed to unsigned32 instantaneous power; unsigned46 sum covers16384 samples without overflow. Full numeric sums retained even for bad channels; qualification mask expresses invalidity.",
+    "errors": {"0":"OK","1":"IDENTITY_OR_NOT_PENDING_OR_FROZEN","2":"WINDOW_COUNT_OR_START_MISMATCH","3":"MISSING_FIXED_LATENCY_RESPONSE","4":"EXPLICIT_ABORT"},
+    "error_disposition": "Error yields held original key/bank map/generations, all-zero stats/peaks and nonzero error. No auto publication, bank return, discard or replay grant. For still-matching pending banks caller may issue generation-qualified stats_valid with stats_good0 then discard via existing owner protocol; stale identities must never dispose new bank generations. Queue/context cancellation is root responsibility.",
+    "drain": "Abort/context failure gates ISSUE read enable; RESPONSE discards the sole outstanding registered response. When error result is produced no later read is pending. Hard reset requires external RAM/owner reset coordination."
+  },
+  "verification": {"command":"python tests/test_capture_statistics_reader.py","bench":"tb/system/tb_capture_statistics_reader.sv","tool":"C:/iverilog/bin/iverilog.exe and vvp.exe","result":"PASS","evidence":"../reports/capture_statistics_reader.log"},
+  "limits": ["No shared capture modules changed by this subtask", "Root A-port mux wiring and complete qualification integration remain external", "Vivado synthesis/timing not claimed", "External bad flags must include complete-window provenance; aggregate powers do not reconstruct absent clipping/gap history"]
+}

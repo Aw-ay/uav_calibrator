@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "magic": 1128352817,
+  "bytes": 96,
+  "byte_order": "little",
+  "fields": [["magic",0,4],["format_version",4,4],["cal_id",8,4],["direction",12,4],["generation",16,8],["logical_channel",24,4],["reference_plane_id",28,4],["valid_from",32,8],["valid_until",40,8],["binding_id",48,8],["valid",56,4],["reserved_header",60,4],["payload",64,16],["payload_crc32c",80,4],["record_crc32c",84,4],["reserved_tail",88,8]],
+  "direction": {"RX":0,"TX":1},
+  "units": "valid_from <= now_gsc < valid_until; unsigned u64 500 MHz GSC ticks, no wrap interval",
+  "crc": "CRC32C reflected Castagnoli poly0x82f63b78 initial/final xor0xffffffff. payload_crc32c covers 16 payload bytes; record_crc32c covers all96 bytes with its own4 bytes zero.",
+  "payload_source": "calibration_dsp_implementation.json calibration_table.fields; 128bits signed gainQ16/DCinteger and reserved-zero bits",
+  "acceptance": "Structural validity, payload/record CRC, exact expected immutable IDs/generation/channel/direction/reference and half-open time interval required. These checks do not validate hardware binding. production_binding_valid and matching nonzero binding_id separately authorize calibration_valid. Missing binding preserves decoded logical payload with UNBOUND result and calibration_valid false.",
+  "lifecycle": "Caller must validate inactive immutable storage, pin generation and atomically commit at safe boundary; API does not write MMIO, GPIO, RF enable or mutate an active table."
+}

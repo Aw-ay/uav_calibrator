@@ -16,6 +16,8 @@ module tb_capture_record_system;
  reg ack_replay=0;reg [3:0] ack_replay_bank=12;
  reg [63:0] ack_replay_epoch=0,ack_replay_generation=0;
  reg [15:0] replay_enable=0;reg [223:0] replay_address=0;
+ reg [15:0] pending_stats_enable=0;reg [223:0] pending_stats_address=0;
+ wire [1023:0] pending_stats_data;wire [15:0] pending_stats_valid;
  wire [1023:0] replay_data,start_seq,generation,pulse_id;
  wire [239:0] sample_count;
  wire [15:0] replay_valid,write_enable,armed,pending,frozen,truncated,qualified;
@@ -24,7 +26,7 @@ module tb_capture_record_system;
  wire quiesce,idle_rf,completion_valid,completion_error;
  wire [1:0] completion_group,completion_bank;
  wire [127:0] md;wire [15:0] mk;wire ml,mv;reg mr=0;wire [2:0] occupancy;
- capture_record_system #(.PRE_SAMPLES(3),.DETECTOR_LATENCY(1),.FIFO_ADDR_W(2)) dut(
+ capture_record_system #(.PRE_SAMPLES(3),.DETECTOR_LATENCY(1),.FIFO_ADDR_W(2),.STATS_PORT_ENABLED(1)) dut(
   .clk_rf(rf),.clk_mem(mem),.rst_n(rst_n),.arm_enable(1'b1),.reset_request(reset_request),.replay_quiescent(replay_quiescent),
   .sample_valid(sample_valid),.sample_seq(sample_seq),.group_data(group_data),
   .primary_trigger(primary_trigger),.primary_onset(primary_onset),.primary_pulse_id(64'd100),
@@ -33,6 +35,7 @@ module tb_capture_record_system;
   .stats_valid(stats_valid),.stats_generation(stats_generation),.stats_good(16'hffff),.publish(publish),.replay_pin(replay_pin),
   .ack_replay(ack_replay),.ack_replay_bank(ack_replay_bank),.ack_replay_epoch(ack_replay_epoch),.ack_replay_generation(ack_replay_generation),
   .replay_enable(replay_enable),.replay_address(replay_address),.replay_data(replay_data),.replay_valid(replay_valid),
+  .pending_stats_enable(pending_stats_enable),.pending_stats_address(pending_stats_address),.pending_stats_data(pending_stats_data),.pending_stats_valid(pending_stats_valid),
   .desc_valid(desc_valid),.desc_ready(desc_ready),.desc_headers(desc_headers),.desc_banks(desc_banks),
   .source_expected_epoch(source_expected_epoch),.source_expected_generation(source_expected_generation),.stale_descriptor(stale_descriptor),
   .completion_valid(completion_valid),.completion_error(completion_error),.completion_epoch(completion_epoch),
@@ -77,9 +80,19 @@ module tb_capture_record_system;
    eop_valid=mask;eop_generation=generation;for(integer j=0;j<16;j=j+1)eop_stop[j*64+:64]=stop;
    repeat(3)@(negedge rf);eop_valid=0;
    if((pending&mask)!=mask)$fatal(1,"not pending");
+   for(integer g=0;g<4;g=g+1)pending_stats_address[g*4*14+:14]=start_seq[g*4*64+:14];
+   pending_stats_enable=mask;
+   @(negedge rf);
+   if(pending_stats_valid!=mask)$fatal(1,"pending statistics A-port read");
+   for(integer g=0;g<4;g=g+1)if(mask[g*4])begin
+    if(pending_stats_data[g*4*64+:64]!={16'(-g),16'(start_seq[g*4*64+:64]+1),16'(g),16'(start_seq[g*4*64+:64])})$fatal(1,"pending statistics data");
+   end
+   pending_stats_enable=0;
    stats_valid=mask;stats_generation=generation;
-   repeat(2)@(negedge rf);stats_valid=0;publish=mask;
-   @(negedge rf);publish=0;
+   repeat(2)@(negedge rf);stats_valid=0;publish=mask;pending_stats_enable=mask;
+   @(negedge rf);
+   if(pending_stats_valid!=mask||replay_valid!=0)$fatal(1,"A response belongs to request before publish");
+   publish=0;pending_stats_enable=0;
    if((frozen&mask)!=mask)$fatal(1,"not frozen");
   end
  endtask

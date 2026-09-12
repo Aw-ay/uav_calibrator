@@ -1,0 +1,60 @@
+{
+  "schema_version": "0.5-awg-load-cdc-1",
+  "status": "FUNCTIONAL_PASS_PHYSICAL_CDC_REVIEW_PENDING",
+  "file": "rtl/source/awg_load_cdc_wrapper.sv",
+  "rtl_sha256": "f4f601d63188f25a531907229281376068dfa2156b71b1deb082b782bb106839",
+  "dependency": "rtl/source/awg_reader.sv unchanged interface",
+  "domains": {
+    "clk_ctrl_hz": 100000000,
+    "clk_rf_hz": 125000000
+  },
+  "control_protocol": {
+    "handshake": "ctrl_valid && ctrl_ready accepts one immutable transaction. ctrl_ready remains low until an actual destination response returns; caller must wait or retain valid/payload as in ready/valid. ctrl_done is one source-clock pulse with matching ctrl_done_op and ctrl_error.",
+    "operations": {
+      "0": "BEGIN: ctrl_length and ctrl_crc32c snapshot",
+      "1": "WRITE: ctrl_data one ordered 64-bit HV word",
+      "2": "COMMIT: done only after core commit_ack at a safe boundary with no pinned playback",
+      "3": "Rejected invalid opcode"
+    },
+    "status": "ctrl_loaded and ctrl_active_valid are response-associated snapshots, not unsynchronized live signals. No success if the core rejects length/CRC/state/op.",
+    "throughput": "One outstanding mailbox transaction; appropriate for preload, not a continuous waveform data path"
+  },
+  "cdc": {
+    "architecture": "130-bit request and5-bit response bundled-data toggle mailboxes; payload remains stable until synchronized destination acknowledgement; two ASYNC_REG control synchronizer stages each way",
+    "reset": "One common active-low reset asserts all domains; each domain releases through its own two-stage synchronizer. Reset cancels inflight transaction and invalidates active AWG. Wrapper outputs force zero/invalid immediately on common reset even if sample clock is stopped.",
+    "physical_gate": "Bundled payload paths require validated placement/routing delay bounds relative to destination request synchronization. Functional simulation is not a metastability proof. No timing waiver/false-path exception was inserted; report_cdc must be reviewed in top-level context.",
+    "source_stability": "Mailbox captures payload at accepted ctrl edge; caller changes afterward cannot tear destination command or sample",
+    "destination_capture": "Each mailbox captures the complete held payload into destination-clock registers before asserting dst_valid. Those registers are preserved to prevent optimization moving cross-domain data paths into RAM or operation decode."
+  },
+  "sample_interface": "safe_boundary/play synchronous clk_rf; active_valid/playing/out_valid/out_last/out_data synchronous clk_rf with reset masking; uses unchanged AWG core",
+  "verification": {
+    "runner": "python tests/test_awg_load_cdc.py",
+    "icarus": "PASS three independent clock ratios (half periods5/4,3/7,7/3ns), payload mutation, CRC failure, invalid state/op, deferred completion, playback, reset cancellation",
+    "vivado": "SYNTHESIS_PASS; CDC_ZERO_CRITICAL_WITH_BUNDLED_DATA_WARNINGS",
+    "script": "hw/tcl/awg_load_cdc_ooc.tcl",
+    "resources_including_awg_core": {
+      "lut": 642.0,
+      "ff": 539.0,
+      "bram_tile": 57.0,
+      "dsp": 0.0
+    },
+    "cdc_report": {
+      "file": "reports/awg_load_cdc_ooc/cdc.rpt",
+      "critical": 0,
+      "CDC-3_info": 4,
+      "CDC-15_warning": 135,
+      "interpretation": "4 recognized two-stage control synchronizers;135 held-data bits captured by destination clock enables. Must prove bundled payload physical timing in top-level; warnings not waived."
+    },
+    "logs": [
+      "reports/tb_awg_load_cdc_5_4.log",
+      "reports/tb_awg_load_cdc_3_7.log",
+      "reports/tb_awg_load_cdc_7_3.log",
+      "reports/awg_load_cdc_ooc_final.log"
+    ]
+  },
+  "not_implemented": [
+    "PS AXI-Lite register endpoint",
+    "full-top CDC constraint/signoff",
+    "physical RF enable or analog calibration"
+  ]
+}

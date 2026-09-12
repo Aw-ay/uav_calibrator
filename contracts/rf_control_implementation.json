@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "status": "LOGICAL_RTL_SIMULATION_VERIFIED_BOARD_UNBOUND",
+  "sources": ["module_catalog.json", "channel_roles.json", "register_map.json", "rf_binding_policy.json"],
+  "modules": ["rtl/control/rf_safety_interlock.sv", "rtl/control/aux_source_controller.sv"],
+  "clock_boundary": "All inputs synchronous to clk_rf. clk_ctrl requests/configuration require external existing atomic mailbox/CDC; normalized hardware feedback requires board-specific CDC before these ports.",
+  "physical_binding": "binding_valid must originate from validated trusted board adapter, never a raw software enable. Current production binding remains UNBOUND. Simulation fixture asserting binding_valid is not production validation.",
+  "rf": {
+    "states": {"0": "SAFE", "1": "RX", "2": "TURNAROUND", "3": "TX", "4": "RECOVERY"},
+    "sequence": "RX -> protect feedback plus dwell -> T/R TX feedback plus dwell -> PA feedback plus dwell -> unmute. Stop -> mute and PA off -> PA-off feedback plus recovery dwell -> T/R RX -> RX feedback plus recovery dwell -> release protection.",
+    "timing_inputs": "protect_cycles, switch_cycles, pa_cycles, recovery_cycles, transition_timeout_cycles, watchdog_cycles: unsigned u32 clk_rf cycle counts; validated and held stable while armed. Zero dwell permitted; timeout/watchdog must be nonzero.",
+    "faults": "hard_fault, armed PLL loss, watchdog expiry, transition timeout and TX feedback loss latch. Disarmed clear_fault with healthy hard-fault/PLL/timing permits explicit clear. UNBOUND independently inhibits all PA enable.",
+    "heartbeat": "One synchronous event per upstream software-heartbeat transaction. Must not be tied high or generated autonomously while Linux is stalled.",
+    "arming": "SAFE enters RX only with arm high, tx_request low and normalized PA-off/T-R-RX feedback. A pending TX request does not auto-start after fault recovery.",
+    "clock_loss": "Clock disappearance needs independent physical shutdown hardware; logical combinational inhibiting does not certify an asynchronous safety circuit."
+  },
+  "aux": {
+    "roles": {"0": "SAFE", "1": "EXTERNAL_REDUNDANT_MID", "2": "PROTECTED_RF_LOOPBACK"},
+    "scope": "Paired H/V ADC3 and ADC7 analog source only; fixed MID range; no primary-six-lane or ADC/DDC/FIR stop/reset signals.",
+    "commit": "Idle, bound, valid timing and safe_to_switch required; reject invalid role, unsafe or busy requests. Every accepted commit increments u32 source_epoch and invalidates AUX, including repeated role.",
+    "qualification": "Matching normalized source_ack/source_feedback -> settling clk_rf cycles -> flush_samples sample_tick events -> done. source_active changes only on matching feedback. SAFE completes with aux_valid false.",
+    "timing": "Unsigned u32 settling_cycles in clk_rf cycles, switch_timeout_cycles in clk_rf cycles, flush_samples in output sample intervals. Latched at accepted commit. PL flush minimum 42 plus board-defined RFDC history/measured pipeline must be included in supplied flush_samples; analog settling independently supplied.",
+    "invalidity": "Reset, transition, binding/timing loss, switch timeout all deny aux_valid. Missing hardware never reports valid. rejected and done are one-cycle pulses. drop_count saturates u32 on sample_tick while invalid.",
+    "integration": "source_ack must reflect stable actual paired source state, not software request acceptance. Frame source_role requires channel_roles.json mapping, not direct register enum copy. Calibration validity remains a separate qualifier."
+  },
+  "verification": {"command": "python tests/test_rf_control.py", "tool": "C:/iverilog/bin/iverilog.exe and vvp.exe", "bench": "tb/unit/tb_rf_control.sv", "result": "PASS", "log": "../reports/rf_control.log"},
+  "remaining": ["Trusted physical board adapter and timing validation", "CDC/register/top-level wiring", "Physical fail-safe and actual RF measurement", "Vivado synthesis and timing integration"]
+}

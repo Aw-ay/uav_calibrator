@@ -21,7 +21,7 @@ def run(args):
         raise RuntimeError(result.stdout + result.stderr)
     return result.stdout
 
-sources = [ROOT/'sw/common/frame_decode.c', ROOT/'sw/common/dma_slots.c']
+sources = [ROOT/'sw/common/frame_decode.c', ROOT/'sw/common/dma_slots.c', ROOT/'sw/common/event_control.c', ROOT/'sw/common/calibration_table.c']
 status = 'FAIL'
 try:
     run([BIN/'aarch64-none-elf-gcc.exe', '--version'])
