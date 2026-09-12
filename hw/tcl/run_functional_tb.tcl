@@ -47,7 +47,7 @@ proc stage3_sv {directory} {
  foreach child [glob -nocomplain -types d -directory $directory *] {set result [concat $result [stage3_sv $child]]}
  return $result
 }
-foreach stage3_top {tb_command_gateway tb_receive_frontend tb_receive_event_producer tb_calibrator_instrument_core} {
+foreach stage3_top {tb_command_gateway tb_receive_frontend tb_receive_event_producer tb_calibrator_instrument_core tb_instrument_waveform_commands} {
  dict set sources $stage3_top [concat [stage3_sv [file join $root rtl]] [list tb/system/$stage3_top.sv]]
 }
 if {![dict exists $sources $top]} {error "Unsupported top: $top"}
@@ -55,15 +55,15 @@ create_project -force functional_$top [file join $root build functional_tb $top]
 foreach rel [dict get $sources $top] {add_files -fileset sim_1 -norecurse [file join $root $rel]}
 set_property top $top [get_filesets sim_1]
 set_property xsim.simulate.runtime 0ns [get_filesets sim_1]
-if {$top eq "tb_qualified_record_upload" || $top eq "tb_qualified_reset_drain" || $top eq "tb_calibrator_capture_pipeline" || $top eq "tb_calibrator_capture_system" || $top eq "tb_calibrator_dataplane_system" || $top eq "tb_calibrator_dataplane_cancel" || $top eq "tb_calibrator_instrument_core"} {
+if {$top eq "tb_qualified_record_upload" || $top eq "tb_qualified_reset_drain" || $top eq "tb_calibrator_capture_pipeline" || $top eq "tb_calibrator_capture_system" || $top eq "tb_calibrator_dataplane_system" || $top eq "tb_calibrator_dataplane_cancel" || ($top eq "tb_calibrator_instrument_core" || $top eq "tb_instrument_waveform_commands")} {
  set vectors [file join $root build qualified_upload_vectors]
- if {$top eq "tb_calibrator_capture_system" || $top eq "tb_calibrator_dataplane_system" || $top eq "tb_calibrator_dataplane_cancel" || $top eq "tb_calibrator_instrument_core"} {set vectors [file join $root build capture_system_vectors]}
+ if {$top eq "tb_calibrator_capture_system" || $top eq "tb_calibrator_dataplane_system" || $top eq "tb_calibrator_dataplane_cancel" || ($top eq "tb_calibrator_instrument_core" || $top eq "tb_instrument_waveform_commands")} {set vectors [file join $root build capture_system_vectors]}
  if {![file exists [file join $vectors expected.hex]]} {error "Run tests/test_qualified_record_upload.py to generate independent vectors first"}
  set_property -dict [list xsim.simulate.xsim.more_options "-testplusarg ROOT=$vectors"] [get_filesets sim_1]
 }
 update_compile_order -fileset sim_1
 launch_simulation -simset sim_1 -mode behavioral
-if {$top ne "tb_calibrator_instrument_core"} {log_wave -r /*}
+if {$top ne "tb_calibrator_instrument_core" && $top ne "tb_instrument_waveform_commands"} {log_wave -r /*}
 run all
 close_sim
 close_project

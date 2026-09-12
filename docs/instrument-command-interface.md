@@ -33,3 +33,31 @@ DDS 9-word payload 依次为 start GSC64、PW32、PRI32、count32、pinc48、chi
 ## 本阶段不代表的验收
 
 尚未连接真实 PS AXI/DDR/DMA/RFDC IP 板级顶层，也未连接旧 CSR 的完整 PDW 读取通路、AUX 独立生产路径和实物时钟初始化。综合估计不能替代布局布线的 setup/hold、CDC/约束覆盖、IO timing 和上板验收；最终 RF GPIO、极性、实测增益和联锁等待仍保持板级合同绑定。
+
+
+## 第四阶段：DDS/AWG 软件提交与换表边界
+
+`sw/common/include/waveform_control.h` 提供 `cal_dds_begin`、
+`cal_awg_load_begin`、`cal_awg_write`、`cal_awg_commit`、`cal_awg_play`。
+每次只提交一条命令；随后使用相同 sequence 调用 `cal_command_poll`，同时检查
+传输状态与 `result.code`。提交成功不表示已开始输出或实际 RF 发射。
+`SUBMIT_UNKNOWN` 必须查询原 sequence，禁止自动重发。
+
+DDS 的 PW/PRI/count 以 125 MHz 样点计，GSC 以 2 ns tick 计且需 4 tick 对齐。
+C API 检查非零长度、PRI>=PW、48 bit 相位字段及完整脉冲列的 GSC 溢出。
+调用者须给 MMIO/CDC 留足提前量，PL 最终判断时间是否仍在未来。
+
+AWG 流程为 BEGIN(length, CRC) → 逐样点 WRITE → COMMIT → MODE=4 → PLAY。
+每个 64 bit 样点从低到高为 HI/HQ/VI/VQ，各 16 bit；CRC32C 按小端字节顺序，
+初值及最终 XOR 为 0xffffffff。长度上限由实际 AWG_DEPTH 决定并由 PL 检查。
+CRC 错误返回 REJECTED，当前活动表保持不变。
+
+已加载表的 COMMIT 仅在采集停止、MUTE、回放及生成源排空、检测器不活动时下发。
+否则立即返回 BUSY，保留待提交表，避免单事务网关等待后续 STOP 造成死锁。
+软件应先 STOP 并等待完成，确认排空后用新 sequence 重试 COMMIT。
+没有合格待提交表时由 AWG 核返回 REJECTED；BEGIN/WRITE 仍可在活动表播放时
+写入独立的非活动 bank。AWG_LOAD 返回低四位为活动表有效、已加载、最近完成操作号；
+被网关拒绝的操作未到 AWG 核，因此最近完成操作号不代表本次操作。
+
+正常主动关闭 PA 时不把预期的 PA 反馈下降当故障；TX 请求仍有效时的 PA 丢失、
+TR 与接收保护反馈异常仍受联锁检查。此逻辑不规定物理引脚、极性或板级等待参数。

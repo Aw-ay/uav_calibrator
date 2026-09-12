@@ -38,7 +38,9 @@ module rf_safety_interlock(
    if(state==TURNAROUND || state==RECOVERY) transition_age<=transition_age+1;
    else transition_age<=0;
    if((arm && fatal_now && binding_valid) || hard_fault || transition_expired ||
-      (state==TX && (!pa_on_fb || !tr_tx_fb || !rx_protected_fb))) fault_latched<=1;
+      // A requested shutdown immediately removes PA enable. Fast PA feedback
+      // may fall before the next state transition; that is expected, not a fault.
+      (state==TX && ((arm && tx_request && !pa_on_fb) || !tr_tx_fb || !rx_protected_fb))) fault_latched<=1;
    if(clear_fault && !arm && !hard_fault && pll_locked && settings_ok) fault_latched<=0;
    if(fatal_now || fault_latched || transition_expired) begin state<=SAFE;phase<=0;dwell<=0;end
    else case(state)

@@ -19,7 +19,7 @@ initial begin
  bound=1;tx=0;tick();ck(state==1,"armed RX");tx=1;tick();ck(protect&&!tr&&!pa,"protect before switch");
  repeat(2)tick();ck(tr&&!pa,"switch before PA");fb_tr=1;repeat(2)tick();ck(pa&&mute,"PA warm-up muted");fb_pa=1;repeat(2)tick();ck(state==3&&!mute,"TX qualified");
  fb_protect=0;#1;ck(!pa&&mute,"lost protection inhibits PA without clock edge");fb_protect=1;
- tx=0;tick();ck(!pa&&tr&&protect&&mute,"recovery PA off first");fb_pa=0;repeat(2)tick();ck(!tr&&protect,"recover switch to RX");fb_tr=0;repeat(2)tick();ck(state==1&&!protect,"RX protection release");
+ tx=0;fb_pa=0;tick();ck(!fault,"commanded PA shutdown must not latch feedback fault");ck(!pa&&tr&&protect&&mute,"recovery PA off first");fb_pa=0;repeat(2)tick();ck(!tr&&protect,"recover switch to RX");fb_tr=0;repeat(2)tick();ck(state==1&&!protect,"RX protection release");
  tx=1;repeat(7)tick(); // feedback deliberately absent
  pll=0;#1;ck(!pa&&mute,"PLL immediate logical inhibit");tick();ck(fault&&state==0,"PLL fault latch");pll=1;tx=0;repeat(2)tick();ck(fault,"fault persists");arm=0;clear_fault=1;tick();clear_fault=0;ck(!fault,"explicit disarmed clear");
  arm=1;hb=0;repeat(14)tick();ck(fault&&!pa,"Linux watchdog");arm=0;hb=1;clear_fault=1;tick();clear_fault=0;
@@ -30,6 +30,10 @@ initial begin
  request_aux(2);ck(!valid&&epoch==2,"new transition invalidates old source");repeat(9)tick();ck(reject_seen&&!busy&&!valid,"missing switch ack times out");
  request_aux(1);ack=1;feedback_role=2;repeat(9)tick();ck(reject_seen&&!valid,"wrong role feedback cannot acknowledge");ack=0;
  request_aux(2);aux_bound=0;tick();ck(aux_unbound&&!busy&&!valid,"binding loss invalidates AUX");
+ // Real PA loss while TX is still requested must remain a sticky fault.
+ rst_n=0;tick();arm=0;tx=0;bound=1;pll=1;hb=1;fb_pa=0;fb_tr=0;fb_protect=1;rst_n=1;
+ arm=1;tick();tx=1;tick();repeat(2)tick();fb_tr=1;repeat(2)tick();fb_pa=1;repeat(2)tick();
+ ck(state==3&&!mute,"second TX qualified");fb_pa=0;#1;ck(mute&&!pa,"unexpected PA loss immediately inhibits");tick();ck(fault,"unexpected PA loss still latches");
  $display("PASS RF control: sequencing, fault latch, watchdog, timeout, binding, AUX epoch and 42 sample flush");$finish;
 end
 initial begin #20000;$fatal(1,"test timeout");end

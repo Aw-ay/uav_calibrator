@@ -211,6 +211,10 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
  wire mode_payload_ok=action_payload[31:3]==0&&action_payload[2:0]<=4;
  wire dds_payload_ok=action_payload[287:257]==0;
  wire awg_payload_ok=action_payload[31:2]==0;
+ // A loaded COMMIT cannot wait for a later STOP/MODE command on this
+ // single-inflight gateway. Keep the inactive table and let PS retry in MUTE.
+ wire awg_commit_blocked=(action_payload[1:0]==2)&&d_t_awg_ctrl_loaded&&
+  (run_enable||(d_t_active_mode!=0)||!d_r_idle||!d_t_sources_drained||detector_active);
  calibrator_dataplane_system #(.PRE_SAMPLES(PRE_SAMPLES),.DETECTOR_LATENCY(2),.FIFO_ADDR_W(FIFO_ADDR_W),.AWG_DEPTH(AWG_DEPTH),.PHYSICAL_MASKS_IN_TEMPLATE(1)) dataplane(
   .replay_leased(d_replay_leased),
   .clk_rf(rf_clk),
@@ -415,7 +419,7 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
   .t_dds_rejected(d_t_dds_rejected),
   .t_dds_busy(d_t_dds_busy),
   .t_dds_done(d_t_dds_done),
-  .t_awg_ctrl_valid(action_valid&&action_opcode==instrument_control_pkg::CMD_AWG_LOAD&&awg_payload_ok&&d_t_awg_ctrl_ready),
+  .t_awg_ctrl_valid(action_valid&&action_opcode==instrument_control_pkg::CMD_AWG_LOAD&&awg_payload_ok&&d_t_awg_ctrl_ready&&!awg_commit_blocked),
   .t_awg_ctrl_op(action_payload[1:0]),
   .t_awg_ctrl_length(action_payload[63:32]),
   .t_awg_ctrl_crc32c(action_payload[95:64]),
@@ -476,8 +480,8 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
    instrument_control_pkg::CMD_REPLAY:begin outcome_valid=d_r_submit_accepted||d_r_submit_rejected;outcome_code=d_r_submit_rejected?8'd4:8'd0;outcome_words=1;outcome_payload[7:0]=d_r_submit_reason;end
    instrument_control_pkg::CMD_DDS:begin outcome_valid=(action_valid&&!dds_payload_ok)||d_t_dds_accepted||d_t_dds_rejected;outcome_code=!dds_payload_ok?8'd2:(d_t_dds_rejected?8'd4:8'd0);end
    instrument_control_pkg::CMD_AWG_LOAD:begin
-    outcome_valid=(action_valid&&(!awg_payload_ok||!d_t_awg_ctrl_ready))||d_t_awg_ctrl_done;
-    outcome_code=!awg_payload_ok?8'd2:((action_valid&&!d_t_awg_ctrl_ready)?8'd3:(d_t_awg_ctrl_error?8'd4:8'd0));
+    outcome_valid=(action_valid&&(!awg_payload_ok||!d_t_awg_ctrl_ready||awg_commit_blocked))||d_t_awg_ctrl_done;
+    outcome_code=!awg_payload_ok?8'd2:((action_valid&&(!d_t_awg_ctrl_ready||awg_commit_blocked))?8'd3:(d_t_awg_ctrl_error?8'd4:8'd0));
     outcome_words=1;outcome_payload[3:0]={d_t_awg_ctrl_active_valid,d_t_awg_ctrl_loaded,d_t_awg_ctrl_done_op};
    end
    instrument_control_pkg::CMD_AWG_PLAY:begin outcome_valid=d_t_awg_play_accepted||d_t_awg_play_rejected;outcome_code=d_t_awg_play_rejected?8'd4:8'd0;end

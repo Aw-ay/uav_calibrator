@@ -4,7 +4,7 @@
 
 用户已要求按阶段恢复，全部在当前任务操作，不使用子窗口或子任务。第一阶段定位并修复采集子系统时序/CDC问题，验证后汇报并停在阶段边界。
 
-第一阶段已完成：53项回归、3项XSim通过；采集综合 WNS +0.629 ns、CDC Critical 0。详见 reports/stage1_capture_closure.md。用户已再次要求继续，第二阶段业务数据顶层集成现已完成：55项回归、3项XSim及联合综合通过，WNS +0.387ns，CDC Critical 0。当前工程顶层calibrator_dataplane_system，尚非PS/RFDC板级顶层。见 reports/stage2_dataplane_integration.md；用户再次要求继续，第三阶段PS控制与实际采样生产端集成已完成：60项回归、4项XSim通过，联合综合 WNS +0.309 ns / WHS +0.037 ns、CDC Critical 0。当前工程顶层calibrator_instrument_core，仍非PS/RFDC板级顶层。详见 reports/stage3_control_ingress.md；按阶段边界暂停，不启动整机布局布线。
+第一阶段已完成：53项回归、3项XSim通过；采集综合 WNS +0.629 ns、CDC Critical 0。详见 reports/stage1_capture_closure.md。用户已再次要求继续，第二阶段业务数据顶层集成现已完成：55项回归、3项XSim及联合综合通过，WNS +0.387ns，CDC Critical 0。当前工程顶层calibrator_dataplane_system，尚非PS/RFDC板级顶层。见 reports/stage2_dataplane_integration.md；用户再次要求继续，第三阶段PS控制与实际采样生产端集成已完成：60项回归、4项XSim通过，联合综合 WNS +0.309 ns / WHS +0.037 ns、CDC Critical 0。当前工程顶层calibrator_instrument_core，仍非PS/RFDC板级顶层。详见 reports/stage3_control_ingress.md；用户再次要求继续；第四阶段 DDS/AWG PS 命令验证及软件接口已完成：62项回归、3项XSim通过，修复 AWG COMMIT 网关死锁及正常 STOP 的 PA 反馈误报；联合综合 WNS +0.391 ns / WHS +0.037 ns，CDC Critical 0。详见 reports/stage4_waveform_commands.md；按阶段边界暂停，不启动整机布局布线。
 
 ## 历史暂停状态
 

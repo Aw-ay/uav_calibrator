@@ -231,5 +231,6 @@
   },
   "config_policy": "atomic only when disarmed, RF disarmed and all consumers/producer contexts drained, no frozen or pending banks; padding must be zero",
   "binding_policy": "clock/time/MTS/map/binding/interlock dwell and normalized feedback remain trusted external inputs",
-  "result_policy": "command success after actual module response; REPLAY success is queue acceptance, later reject held until REJECT_POP; STATUS is coherent RF snapshot"
+  "result_policy": "command success after actual module response; REPLAY success is queue acceptance, later reject held until REJECT_POP; STATUS is coherent RF snapshot",
+  "awg_commit_policy": "A loaded COMMIT returns BUSY without dispatch or table loss unless acquisition is stopped, active mode is MUTE, replay and generated sources are drained and detector is inactive. This prevents single-inflight gateway deadlock behind a future STOP. Unloaded COMMIT still returns REJECTED from the AWG core. BEGIN and WRITE may target the inactive bank while RF runs."
 }
