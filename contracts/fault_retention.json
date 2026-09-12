@@ -1,0 +1,10 @@
+{
+  "module": "fault_event_retainer",
+  "clock": "clk_rf",
+  "snapshot_bits": 256,
+  "occurrences_bits": 32,
+  "reset": "coordinated hard reset; not soft capture reset or fault clear",
+  "interface": "in_valid pulse, opaque snapshot; immutable out_valid/out_ready snapshot with occurrences and saturated flag",
+  "policy": "Two slots: immutable presented head plus a pending aggregate. While blocked preserve first pending snapshot and saturating count. Pending promotion precedes a simultaneous new input, which starts a new aggregate. With no pending input can replace a consumed head. All asserted input events contribute to count unless saturated, which explicitly marks a lower bound; individual details after first within aggregate are not retained.",
+  "integration_status": "standalone module; not connected to core or PS; priority arbitration, EVENT encoding and transport remain pending"
+}
