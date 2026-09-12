@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "status": "USER_AUTHORIZED_ARCHITECTURE_NOT_IMPLEMENTATION_ACCEPTANCE",
+  "logical_contracts": ["channel_roles.json", "range_selection.json", "register_map.json", "replay_contract.json"],
+  "physical_binding": "../hw/boards/zu27dr/rf_binding.json",
+  "missing_binding_blocks": ["physical_rf_enable", "board_calibration_acceptance"],
+  "missing_binding_does_not_block": ["core_rtl", "ps_functional_software", "register_implementation", "state_machines", "calibration_table_format", "testbench_delivery"],
+  "core_forbidden_literals": ["physical_control_codes", "measured_gain_values", "gpio_package_pins", "gpio_polarity", "board_interlock_timing"],
+  "binding_rules": {
+    "unknown_representation": "null with explicit UNBOUND status; never substitute zero as verified data",
+    "test_fixture": "Explicit simulation-only profile; must not establish production binding validity",
+    "configuration_update": "Validate inactive profile then commit atomically at safe boundary; retain referenced versions or drain users",
+    "gain_order": "Use validated actual gain ordering; logical HIGH/MID/LOW labels alone do not prove physical ordering",
+    "units": "Every numeric calibration and timing field must carry defined units and fixed-point format in its implementation schema",
+    "core_io": "Logical requests and normalized feedback; polarity and control encoding belong to a board adapter",
+    "pin_binding": "Package pins belong to board constraints; software register writes cannot dynamically remap FPGA package pins",
+    "hardware_evidence": "Binding validation does not substitute for physical fail-safe or RF measurement evidence"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "module": "qualification_bank_commit",
+  "status": "NORMAL_POLICY_ADAPTER_TESTED_WITH_ACTUAL_OWNER_NOT_COMPLETE_SYSTEM",
+  "groups": "Primary logical groups 0..2, each with bank_id 0..3; physical owner bit index=group*4+bank_id",
+  "identity": "One expected pulse_id and owner_epoch plus THREE independent expected generations and bank IDs; supplied by frozen transaction map",
+  "admission": "One outstanding request. All three mapped banks must already be pending with matching identity. Invalid request is handshaken and rejected; early results require caller retry after pending",
+  "ordering": "Latch request -> one stats_valid edge for all three -> one publish/discard edge; captures owner's qualified result after stats, including truncation gate",
+  "normal_policy": "Publish only selected group when selected_valid, range<3, both selected H/V qualified and owner confirms qualified; discard other primary groups. Otherwise discard all three. AUX untouched",
+  "replay": "want_replay only pins the selected qualified bank in the same owner transition that publishes it; physical RF permission remains separate",
+  "runtime_validation": "Recheck all pending bits and pulse/epoch/generation before each control edge; quiesce or mismatch suppresses controls and completes with rejected",
+  "completion": "done/published/published_bank indicate local owner transition, not DMA completion or host delivery; caller associates with its single outstanding request",
+  "exclusive_control": "No other producer may modify these banks' stats, publish or discard while this adapter owns transaction",
+  "remaining": ["transaction map from qualification engine identity to three bank generations", "record header construction and DMA descriptor submission", "AUX and diagnostic retention policy", "integrated reset drain protocol", "timing verification"]
+}

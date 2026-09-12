@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "module": "qualification_publish_bridge",
+  "status": "DIGITAL_SUBSYSTEM_IMPLEMENTED_BOARD_INTEGRATION_PENDING",
+  "clock": "125 MHz intended; this hierarchy has not completed timing closure",
+  "capacity": 4,
+  "identity_msb_to_lsb": ["pulse_id_u64", "owner_epoch_u64", "bank_generation_u64", "config_version_u64"],
+  "payload_contract": "qualification_payload.json",
+  "admission": "begin_valid && begin_ready snapshots context, three bank IDs, three independent generations, three opaque 1024-bit headers and replay request. No same-edge measurement/noise admission for a newly created context.",
+  "mapping_order": ["HIGH", "MID", "LOW"],
+  "bank_index": "4 * range + bank_ids[2*range +: 2]",
+  "publication": "Actual engine result handshakes directly into qualification_bank_commit. All three owner identities and pending states must match at commit. Statistics precede publication by one owner clock edge.",
+  "completion": "One held ready/valid event. Published: selected bank, selected frozen header, generation and epoch. Rejected: identity/owner transition failure with no publication. Neither: valid no-range disposition, all three pending banks discarded.",
+  "ownership": "Map remains reserved through event acceptance, including after the engine retires its context. Event acceptance never releases capture record/replay references.",
+  "rejection": "begin_rejected pulses on begin_valid without begin_ready, including capacity/duplicate/quiesce. Caller must honor handshake. Delayed results are correlated by all 256 key bits; stale and duplicate measurement/noise are rejected by the engine.",
+  "quiesce": "Blocks admissions and commit controls; an active commit aborts. Already generated events remain held. Incomplete contexts are not canceled automatically. Coordinated reset and producer drainage are system responsibilities.",
+  "integration_requirements": [
+    "Reserve context/map capacity jointly with capture admission; ADC cannot be backpressured",
+    "Result arrival must follow capture completion; early commit rejects rather than waiting",
+    "Exclusive stats/publish/discard ownership for participating banks",
+    "Do not reuse full identity while delayed producers can still return an old result",
+    "Construct and validate selected record headers according to frame ABI upstream",
+    "Connect published events to record descriptor acceptance; release bank refs only using validated reader completion",
+    "Coordinate rst with bank owner and all producers/consumers; idle is local map drainage only"
+  ],
+  "not_included": ["AUX policy", "record header ABI construction", "DMA submission", "whole-system reset controller", "whole-system timing", "physical RF binding"]
+}

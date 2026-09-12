@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "profile_id": "zu27dr_v2_1_rf_unbound",
+  "status": "UNBOUND",
+  "production_validated": false,
+  "logical_to_physical_channels": null,
+  "range_control_codes": null,
+  "measured_gain_calibration": null,
+  "gpio_package_pins": null,
+  "gpio_active_levels": null,
+  "interlock_timing": null,
+  "power_on_and_clock_loss_behavior": null,
+  "evidence": [],
+  "note": "Board binding placeholder only. Not a completed calibration-table ABI or a production RF-enable authorization."
+}

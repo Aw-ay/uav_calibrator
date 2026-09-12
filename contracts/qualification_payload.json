@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "status": "INTERNAL_RTL_QUALIFICATION_TRANSPORT_NOT_SOFTWARE_REGISTER_ABI",
+  "bit_numbering": "inclusive [msb,lsb]; six channels packed least-significant channel first in H_HIGH,H_MID,H_LOW,V_HIGH,V_MID,V_LOW order",
+  "context_bits": 1024,
+  "context_fields": {"power_scale_q16_x6": [191,0], "min_snr_q16": [223,192], "tolerance_q16": [239,224], "gain_order": [245,240], "calibration_valid": [251,246], "overlap_valid": [257,252], "tolerance_valid": [258,258], "threshold_valid": [259,259], "rank_valid": [260,260], "context_valid": [261,261], "common_known": [262,262], "common_pass": [263,263], "reserved_zero": [1023,264]},
+  "stats_bits": 512,
+  "stats_fields": {"energy_u46_x6": [275,0], "sample_count_u15": [290,276], "bad_channels": [296,291], "frozen_stats_done": [299,297], "reserved_zero": [511,300]},
+  "noise_bits": 256,
+  "noise_fields": {"power_u32_x6": [191,0], "known": [197,192], "reserved_zero": [255,198]},
+  "invalid_payload": "Nonzero reserved fields invalidate context and prevent selection; count must be 1..16384",
+  "engine": "pulse_qualification_engine",
+  "pipeline": "four context join slots -> registered noise-energy and linearity results -> registered qualification result; each stage preserves full identity and honors downstream ready",
+  "capacity": "Up to four joining contexts plus two pipeline-held results; occupied reports only joining pool, NOT global quiescence",
+  "identity_rule": "Duplicate context identity rejected across both pool and pipeline; external owner still guarantees no stale key reuse after retirement/reset",
+  "overlap_rule": "Frozen externally qualified overlap mask further excludes bad_channels; this does not infer valid overlap solely from no clipping",
+  "cancel": "Discard both pipeline stages and pool; external bank lease and producer cancellation remain caller responsibilities",
+  "binding_boundary": "No physical gains/pins/control codes hardcoded; context carries calibrated power normalization and explicit validity",
+  "not_implemented_here": ["physical bank admission and publication adapter", "per-group generation transaction map", "calibration table binary/register ABI", "automatic off-pulse qualification", "integrated timing sign-off"]
+}

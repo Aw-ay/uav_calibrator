@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "module": "pulse_range_statistics",
+  "scope": "BOUNDED_DIGITAL_STATISTICS_NOT_COMPLETE_RANGE_QUALIFIER",
+  "channel_order": ["H_HIGH", "H_MID", "H_LOW", "V_HIGH", "V_MID", "V_LOW"],
+  "clock_hz": 125000000,
+  "input": "Six signed IQ16 pairs; logical order supplied by board adapter",
+  "power": "Unsigned I squared plus Q squared; 32 bits, maximum 2147483648",
+  "energy": "Unsigned 46-bit sum over all accepted samples, including invalid samples with sticky bad flag; never use bad result as qualified data",
+  "max_samples": 16384,
+  "count_bits": 15,
+  "start": "Accepted only when ready and sample_enable=0 and finish=0; no same-edge result retirement/replacement; otherwise rejected pulse",
+  "sampling": "sample_enable asserts membership in the caller-selected window; idle cycles outside membership do not imply a missing sample",
+  "quality": "Caller supplies sample_good and time-aligned late_bad; bad flags sticky during active window; finish must wait for final late flags",
+  "finish": "May coincide with final sample; publishes immutable result until result_ready; empty result marks every channel bad",
+  "overflow": "Extra samples after 16384 do not wrap or change accumulated energy; mark overflow and all channels bad",
+  "reset": "Cancels active window and pending result",
+  "upstream_obligations": ["window membership including desired prehistory", "pulse identity", "sequence/time/source validation", "latency alignment of native overrange"],
+  "not_implemented_here": ["noise estimation", "SNR qualification", "calibrated overlap linearity", "physical gain values", "complete EOP range selection integration"]
+}

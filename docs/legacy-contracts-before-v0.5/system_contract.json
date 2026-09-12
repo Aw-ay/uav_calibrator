@@ -1,0 +1,98 @@
+{
+  "schema_version": "0.1-proposed",
+  "status": "DESIGN_PROPOSAL",
+  "implementation_authorized": false,
+  "matlab_reference": {
+    "repo": "Aw-ay/calibrator-matlab-sim",
+    "ref": "4gps",
+    "commit": "3065469792e47b500aeb8a9f8ace1fd513948fd9"
+  },
+  "board": {
+    "selected": null,
+    "documented_candidate": "ALINX AXRF47 / ACRF47",
+    "candidate_silicon_label": "ZU47DR-2FFVE1156I",
+    "vivado_part_string": null,
+    "board_revision": null,
+    "vendor_bsp": null
+  },
+  "toolchain": {
+    "vivado": null,
+    "vitis": null,
+    "linux_bsp": null,
+    "ip_versions_locked": false
+  },
+  "rates": {
+    "rf_center_hz": 2800000000,
+    "adc_real_sample_hz": 4000000000,
+    "rfdc_decimation": 8,
+    "rfdc_complex_hz": 500000000,
+    "canonical_input_complex_spc": 8,
+    "clk_rf_hz": 62500000,
+    "pl_decimation": 8,
+    "core_complex_hz": 62500000,
+    "core_spc": 1,
+    "usable_total_bandwidth_hz": 20000000,
+    "gsc_hz": 500000000,
+    "gsc_increment_per_rf_clock": 8
+  },
+  "clock_targets": {
+    "control_hz": 100000000,
+    "memory_hz": 200000000,
+    "sample_clock_source": "external coherent PL reference per board/MTS design",
+    "ctrl_clock_source": "PS FCLK candidate",
+    "mem_clock_source": "PS FCLK candidate"
+  },
+  "capture": {
+    "range_count": 3,
+    "polarization_count": 2,
+    "iq_component_bits": 16,
+    "sample_bytes_per_range": 8,
+    "samples_per_bank": 8192,
+    "initial_bank_count": 2,
+    "allow_build_bank_counts": [
+      2,
+      4,
+      8
+    ],
+    "pre_s": 2e-06,
+    "post_s": 2e-06,
+    "max_pulse_s": 0.00012,
+    "eop_hold_s": 1e-06,
+    "unbounded_continuous_capture_claim": false
+  },
+  "tx_profile": {
+    "active": null,
+    "candidate_gen3": {
+      "id": "TX_8GS_GEN3_CANDIDATE",
+      "requires_approval": true,
+      "core_complex_hz": 62500000,
+      "pl_interpolation": 8,
+      "rfdc_iq_input_hz": 500000000,
+      "rfdc_interpolation": 16,
+      "dac_real_sample_hz": 8000000000,
+      "imr_enabled": false,
+      "native_iq_words_per_beat_target": 16,
+      "native_bits_per_dac_stream_target": 256
+    },
+    "gen1_fallback": "must recompute an approved complete rate plan; never apply Gen3 x16"
+  },
+  "ownership": {
+    "real_time": "PL",
+    "control_and_data": "PS",
+    "unknown_reference_multipath": "HOST_STAGE_C",
+    "fastsel": false,
+    "shared_hv_range": true,
+    "live_ota_single_antenna_allowed": false
+  },
+  "optional_features_require_approval": [
+    "PL_DDR",
+    "MM2S_PRELOAD",
+    "10G_OR_100G_LINK",
+    "MULTITARGET",
+    "SIC_FULL_DUPLEX",
+    "CLOSED_LOOP_HOST_MULTIPATH_FEEDBACK",
+    "125MS_PROFILE",
+    "HIGH_ORDER_OR_WIDEBAND_CALIBRATION",
+    "RF_TX_8GS_PROFILE"
+  ]
+}

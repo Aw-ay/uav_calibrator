@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "module": "qualification_record_source",
+  "role": "Route retained normal-mode qualification events to capture_record_system descriptors",
+  "clock_domain": "Combinational within clk_rf; no CDC or buffering",
+  "primary_banks": "0..11, group=event_bank[3:2], bank=event_bank[1:0]; AUX 12..15 rejected",
+  "payload": "Selected 1024-bit header and 64-bit epoch/generation remain unchanged until handshake. Owner normalizes length/count fields and formatter validates header schema.",
+  "handshake": "Published, non-rejected events wait for selected desc_ready or selected stale_descriptor. Non-published events complete without descriptor submission.",
+  "outputs": {
+    "disposition_valid": "Combinational event handshake indication; consumer must sample in clk_rf",
+    "descriptor_accepted": "Descriptor accepted by upload; not RAM completion or DMA/host delivery",
+    "disposition_rejected": "Rejected input, invalid primary bank or explicitly stale descriptor; no bank reference release"
+  },
+  "stale_behavior": "Keep desc_valid asserted independently of stale because the receiving owner derives stale from valid. Consume stale event with explicit rejection; owner gates descriptor admission by identity.",
+  "integration_requirements": [
+    "Upstream qualification_publish_bridge must hold event fields until event_ready",
+    "Use capture_record_system identity-qualified desc_ready and stale_descriptor together",
+    "No other source drives the three primary descriptor channels concurrently",
+    "Drain admitted qualification contexts/events before asserting capture soft reset; this adapter does not provide reset coordination",
+    "Downstream must observe disposition outputs if it needs a loss/event ledger",
+    "Do not use descriptor acceptance to release RAW or replay references"
+  ],
+  "validation_boundary": "Behavioral RAM array, real ownership/qualification/formatter/CDC/FIFO RTL and independent Python frame bytes. No physical DMA, DDR, RF or integrated timing sign-off."
+}

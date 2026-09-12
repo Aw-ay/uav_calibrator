@@ -1,0 +1,308 @@
+{
+  "status": "MERGED_DESIGN_BASELINE_NOT_IMPLEMENTED",
+  "semantic_targets_not_generated_xci": true,
+  "ips": [
+    {
+      "id": "PS",
+      "name": "Zynq UltraScale+ MPSoC Processing System",
+      "scope": "BASE",
+      "configuration": {
+        "preset": "vendor board preset required",
+        "M_AXI_HPM0_FPD": "enable; control master",
+        "S_AXI_HP0_FPD": "enable,128bit",
+        "pl_clk0": "100MHz candidate",
+        "pl_clk1": "200MHz candidate",
+        "pl_ps_irq0": "enable",
+        "DDR/MIO/GEM/SD/UART/SPI/IIC": "vendor schematic; no guessed pins"
+      },
+      "source": [
+        "A14"
+      ]
+    },
+    {
+      "id": "RFDC",
+      "name": "RF Data Converter",
+      "scope": "BASE",
+      "configuration": {
+        "ADC_real_hz": 4000000000,
+        "ADC_decimation": 8,
+        "ADC_mixer": "real RF to complex baseband; sign and Nyquist zone verify by tone",
+        "ADC_logic_channels": "8 continuously enabled independent ADC: 6 primary + H_AUX_MID/V_AUX_MID",
+        "ADC_native_streams": "resolved from tile type; do not equate one ADC with one stream",
+        "PL_canonical_complex_spc": 4,
+        "AXI_Lite_hz": 100000000,
+        "MTS": "enable for groups; PS RFdc API initialization",
+        "DAC_rate_plan": "ZU27DR Gen1 design target: PLx4,500MS/s IQ,RFDCx8,4GS/s real; board/PLL/Nyquist/native layout unverified",
+        "ADC_QMC_DSA_DAC_VOP": "Gen1 capability-gated QMC/coarse delay/output-current settings; Gen3 DSA/VOP/TDD features are not baseline. No autonomous gain changes.",
+        "ADC_enable_mask": 255,
+        "DAC_physical_channels_target": 8,
+        "PL_axis_clock_hz": 125000000
+      },
+      "source": [
+        "A01",
+        "A02",
+        "A03",
+        "A04",
+        "A05",
+        "A07"
+      ]
+    },
+    {
+      "id": "RX_FIR",
+      "name": "FIR Compiler",
+      "scope": "BASE",
+      "configuration": {
+        "logical_hv_groups": 4,
+        "stages_per_group": 2,
+        "stage_contract": "contracts/fir_plan.json:rx_stages",
+        "total_stage_instances_target": 8,
+        "clock_frequency_MHz": 125,
+        "clock_net": "clk_rf",
+        "parallel_real_paths": 4,
+        "interleaved_channels": 1,
+        "SSR_sequence": [
+          4,
+          2,
+          1
+        ],
+        "decimation_total": 4,
+        "input_hz": 500000000,
+        "output_hz": 125000000,
+        "input_width": 16,
+        "intermediate_width_candidate": 24,
+        "coefficient_bits": 18,
+        "reload": false,
+        "final_record_width": 16,
+        "aux_optional_enable": false,
+        "architecture": "explicit sparse symmetric HB plus general polyphase; compare exactSSR IP OOC",
+        "tlast": "not pulse timing"
+      },
+      "source": [
+        "R02",
+        "A10",
+        "A11"
+      ]
+    },
+    {
+      "id": "TX_FIR",
+      "name": "FIR Compiler",
+      "scope": "BASE",
+      "configuration": {
+        "logical_two_complex_groups": 4,
+        "stages_per_group": 2,
+        "stage_contract": "contracts/fir_plan.json:tx_stages",
+        "total_stage_instances_target": 8,
+        "clock_hz": 125000000,
+        "clock_net": "clk_rf",
+        "parallel_real_paths": 4,
+        "interleaved_channels": 1,
+        "SSR_sequence": [
+          1,
+          2,
+          4
+        ],
+        "interpolation_total": 4,
+        "input_hz": 125000000,
+        "output_hz": 500000000,
+        "coefficient_bits": 18,
+        "coefficient_fraction_bits": 16,
+        "steady_tone_gain": 1.0,
+        "no_truncation_at_ram_read_done": true,
+        "normal_tail_zero_input_samples_min": 42,
+        "source_scope": "8 FIR lanes; one selected H/V DRFM engine; arbitrary8 sources not implemented"
+      },
+      "source": [
+        "A10",
+        "A11"
+      ]
+    },
+    {
+      "id": "DMA",
+      "name": "AXI DMA",
+      "scope": "BASE",
+      "configuration": {
+        "c_include_sg": 1,
+        "c_include_mm2s": 0,
+        "c_include_s2mm": 1,
+        "c_micro_dma": 0,
+        "c_m_axi_s2mm_data_width": 128,
+        "c_s_axis_s2mm_tdata_width": 128,
+        "c_include_s2mm_dre": 0,
+        "c_s2mm_burst_size": 64,
+        "c_sg_length_width": 23,
+        "c_addr_width": 40,
+        "c_sg_include_stscntrl_strm": 0,
+        "c_prmry_is_aclk_async": 1,
+        "control_clock_hz": 100000000,
+        "data_clock_hz": 200000000,
+        "note": "target CONFIG names from PG021; verify available properties/version before Tcl emits",
+        "cyclic_mode": false,
+        "ownership": "normal SG tail-controlled descriptors; reusable software ring only after consumer release"
+      },
+      "source": [
+        "A12",
+        "A13"
+      ]
+    },
+    {
+      "id": "SC_CTRL",
+      "name": "SmartConnect",
+      "scope": "BASE",
+      "configuration": {
+        "SI": 1,
+        "MI": "RFDC, DMA, custom CSR, AWG and coefficient controllers as implemented",
+        "clocks": "100MHz control; other clocks only when interface metadata requires conversion",
+        "AXI_reset": "one coordinated domain for connected bus interfaces"
+      },
+      "source": [
+        "A15"
+      ]
+    },
+    {
+      "id": "SC_MEM",
+      "name": "SmartConnect",
+      "scope": "BASE",
+      "configuration": {
+        "SI": 2,
+        "MI": 1,
+        "SI_sources": [
+          "DMA/M_AXI_S2MM",
+          "DMA/M_AXI_SG"
+        ],
+        "MI_destination": "PS/S_AXI_HP0_FPD",
+        "clock_hz": 200000000,
+        "note": "SG width may differ; width conversion remains explicit in generated reports"
+      },
+      "source": [
+        "A14",
+        "A15"
+      ]
+    },
+    {
+      "id": "CAPTURE_RAM",
+      "name": "Block Memory Generator / verified XPM wrapper",
+      "scope": "BASE",
+      "configuration": {
+        "memory_type": "True Dual Port Block RAM",
+        "instances": "4 groups x4 independent banks",
+        "port_A_width": 64,
+        "port_A_depth": 16384,
+        "port_A_clock_hz": 125000000,
+        "port_B_width": 128,
+        "port_B_depth": 8192,
+        "port_B_clock_hz": 200000000,
+        "port_A_role": "capture write OR frozen replay read",
+        "port_B_role": "frozen DMA read only",
+        "ECC": "off candidate; enabling requires new width/port budget",
+        "read_latency": "generated-core measured, descriptor prefetch must account",
+        "URAM_replacement": "not automatic; verify clock/port capabilities",
+        "raw_bytes_total": 2097152
+      },
+      "source": []
+    },
+    {
+      "id": "DDS",
+      "name": "DDS Compiler",
+      "scope": "BASE",
+      "configuration": {
+        "clock_hz": 125000000,
+        "phase_width_candidate": 48,
+        "output_width": 16,
+        "outputs": "sine and cosine",
+        "PINC": "streaming for LFM; programmed for fixed tone",
+        "POFF": "explicit phase policy",
+        "TREADY": "datapath cannot stall DAC; wrapper schedules continuous data",
+        "latency": "read generated IP metadata; align envelope"
+      },
+      "source": []
+    },
+    {
+      "id": "MATH",
+      "name": "Complex Multiplier or inferred DSP48",
+      "scope": "FULL_A",
+      "configuration": {
+        "data_width_candidate": 24,
+        "coefficient_width_candidate": 18,
+        "outputs": "full product precision; 2-term complex sum extra bit",
+        "pipeline": "fixed and documented",
+        "gain_gt1": "coeff fraction length selected to represent required calibrated gain",
+        "clock_hz": 125000000,
+        "note": "One selected H/V DRFM, per-DAC gain mapping; 63tap fractional-delay is a resource placeholder, not accepted design."
+      },
+      "source": []
+    },
+    {
+      "id": "CDC",
+      "name": "XPM_CDC / XPM_FIFO",
+      "scope": "BASE",
+      "configuration": {
+        "commands": "async FIFO or stable-bus handshake",
+        "descriptors": "async FIFO",
+        "events": "one producer clock per FIFO",
+        "GSC_read": "atomic snapshot handshake",
+        "single_fault": "single-bit synchronizer + fail-safe latch",
+        "reset": "assert async, deassert per-clock sync; use macro reset-busy as required"
+      },
+      "source": []
+    },
+    {
+      "id": "AXIS_FIFO",
+      "name": "AXI4-Stream Data FIFO / Register Slice",
+      "scope": "BASE",
+      "configuration": {
+        "data_width": 128,
+        "clock_hz": 200000000,
+        "depth_beats_candidate": 4096,
+        "packet_mode": false,
+        "tkeep": true,
+        "tlast": true,
+        "purpose": "burst/backpressure cushion, not unbounded storage"
+      },
+      "source": []
+    },
+    {
+      "id": "AWG_MEMORY",
+      "name": "AXI BRAM Controller + Block Memory Generator",
+      "scope": "BASE",
+      "configuration": {
+        "AXI": "control-access memory aperture",
+        "RAM": "two banks total<=256KiB initial aperture",
+        "PS_port": "inactive bank write only",
+        "replay_port": "64bit at125MHz",
+        "length_and_crc": "verified before atomic commit"
+      },
+      "source": []
+    },
+    {
+      "id": "CLOCK_RESET",
+      "name": "Clocking Wizard + Processor System Reset",
+      "scope": "BASE",
+      "configuration": {
+        "sample_clock": "one coherent clk_rf125MHz including all RX/TX FIR; no250MHz FIR clock",
+        "reset_count": "per clock reset synchronizer; AXI coordinated reset",
+        "PPS": "external PPS event, not SYSREF",
+        "pin_constraints": "vendor board input required",
+        "memory_clock": "clk_mem200MHz retained",
+        "ctrl_clock": "clk_ctrl100MHz candidate"
+      },
+      "source": [
+        "A06",
+        "A07",
+        "A09",
+        "A15"
+      ]
+    },
+    {
+      "id": "DEBUG",
+      "name": "ILA / System ILA / AXI Performance Monitor / xlconcat",
+      "scope": "BASE",
+      "configuration": {
+        "ILA": "separate probes per clock, depth1024-4096 candidate",
+        "APM": "measure HP service and stalls",
+        "IRQ": "DMA+event+fault+RFDC; wire/CDC then concat to GIC",
+        "VIO": "debug requests only, never override physical RF interlock"
+      },
+      "source": []
+    }
+  ]
+}

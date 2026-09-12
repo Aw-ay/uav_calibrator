@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "module": "pulse_context_pool",
+  "status": "FOUR_LOGICAL_CONTEXTS_NOT_CAPTURE_BANK_INTEGRATION",
+  "slots": 4,
+  "slot_module": "pulse_context_join",
+  "payload_widths": {"context": 1024, "statistics": 512, "noise": 256},
+  "identity": "256-bit key inherited from pulse_context_join; unique among all active slots and no reuse while stale producers may remain",
+  "admission": "Lowest free slot; duplicate active identity or full pool rejects; no same-edge retirement/admission bypass",
+  "results": "Statistics and noise independently route by full key; can target different slots on same edge; unknown identities consumed and explicitly rejected",
+  "output": "Round robin among completed slots; selected slot latched and held through backpressure until result handshake; one selection bubble allowed",
+  "cancel_all": "Discard local slots and output lock only; caller owns external cancellation, reference release and epoch discipline",
+  "reset": "All slots empty and arbitration reset; no guaranteed protection if caller reuses an old complete key",
+  "capacity_boundary": "Four logical contexts are not an implicit mapping to four physical RAM banks or all sixteen capture banks; upstream must perform joint resource admission",
+  "not_implemented_here": ["multi-group identity allocation", "calibration version reference manager", "per-context cancel", "timeout policy", "payload ABI packing", "connection to capture_record_system", "timing closure"]
+}

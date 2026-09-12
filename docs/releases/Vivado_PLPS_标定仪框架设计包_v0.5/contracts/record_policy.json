@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.5",
+  "status": "MERGED_DESIGN_BASELINE_NOT_IMPLEMENTED",
+  "default_mode": "SELECTED_HV",
+  "modes": [
+    "SELECTED_HV",
+    "PRIMARY_ALL_DIAGNOSTIC",
+    "ALL8_SNAPSHOT",
+    "AUX_ONLY"
+  ],
+  "primary": "Always capture all3 ranges in parallel before EOP selection; normal sends one selected HV record, keeps others only if diagnostic requested",
+  "aux": "independent quota and round-robin eligible record; never silently drop approved master timing to service AUX",
+  "arbiter": "whole-record nonpreemptive round-robin with reserved safety/event channels; source held until final beat handshake",
+  "default_unselected_release": "after qualification/selection and diagnostic/replay refs resolved, rearm",
+  "dma": {
+    "clock_hz": 200000000,
+    "axis_bits": 128,
+    "ideal_Bps": 3200000000,
+    "sg": true,
+    "mm2s": false,
+    "cyclic_mode": false,
+    "slot_bytes": 262144,
+    "slots": 512,
+    "pool_bytes": 134217728,
+    "max_actual_record_bytes": 131216,
+    "descriptor_alignment_bytes": 64,
+    "buffer_alignment_bytes": 64,
+    "sustainable_Bps_measured": null,
+    "simulation_example_Bps": 2400000000,
+    "ownership": "FREE -> DRIVER_OWNED -> DMA_ACTIVE -> COMPLETE -> USER_OWNED -> FREE; tail advances only to fully prepared free descriptors",
+    "length": "driver/BD actual length and header/trailer agree; slot allocation length is not actual record length"
+  },
+  "fifo": {
+    "depth_beats": 4096,
+    "width_bits": 128,
+    "clock_hz": 200000000,
+    "payload_bytes": 65536,
+    "packet_mode": false
+  },
+  "queue_admission": "validate capture samples<=16384 AND record_bytes<=slot_bytes; frozen readiness at window completion, not pulse onset",
+  "loss": "Finite bursts only under assumed service; no continuous all8 4GB/s promise. DDR storage average must meet retained rate.",
+  "bandwidth_example": {
+    "window_us": 126,
+    "prf_hz": 3300,
+    "record_bytes_per_hv": 126144,
+    "selected_hv_Bps": 416275200,
+    "all8_Bps": 1665100800,
+    "is_assumption_not_board_result": true
+  }
+}

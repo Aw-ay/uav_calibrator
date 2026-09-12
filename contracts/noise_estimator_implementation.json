@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "modules": ["noise_snapshot", "noise_window_energy"],
+  "status": "BOUNDED_ESTIMATOR_AND_SNAPSHOT_NOT_SYSTEM_NOISE_QUALIFICATION",
+  "channel_order": ["H_HIGH", "H_MID", "H_LOW", "V_HIGH", "V_MID", "V_LOW"],
+  "update": "Only explicit offpulse_enable AND per-channel sample_good; first sample seeds; EWMA estimate += or -= abs(power-estimate)>>ewma_shift",
+  "shift": "Unsigned 0..31; 0 selects latest sample; changed shift invalidates previous estimate history",
+  "power_format": "Unsigned 32-bit I^2+Q^2 in IQ16 count-squared units, maximum 2^31",
+  "freshness": "At snapshot edge use prior age < max_age_cycles; last update on preceding edge is age 0 and one elapsed cycle; max_age_cycles=0 means unqualified; age saturates",
+  "context": "context_version must identify source, time epoch, calibration and estimator settings; changes invalidate estimator history; snapshot retains result_context",
+  "snapshot": "One owned result; reads pre-edge estimate, never same-edge new sample; no replacement on same edge as retirement; rejected pulses identify invalid requests",
+  "clear": "Explicit clear invalidates live estimates and rejects new snapshot; existing owned snapshot remains immutable until consumed; reset cancels both",
+  "window_conversion": "Frozen power times final sample_count; count 1..16384; reject power>2^31; 47-bit intermediate and exact 46-bit valid result",
+  "upstream_obligations": ["qualify off-pulse samples, not simply invert detector active", "exclude FIR tails, source settling, uncertain onset and interference", "establish statistical adequacy and stationarity", "increment context version on applicable changes", "join pulse/context IDs with final window before SNR evaluation"],
+  "scope_limit": "noise_known means seeded fresh estimate in matching context, not proof of calibrated noise/SNR confidence; no physical gain constants or production binding inferred"
+}

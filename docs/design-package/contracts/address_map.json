@@ -1,0 +1,31 @@
+{
+  "status": "PROPOSED_NOT_ASSIGNED_BY_VIVADO",
+  "note": "Apertures must be validated against generated IP address segments and PS address map; DDR buffer physical addresses are OS allocated, not listed here.",
+  "segments": [
+    {
+      "name": "RFDC",
+      "base_hex": "0xa0000000",
+      "size_bytes": 262144
+    },
+    {
+      "name": "AXI_DMA",
+      "base_hex": "0xa0040000",
+      "size_bytes": 65536
+    },
+    {
+      "name": "CALIB_CSR",
+      "base_hex": "0xa0050000",
+      "size_bytes": 65536
+    },
+    {
+      "name": "AWG_MEMORY",
+      "base_hex": "0xa0100000",
+      "size_bytes": 262144
+    },
+    {
+      "name": "COEFF_MEMORY",
+      "base_hex": "0xa0200000",
+      "size_bytes": 65536
+    }
+  ]
+}

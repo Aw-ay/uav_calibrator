@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "module": "pulse_context_join",
+  "status": "SINGLE_CONTEXT_JOIN_NOT_SYSTEM_SCHEDULER",
+  "clock": "clk_rf",
+  "key_fields_msb_to_lsb": ["pulse_id_u64", "owner_epoch_u64", "bank_generation_u64", "config_version_u64"],
+  "payloads": "Opaque parameterized context, statistics and noise vectors; default widths 1024,512,256 are transport capacities, not final calibration-table ABI",
+  "admission": "One in-flight context. Results require context admitted on an earlier edge. No same-edge retire/new-context bypass",
+  "result_inputs": "Ready whenever not reset/cancel; stale, duplicate or unowned result handshakes are consumed and explicitly rejected; only first matching result retained",
+  "context_rejected": "Pulse for attempted context_valid while not ready and not cancel/reset; caller must obey context_ready for actual admission",
+  "publication": "result_valid only after both matching inputs accepted; key and three payloads immutable until consumer handshake, cancel or reset",
+  "cancel": "Gates ready/valid and discards local partial/completed context; aborted pulse iff context was owned; no external producer cancellation or RAM reference release implied",
+  "reset": "Clears local ownership; caller must change epoch or otherwise guarantee no key reuse with in-flight old producers",
+  "caller_obligations": ["unique complete key for each transaction", "validate payload semantics and field layout", "bind all referenced calibration/settings to config_version", "coordinate cancellation with producer queues and bank owner", "manage backpressure or explicit trigger rejection", "do not use a single bank_generation for unequal per-group generations; instantiate per bank or use a validated transaction identity"],
+  "not_implemented_here": ["multi-context queue", "timeout policy", "calibration table storage/reference manager", "physical board bindings", "qualification arithmetic", "integration with capture_record_system"]
+}

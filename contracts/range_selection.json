@@ -1,0 +1,28 @@
+{
+  "schema_version": "0.5",
+  "status": "MERGED_DESIGN_BASELINE_NOT_IMPLEMENTED",
+  "shared_hv_range": true,
+  "selection_boundary": "RAM_FROZEN and STATS_DONE and aligned late flags; one choice for entire pulse",
+  "gain_order_descending": null,
+  "gain_order_requires_analog_calibration": true,
+  "not_infer_gain_from_label_HIGH": true,
+  "valid_rule": "H_valid[r] AND V_valid[r] AND calibration/time/source valid; choose highest actual gain qualified",
+  "invalid_reasons": [
+    "ADC_OVER_RANGE",
+    "FIR_ARITH_SAT",
+    "IQ16_SAT",
+    "SAMPLE_GAP",
+    "TIME_INVALID",
+    "SOURCE_SETTLING",
+    "CAL_UNQUALIFIED",
+    "LINEARITY_UNKNOWN",
+    "TRUNCATED",
+    "HISTORY_INCOMPLETE"
+  ],
+  "hardware_flag_policy": "RFDC sticky flags need explicit clear/event bookkeeping and window association; not clipped-sample counters",
+  "linear_compression": "no ADC saturation does not prove analog linearity; compare calibrated range overlap and reject/mark unknown common front-end compression",
+  "all_invalid": "INVALID; no defaultLOW and no precision replay",
+  "buffer_full": "not signal overrange; changing range does not reduce one-record bytes",
+  "aux_replacement": "only externalMID source + independent calibration + pulse-boundary authorized commit; loopback forbidden",
+  "configuration_defaults": "qualification disabled until threshold/gain/calibration bounds validated; no fabricated numeric gain ranking"
+}

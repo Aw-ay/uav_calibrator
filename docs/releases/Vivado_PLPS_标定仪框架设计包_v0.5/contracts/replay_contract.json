@@ -1,0 +1,401 @@
+{
+  "schema_version": "0.5",
+  "status": "PROPOSED_INTERNAL_ABI_NOT_RTL",
+  "byte_order": "little",
+  "default_zero_reserved_bytes": true,
+  "capture_descriptor": {
+    "size_bytes": 128,
+    "fields": [
+      {
+        "name": "owner_epoch",
+        "type": "u64",
+        "offset_bytes": 0,
+        "size_bytes": 8,
+        "meaning": "ownership reset generation"
+      },
+      {
+        "name": "generation",
+        "type": "u64",
+        "offset_bytes": 8,
+        "size_bytes": 8,
+        "meaning": "bank reuse generation"
+      },
+      {
+        "name": "pulse_id",
+        "type": "u64",
+        "offset_bytes": 16,
+        "size_bytes": 8,
+        "meaning": "capture identity"
+      },
+      {
+        "name": "start_seq",
+        "type": "u64",
+        "offset_bytes": 24,
+        "size_bytes": 8,
+        "meaning": "first sample absolute index"
+      },
+      {
+        "name": "gsc_first",
+        "type": "u64",
+        "offset_bytes": 32,
+        "size_bytes": 8,
+        "meaning": "signal-time reference"
+      },
+      {
+        "name": "stream_group_id",
+        "type": "u32",
+        "offset_bytes": 40,
+        "size_bytes": 4,
+        "meaning": "1..4"
+      },
+      {
+        "name": "bank_id",
+        "type": "u32",
+        "offset_bytes": 44,
+        "size_bytes": 4,
+        "meaning": "0..3"
+      },
+      {
+        "name": "start_ptr",
+        "type": "u32",
+        "offset_bytes": 48,
+        "size_bytes": 4,
+        "meaning": "0..16383"
+      },
+      {
+        "name": "sample_count",
+        "type": "u32",
+        "offset_bytes": 52,
+        "size_bytes": 4,
+        "meaning": "1..16384"
+      },
+      {
+        "name": "config_id",
+        "type": "u32",
+        "offset_bytes": 56,
+        "size_bytes": 4,
+        "meaning": "immutable config version"
+      },
+      {
+        "name": "fir_id",
+        "type": "u32",
+        "offset_bytes": 60,
+        "size_bytes": 4,
+        "meaning": "scale/coeff/latency version"
+      },
+      {
+        "name": "source_epoch",
+        "type": "u32",
+        "offset_bytes": 64,
+        "size_bytes": 4,
+        "meaning": "AUX source transition"
+      },
+      {
+        "name": "quality_flags",
+        "type": "u32",
+        "offset_bytes": 68,
+        "size_bytes": 4,
+        "meaning": "aggregate quality"
+      },
+      {
+        "name": "range_id",
+        "type": "u32",
+        "offset_bytes": 72,
+        "size_bytes": 4,
+        "meaning": "logical range, not gain order"
+      },
+      {
+        "name": "physical_adc_mask",
+        "type": "u32",
+        "offset_bytes": 76,
+        "size_bytes": 4,
+        "meaning": "source mask"
+      },
+      {
+        "name": "source_role",
+        "type": "u32",
+        "offset_bytes": 80,
+        "size_bytes": 4,
+        "meaning": "external versus loopback"
+      },
+      {
+        "name": "metadata_id",
+        "type": "u32",
+        "offset_bytes": 84,
+        "size_bytes": 4,
+        "meaning": "join quality/event records"
+      }
+    ]
+  },
+  "replay_task": {
+    "size_bytes": 192,
+    "fields": [
+      {
+        "name": "owner_epoch",
+        "type": "u64",
+        "offset_bytes": 0,
+        "size_bytes": 8,
+        "meaning": "ownership reset generation"
+      },
+      {
+        "name": "generation",
+        "type": "u64",
+        "offset_bytes": 8,
+        "size_bytes": 8,
+        "meaning": "bank reuse generation"
+      },
+      {
+        "name": "pulse_id",
+        "type": "u64",
+        "offset_bytes": 16,
+        "size_bytes": 8,
+        "meaning": "capture identity"
+      },
+      {
+        "name": "start_seq",
+        "type": "u64",
+        "offset_bytes": 24,
+        "size_bytes": 8,
+        "meaning": "first sample absolute index"
+      },
+      {
+        "name": "gsc_first",
+        "type": "u64",
+        "offset_bytes": 32,
+        "size_bytes": 8,
+        "meaning": "signal-time reference"
+      },
+      {
+        "name": "stream_group_id",
+        "type": "u32",
+        "offset_bytes": 40,
+        "size_bytes": 4,
+        "meaning": "1..4"
+      },
+      {
+        "name": "bank_id",
+        "type": "u32",
+        "offset_bytes": 44,
+        "size_bytes": 4,
+        "meaning": "0..3"
+      },
+      {
+        "name": "start_ptr",
+        "type": "u32",
+        "offset_bytes": 48,
+        "size_bytes": 4,
+        "meaning": "0..16383"
+      },
+      {
+        "name": "sample_count",
+        "type": "u32",
+        "offset_bytes": 52,
+        "size_bytes": 4,
+        "meaning": "1..16384"
+      },
+      {
+        "name": "config_id",
+        "type": "u32",
+        "offset_bytes": 56,
+        "size_bytes": 4,
+        "meaning": "immutable config version"
+      },
+      {
+        "name": "fir_id",
+        "type": "u32",
+        "offset_bytes": 60,
+        "size_bytes": 4,
+        "meaning": "scale/coeff/latency version"
+      },
+      {
+        "name": "source_epoch",
+        "type": "u32",
+        "offset_bytes": 64,
+        "size_bytes": 4,
+        "meaning": "AUX source transition"
+      },
+      {
+        "name": "quality_flags",
+        "type": "u32",
+        "offset_bytes": 68,
+        "size_bytes": 4,
+        "meaning": "aggregate quality"
+      },
+      {
+        "name": "range_id",
+        "type": "u32",
+        "offset_bytes": 72,
+        "size_bytes": 4,
+        "meaning": "logical range, not gain order"
+      },
+      {
+        "name": "physical_adc_mask",
+        "type": "u32",
+        "offset_bytes": 76,
+        "size_bytes": 4,
+        "meaning": "source mask"
+      },
+      {
+        "name": "source_role",
+        "type": "u32",
+        "offset_bytes": 80,
+        "size_bytes": 4,
+        "meaning": "external versus loopback"
+      },
+      {
+        "name": "metadata_id",
+        "type": "u32",
+        "offset_bytes": 84,
+        "size_bytes": 4,
+        "meaning": "join quality/event records"
+      },
+      {
+        "name": "target_gsc",
+        "type": "u64",
+        "offset_bytes": 88,
+        "size_bytes": 8,
+        "meaning": "requested physical reference time"
+      },
+      {
+        "name": "task_id",
+        "type": "u64",
+        "offset_bytes": 96,
+        "size_bytes": 8,
+        "meaning": "unique task identity"
+      },
+      {
+        "name": "rx_cal_id",
+        "type": "u32",
+        "offset_bytes": 104,
+        "size_bytes": 4,
+        "meaning": "pinned receive table"
+      },
+      {
+        "name": "tx_cal_id",
+        "type": "u32",
+        "offset_bytes": 108,
+        "size_bytes": 4,
+        "meaning": "pinned perDAC table"
+      },
+      {
+        "name": "target_matrix_id",
+        "type": "u32",
+        "offset_bytes": 112,
+        "size_bytes": 4,
+        "meaning": "pinned 2x2 target"
+      },
+      {
+        "name": "fraction_q32",
+        "type": "u32",
+        "offset_bytes": 116,
+        "size_bytes": 4,
+        "meaning": "fraction in[0,1),core8ns interval; implementation pending"
+      },
+      {
+        "name": "output_dac_mask",
+        "type": "u32",
+        "offset_bytes": 120,
+        "size_bytes": 4,
+        "meaning": "8 DAC lane routing request"
+      },
+      {
+        "name": "reference_sample_index",
+        "type": "u32",
+        "offset_bytes": 124,
+        "size_bytes": 4,
+        "meaning": "where target time applies within captured window"
+      },
+      {
+        "name": "reference_plane_id",
+        "type": "u32",
+        "offset_bytes": 128,
+        "size_bytes": 4,
+        "meaning": "explicit output reference"
+      },
+      {
+        "name": "doppler_phase_id",
+        "type": "u32",
+        "offset_bytes": 132,
+        "size_bytes": 4,
+        "meaning": "pinned phase policy"
+      }
+    ]
+  },
+  "return_token": {
+    "size_bytes": 32,
+    "fields": [
+      {
+        "name": "owner_epoch",
+        "type": "u64",
+        "offset_bytes": 0,
+        "size_bytes": 8,
+        "meaning": "epoch"
+      },
+      {
+        "name": "generation",
+        "type": "u64",
+        "offset_bytes": 8,
+        "size_bytes": 8,
+        "meaning": "bank generation"
+      },
+      {
+        "name": "stream_group_id",
+        "type": "u32",
+        "offset_bytes": 16,
+        "size_bytes": 4,
+        "meaning": "1..4"
+      },
+      {
+        "name": "bank_id",
+        "type": "u32",
+        "offset_bytes": 20,
+        "size_bytes": 4,
+        "meaning": "0..3"
+      },
+      {
+        "name": "consumer_id",
+        "type": "u32",
+        "offset_bytes": 24,
+        "size_bytes": 4,
+        "meaning": "1record2replay"
+      },
+      {
+        "name": "status",
+        "type": "u32",
+        "offset_bytes": 28,
+        "size_bytes": 4,
+        "meaning": "success/cancel/fault"
+      }
+    ]
+  },
+  "drfm": {
+    "simultaneous_hv_target_engines": 1,
+    "data_source": "selected frozen bank A port; notDDR/MM2S",
+    "rxcal_location": "on read copy; never overwriteRAW",
+    "order": [
+      "replay_reader_scheduler",
+      "rx_cal_executor",
+      "fractional_delay",
+      "target_complex_operator",
+      "tx_source_mux",
+      "tx_channel_router",
+      "tx_cal_executor_per_dac",
+      "tx_interp4_wrapper",
+      "rfdac_stream_adapter"
+    ],
+    "source_rule": "RF_LOOPBACK/settling/unknown are not legal precision replay sources",
+    "deadline": "must wait fullcapture and stats; schedule by output reference, too-late rejects; no promise of immediatelive relaying",
+    "fractional_delay": {
+      "approved_architecture": null,
+      "resource_placeholder_taps": 63,
+      "placeholder_not_validated_filter": true,
+      "band_hz": [
+        -50000000,
+        50000000
+      ]
+    },
+    "pin": "RAW refs and coeff/task refs distinct lifetimes; releaseRAW only after final actual RAM read no future reread",
+    "RF_safety": "single antenna halfduplex; TX tails/guards/physicalPA/tr_switch; clockloss externally safe"
+  },
+  "multiple_replay_note": "current model one outstanding replay consumer per bank. Repeated tasks need task-set/refcount, extra read scheduling and explicit tests."
+}

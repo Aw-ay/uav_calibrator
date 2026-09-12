@@ -1,0 +1,22 @@
+{
+  "README.md": "ff47fabfc2948065a23cf213787febd01c01aa049d4dd5aaa6f0e49cc56a8c05",
+  "codex/AGENTS.md": "d54fe29ccbfc5ac1c14ac6e9f3587e02f1e4fef91d0143e3e9f978a747f9391a",
+  "codex/任务顺序.md": "3cf86bd6850dc66564773fd3fe19b788ab28f1919c5188791b88f3f36eaba9fb",
+  "contracts/address_map.json": "b0962a1882a469a0c9d35787b52c6b754fae10ffe483a22a8f3f389cb702cdc8",
+  "contracts/amd_ip_targets.json": "fd85e4d2f79056a589369965ac1e62dae91f3c43ebcf7f30ddb8c11091af454b",
+  "contracts/bd_connections.json": "cf839478f27026d966b893125252e7795abeeccaa7492ef165cb9eb6b45bd1bc",
+  "contracts/frame_format.json": "d12089a0dc03bc74e1759b50e9d8f7b3e89b750e016b1b33be413fb95593b570",
+  "contracts/module_catalog.json": "75c21a027bd5c505f207d230a2ad5763f0a07121d26836c841ea49029cfb64e9",
+  "contracts/register_map.json": "12d6fe7ac99587e17ebb6b7609f56bef95f1cd6c2bdb924192b36a20283928f5",
+  "contracts/system_contract.json": "accfea00bb6bf2c237d1a7196cb0798e9941b52213e68eca8eb8dfaceca114f4",
+  "contracts/verification_matrix.json": "29c046992373e054e6d2a2e8e417a292cb22e6ee1fbc9710a3b3f12762c6560a",
+  "specs/00_总体设计.md": "946275361b7b7c78a623bdff1ae96271cfbdea09df003c5a44179d83192b309e",
+  "specs/01_模块清单.md": "41f6aa4be8a676e74ebdf1bdcf652e5001ba8e1bff0d9fa5f39f49ce057896da",
+  "specs/02_AMD_IP配置.md": "0ca82d63c02a3c96038664f8fce406c660ecdcc64ab7970d9bd099e66e74c135",
+  "specs/03_时钟缓存与数据契约.md": "a0d1cf8274be58b894bd2083b1f397650f578477700945928d2a48ffa9b3ed4e",
+  "specs/04_BlockDesign方法.md": "05ca7007b8f265097ca697d06626308a6b11194eec83f71bdaa2f8f708665c30",
+  "specs/05_PS软件.md": "ac0f457de9c2c03f0cbcee8243d493c34f8b17b4c60ca80f2d1dfdc5776c7f6b",
+  "specs/06_验证计划.md": "27b6bd1eedf2fb34c0b1d366fddebad92eb6e5edd9f3237d2fb30d41e990db49",
+  "specs/09_来源与待确认项.md": "2837317a65b14253fb114861b0af00aaf32cff30d4964a9a4ab5bed04115c49b",
+  "设计包检查记录.json": "d00d04d7a3fe4465b98f6e66891747a415a1d74f4ca5288edd28d5bb91275317"
+}

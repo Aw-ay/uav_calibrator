@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "module": "capture_reset_coordinator",
+  "scope": "RF-domain capture/qualification/upload/replay soft-reset sequencing, not complete board reset",
+  "states": ["RUN", "DRAIN", "OWNER_RESET", "HOLD"],
+  "request": "Synchronous clk_rf level; even a one-cycle request is retained. Requests while busy coalesce into the active reset, not a queue.",
+  "admission": "block_new_work asserts combinationally with reset_request and remains asserted until completion and request deassertion. Gate new joint capture/context/replay admissions; continue all already admitted work.",
+  "drain_proofs": {
+    "producers_idle": "No admitted sample window, EOP, statistics, noise or delayed producer result remains. Must come from producer ownership tracking.",
+    "qualification_idle": "No retained qualification context, pipeline result, bank commit or pending publication event; qualification_publish_bridge.idle covers its maps.",
+    "upload_idle": "No accepted descriptor or RAM upload read remains; capture_record_system.idle_rf. Does not assert FIFO empty or host delivery.",
+    "replay_idle": "No replay task/read/return remains. Upstream stops new replay work and proves all pending work complete."
+  },
+  "sequence": "Require all four proofs high on two consecutive DRAIN edges. Then assert owner_reset_request and wait for owner_epoch == previous_epoch + 1 modulo 2^64. done pulses once. Hold owner_reset_request until external request has deasserted.",
+  "no_timeout_discard": "Never force reset while a drain proof is missing. Permanent downstream stall or missing producer result leaves busy asserted and requires diagnosis; no silent RAW loss.",
+  "integration_requirements": [
+    "All inputs and proofs already synchronous to clk_rf",
+    "Do not tie block_new_work to qualification quiesce, sample_valid, existing-result valid or upload ready",
+    "Only the coordinator drives the capture owner soft-reset request",
+    "Once drain is proved, no new producer/reader work may appear before RUN resumes",
+    "Keep upload FIFO and clk_mem alive: this soft reset does not discard already queued bytes",
+    "Hard rst requires external DMA isolation and both-domain quiescence and is outside this protocol",
+    "Full-system producer tracking, admission arbitration and physical-top connections remain to be implemented"
+  ]
+}

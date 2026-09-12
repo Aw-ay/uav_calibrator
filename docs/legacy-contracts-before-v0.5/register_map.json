@@ -1,0 +1,349 @@
+{
+  "status": "PARTIAL_REGISTER_SPEC_PROPOSAL",
+  "note": "This freezes global control semantics; per-DSP parameter arrays and descriptor schema must be completed together with selected numeric model before code generation. Unimplemented capabilities remain0.",
+  "registers": [
+    {
+      "name": "IP_ID",
+      "offset_hex": "0x0000",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 1128352817,
+      "meaning": "instrument identifier"
+    },
+    {
+      "name": "ABI_VERSION",
+      "offset_hex": "0x0004",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 1,
+      "meaning": "register/frame contract version"
+    },
+    {
+      "name": "BUILD_ID",
+      "offset_hex": "0x0008",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "source build manifest lookup"
+    },
+    {
+      "name": "CAPABILITIES",
+      "offset_hex": "0x000C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "actual compiled capabilities, not desired capabilities"
+    },
+    {
+      "name": "REQUEST",
+      "offset_hex": "0x0010",
+      "width_bits": 32,
+      "access": "WO",
+      "reset": 0,
+      "meaning": "arm/stop/time_snapshot; default does not enable TX"
+    },
+    {
+      "name": "STATE",
+      "offset_hex": "0x0014",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "safe/ready/capturing/tx"
+    },
+    {
+      "name": "FAULT_STATUS",
+      "offset_hex": "0x0018",
+      "width_bits": 32,
+      "access": "W1C",
+      "reset": 0,
+      "meaning": "new fault has priority over concurrent clear"
+    },
+    {
+      "name": "IRQ_ENABLE",
+      "offset_hex": "0x001C",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "mask only, cannot bypass safety"
+    },
+    {
+      "name": "IRQ_STATUS",
+      "offset_hex": "0x0020",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "level fault/watermark conditions"
+    },
+    {
+      "name": "SHADOW_MODE",
+      "offset_hex": "0x0100",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "0mute,1measure,2DRFM,3DDS,4AWG,5LIVE"
+    },
+    {
+      "name": "SHADOW_CONFIG_ID",
+      "offset_hex": "0x0104",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "proposed config id"
+    },
+    {
+      "name": "COMMIT",
+      "offset_hex": "0x0108",
+      "width_bits": 32,
+      "access": "WO",
+      "reset": 0,
+      "meaning": "submit inactive configuration atomically"
+    },
+    {
+      "name": "ACTIVE_CONFIG_ID",
+      "offset_hex": "0x010C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "acknowledged config"
+    },
+    {
+      "name": "COMMIT_STATUS",
+      "offset_hex": "0x0110",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "busy/rejected/reason"
+    },
+    {
+      "name": "GSC_SNAPSHOT_LO",
+      "offset_hex": "0x0200",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "latched snapshot low, not free-running bus"
+    },
+    {
+      "name": "GSC_SNAPSHOT_HI",
+      "offset_hex": "0x0204",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "same snapshot high"
+    },
+    {
+      "name": "EPOCH_ID",
+      "offset_hex": "0x0208",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "timebase generation"
+    },
+    {
+      "name": "TIME_QUALITY",
+      "offset_hex": "0x020C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "PPS/mapping valid and uncertainty class"
+    },
+    {
+      "name": "EVENT_COUNT",
+      "offset_hex": "0x0300",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "number of complete512bit records"
+    },
+    {
+      "name": "EVENT_LATCH",
+      "offset_hex": "0x0304",
+      "width_bits": 32,
+      "access": "WO",
+      "reset": 0,
+      "meaning": "latch head without removal"
+    },
+    {
+      "name": "EVENT_POP",
+      "offset_hex": "0x0308",
+      "width_bits": 32,
+      "access": "WO",
+      "reset": 0,
+      "meaning": "explicit removal after all words consumed"
+    },
+    {
+      "name": "DROP_CAPTURE",
+      "offset_hex": "0x0400",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "counter snapshot"
+    },
+    {
+      "name": "DROP_IQ",
+      "offset_hex": "0x0404",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "counter snapshot"
+    },
+    {
+      "name": "DROP_EVENT",
+      "offset_hex": "0x0408",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "counter snapshot"
+    },
+    {
+      "name": "REPLAY_REJECTED",
+      "offset_hex": "0x040C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "counter snapshot"
+    },
+    {
+      "name": "BANK_HIGHWATER",
+      "offset_hex": "0x0410",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "max concurrently owned banks"
+    },
+    {
+      "name": "EVENT_WORD_0",
+      "offset_hex": "0x0340",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_1",
+      "offset_hex": "0x0344",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_2",
+      "offset_hex": "0x0348",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_3",
+      "offset_hex": "0x034C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_4",
+      "offset_hex": "0x0350",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_5",
+      "offset_hex": "0x0354",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_6",
+      "offset_hex": "0x0358",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_7",
+      "offset_hex": "0x035C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_8",
+      "offset_hex": "0x0360",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_9",
+      "offset_hex": "0x0364",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_10",
+      "offset_hex": "0x0368",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_11",
+      "offset_hex": "0x036C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_12",
+      "offset_hex": "0x0370",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_13",
+      "offset_hex": "0x0374",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_14",
+      "offset_hex": "0x0378",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_15",
+      "offset_hex": "0x037C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    }
+  ],
+  "reserved_groups": {
+    "0x0500-0x07FF": "read-only per-range statistics and latency snapshots",
+    "0x0800-0x0FFF": "shadow detector and qualification parameters",
+    "0x1000-0x17FF": "shadow waveform/replay descriptors",
+    "0x1800-0x1FFF": "coefficient-bank validation/pinning and commit",
+    "0x2000-0x2FFF": "monitor/fault diagnostic windows"
+  }
+}

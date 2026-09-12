@@ -1,0 +1,149 @@
+{
+  "status": "MERGED_DESIGN_BASELINE_NOT_IMPLEMENTED",
+  "logical_ids_are_not_tile_block_ids": true,
+  "channels": [
+    {
+      "logical_adc_id": 0,
+      "name": "H_HIGH",
+      "polarization": "H",
+      "analog_range": "HIGH",
+      "group": "HIGH_HV",
+      "continuous": true,
+      "adc_ddc_fir_state_independent": true,
+      "physical_tile_block": null,
+      "calibration_key": "ADC0_H_HIGH"
+    },
+    {
+      "logical_adc_id": 1,
+      "name": "H_MID",
+      "polarization": "H",
+      "analog_range": "MID",
+      "group": "MID_HV",
+      "continuous": true,
+      "adc_ddc_fir_state_independent": true,
+      "physical_tile_block": null,
+      "calibration_key": "ADC1_H_MID"
+    },
+    {
+      "logical_adc_id": 2,
+      "name": "H_LOW",
+      "polarization": "H",
+      "analog_range": "LOW",
+      "group": "LOW_HV",
+      "continuous": true,
+      "adc_ddc_fir_state_independent": true,
+      "physical_tile_block": null,
+      "calibration_key": "ADC2_H_LOW"
+    },
+    {
+      "logical_adc_id": 3,
+      "name": "H_AUX_MID",
+      "polarization": "H",
+      "analog_range": "MID",
+      "group": "AUX_MID_HV",
+      "continuous": true,
+      "adc_ddc_fir_state_independent": true,
+      "physical_tile_block": null,
+      "calibration_key": "ADC3_H_MID"
+    },
+    {
+      "logical_adc_id": 4,
+      "name": "V_HIGH",
+      "polarization": "V",
+      "analog_range": "HIGH",
+      "group": "HIGH_HV",
+      "continuous": true,
+      "adc_ddc_fir_state_independent": true,
+      "physical_tile_block": null,
+      "calibration_key": "ADC4_V_HIGH"
+    },
+    {
+      "logical_adc_id": 5,
+      "name": "V_MID",
+      "polarization": "V",
+      "analog_range": "MID",
+      "group": "MID_HV",
+      "continuous": true,
+      "adc_ddc_fir_state_independent": true,
+      "physical_tile_block": null,
+      "calibration_key": "ADC5_V_MID"
+    },
+    {
+      "logical_adc_id": 6,
+      "name": "V_LOW",
+      "polarization": "V",
+      "analog_range": "LOW",
+      "group": "LOW_HV",
+      "continuous": true,
+      "adc_ddc_fir_state_independent": true,
+      "physical_tile_block": null,
+      "calibration_key": "ADC6_V_LOW"
+    },
+    {
+      "logical_adc_id": 7,
+      "name": "V_AUX_MID",
+      "polarization": "V",
+      "analog_range": "MID",
+      "group": "AUX_MID_HV",
+      "continuous": true,
+      "adc_ddc_fir_state_independent": true,
+      "physical_tile_block": null,
+      "calibration_key": "ADC7_V_MID"
+    }
+  ],
+  "aux_input_switch": {
+    "affected_adc_mask": 136,
+    "pause_primary_capture": false,
+    "stop_adc_ddc_fir": false,
+    "role_values": {
+      "0": "SAFE_TERMINATED",
+      "1": "REDUNDANT_EXTERNAL_MID",
+      "2": "RF_LOOPBACK"
+    },
+    "default_role": 0,
+    "paired_hv_switch": true,
+    "hardware_analog_switch_required": true,
+    "transition": "commit -> mark AUX invalid and increment source_epoch -> switch -> settling plus filter flush -> qualified AUX valid",
+    "filter_flush_rule": "ceil((167-1)/4)=42 output-sample intervals minimum for PL RX chain, PLUS analog settling, RFDC history and measured pipeline; group delay166ns is not history clearance",
+    "same_pair_cannot_observe_two_independent_sources_simultaneously": true,
+    "pl_flush_samples_min": 42,
+    "pl_group_delay_ns": 166,
+    "pl_impulse_span_ns": 332
+  },
+  "continuity": {
+    "all_adc_mask": 255,
+    "each_path_has_sequence_and_validity": true,
+    "aux_fault_does_not_globally_reset_primary": true,
+    "shared_clock_mts_fault_invalidates_all": true
+  },
+  "redundancy": {
+    "default_automatic_selection": false,
+    "replace": "original MID pair only after calibrated external MID routing and qualification",
+    "explicit_pulse_boundary_commit": true,
+    "independent_calibration": true,
+    "limitations": "Does not cover common antenna/splitter/clock/FPGA/PS failures; does not replace HIGH/LOW analog range performance"
+  },
+  "loopback": {
+    "continuous_during_primary_measurement": true,
+    "protected_coupling_attenuation_limiting_required": true,
+    "rf_tx_still_requires_interlock": true,
+    "replay_source_allowed": false,
+    "capture_trigger": "actual TX event or diagnostic command; independent of primary EOP",
+    "metadata": [
+      "tx_event_id",
+      "physical_adc_mask",
+      "source_epoch",
+      "coupling_calibration_id",
+      "fir_id"
+    ]
+  },
+  "source_role_encoding": {
+    "aux_control_to_frame": {
+      "0": 0,
+      "1": 2,
+      "2": 3
+    },
+    "primary_external_frame_value": 1,
+    "note": "AUX switch register enum and wire descriptor/frame source_role differ. Apply mapping; never copy raw role register into frame."
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "status": "DOCUMENT_STRUCTURE_CHECKED_ONLY",
+  "checks": [
+    "UTF-8 JSON parse",
+    "unique module/test/register IDs",
+    "128-byte header nonoverlap and complete coverage",
+    "MMIO segments aligned and nonoverlapping",
+    "Markdown code fences closed",
+    "hardware test specs remain NOT_RUN",
+    "no implementation or hardware artifacts represented as completed"
+  ],
+  "module_count": 36,
+  "ip_group_count": 15,
+  "test_spec_count": 46,
+  "max_frame_without_crc_bytes": 65664,
+  "max_frame_with_crc_bytes": 65680,
+  "raw_capture_2bank_bytes": 393216,
+  "raw_capture_8bank_bytes": 1572864,
+  "synthesis": "NOT_RUN",
+  "implementation": "NOT_RUN",
+  "vitis_build": "NOT_RUN",
+  "board_test": "NOT_RUN",
+  "board_selection": "PENDING_CONFIRMATION",
+  "toolchain_selection": "PENDING_CONFIRMATION"
+}

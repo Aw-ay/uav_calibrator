@@ -1,0 +1,61 @@
+{
+  "rfdc_configuration": "../../../reports/rfdc_probe_configuration.txt (IP-only probe)",
+  "status": "PARTIAL_DIGITAL_IMPLEMENTATION_BOARD_INTEGRATION_PENDING",
+  "pin_constraints": null,
+  "board": "XCZU27DR-v2.1 schematic; vendor not identified",
+  "board_revision": "v2.1",
+  "part_status": "FROM_ADC_DAC_EXAMPLE_SPEED_CONFLICT_WITH_MEMORY_TEST",
+  "part": "xczu27dr-fsve1156-2-i",
+  "device": "ZU27DR",
+  "ps_preset": null,
+  "vivado": "2025.2",
+  "tx_rate_plan": "125M x PL4 x RFDC8 = 4GS/s; external clocks and analog mapping unverified",
+  "reference_directory": "E:\\temp\\save_v2.1",
+  "reference_vivado": "2021.2",
+  "part_evidence": [
+    "ADC_DAC_27DR_TEST: xczu27dr-fsve1156-2-i",
+    "GTY_20G: xczu27dr-fsve1156-2-i",
+    "XCZU27_MEM_TEST_TOP: xczu27dr-fsve1156-1-i"
+  ],
+  "clock_plan": {
+    "clk_mem": {
+      "frequency_hz": 200000000,
+      "source": "PS FCLK1",
+      "status": "CANDIDATE_BD_GENERATED_NOT_HARDWARE_VALIDATED",
+      "rf_coherent_reference": false,
+      "vivado_actual_mhz": 199.998001
+    },
+    "rf_clock": {
+      "device": "RC21008A",
+      "reference_designator": "UT19",
+      "external_reference_nets": [
+        "RC_CLK_P",
+        "RC_CLK_N"
+      ],
+      "evidence": "Schematic PDF page 10 and user clarification 2026-09-11",
+      "configuration_status": "REGISTER_CONFIGURATION_AND_OUTPUT_FREQUENCIES_UNVERIFIED"
+    },
+    "sysref": {
+      "destination": "BANK228 SYSREF via J4",
+      "source": null,
+      "status": "EXTERNAL_SOURCE_REQUIRED"
+    },
+    "probe_refclk": {
+      "frequency_hz": 200000000,
+      "status": "VENDOR_EXAMPLE_IP_PROBE_VALUE_ONLY_NOT_APPROVED_BOARD_REFERENCE"
+    }
+  },
+  "rf_interfaces": {
+    "adc224_225": "ONBOARD_RF_FRONTEND",
+    "adc226_227": "J4_EXTERNAL_FRONTEND_REQUIRED",
+    "dac229": "ONBOARD_RF_FRONTEND",
+    "dac228": "J4_EXTERNAL_FRONTEND_REQUIRED",
+    "all_8adc_8dac_usable": false
+  },
+  "ps_candidate": {
+    "preset": "../../tcl/platform_ps_preset.tcl",
+    "project": "../../../build/platform_candidate_2025_2/platform_candidate.xpr",
+    "status": "BD_VALIDATION_PASSED_WITH_DOCUMENTED_WARNINGS_NOT_HARDWARE_VALIDATED",
+    "dma_control_base": "0xA0040000"
+  }
+}

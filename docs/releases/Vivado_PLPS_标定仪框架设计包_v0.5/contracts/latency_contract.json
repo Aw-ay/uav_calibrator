@@ -1,0 +1,47 @@
+{
+  "schema_version": "0.5",
+  "status": "MERGED_DESIGN_BASELINE_NOT_IMPLEMENTED",
+  "gsc_tick_ns": 2,
+  "core_sample_ticks": 4,
+  "sample_period_ns": 8,
+  "core_clock_hz": 125000000,
+  "sample_time_vs_available_time_separate": true,
+  "phase_origin": "lock cascaded decimation phase at startup; expose profile/phase ID",
+  "rx_pl_fir": {
+    "equivalent_taps": 167,
+    "group_delay_ns": 166,
+    "group_delay_ticks": 83,
+    "history_span_ns": 332,
+    "phase_in_input_samples": 0
+  },
+  "tx_pl_fir": {
+    "equivalent_taps_at500M": 167,
+    "group_delay_ns": 166,
+    "response_span_ns": 332,
+    "normal_zero_samples_min_at125M": 42
+  },
+  "measured_latency_cycles": {
+    "rfdc_rx": null,
+    "rx_fir_pipeline": null,
+    "ram_read_A": null,
+    "ram_read_B": null,
+    "rxcal": null,
+    "fractional_delay": null,
+    "target_operator": null,
+    "txcal": null,
+    "tx_fir_pipeline": null,
+    "rfdc_tx": null
+  },
+  "timing_gate": "read_start = target_output_reference - measured causal pipeline - declared algorithmic offsets; earliest data_ready checked; pretrigger index included; no silent late transmit",
+  "aux_history_rule": "PL42 minimum plus analogsettling and RFDC/history/actual pipeline; keep source sequence during invalid interval",
+  "tail_rule": "normal completion includes upstream CAL/Farrow tails plus PL TX zeros and RFDC/analog guard; fault shutdown overrides waveform preservation",
+  "events": [
+    "RAM_READ_DONE",
+    "TX_PIPELINE_DONE",
+    "RF_DONE",
+    "BLOCKED",
+    "INTERRUPTED",
+    "TRUNCATED"
+  ],
+  "2ns_note": "timestamp granularity only, not clock edge positioning or measured uncertainty"
+}

@@ -1,0 +1,116 @@
+{
+  "schema_version": "0.5",
+  "status": "MERGED_DESIGN_BASELINE_NOT_IMPLEMENTED",
+  "clock_owner": "clk_rf",
+  "readout_clock": "clk_mem",
+  "groups": 4,
+  "banks_per_group": 4,
+  "samples_per_bank": 16384,
+  "sample_bits": 64,
+  "fixed_roles_by_bank_id": false,
+  "bank_to_bank_iq_copy": false,
+  "independent_ram_ports_per_bank_required": true,
+  "address_bits": 14,
+  "sample_count_bits": 15,
+  "raw_bytes_total": 2097152,
+  "ports": {
+    "A": {
+      "width": 64,
+      "depth": 16384,
+      "clock_hz": 125000000,
+      "role": "write when mutable OR frozen replay read"
+    },
+    "B": {
+      "width": 128,
+      "depth": 8192,
+      "clock_hz": 200000000,
+      "role": "frozen record read only",
+      "write_enable": 0
+    }
+  },
+  "pretrigger": {
+    "broadcast_to_all_mutable_available_banks": true,
+    "pre_samples": 250,
+    "max_detector_latency_samples": null,
+    "example_detector_latency_samples": 32,
+    "history_inclusive": "pre_samples + max_detector_latency_samples + 1",
+    "example_armed_history": 283,
+    "no_trigger_memcpy": true,
+    "tag": "trigger carries onset_seq in signal sample time, not arrival write_ptr"
+  },
+  "window": {
+    "bounds": "[start_seq, stop_seq) left closed right open",
+    "address": "sample_seq modulo16384",
+    "start": "onset_seq-pre_samples",
+    "stop": "pulse_end_exclusive_seq+post_samples",
+    "max_count": 16384,
+    "write_guard": "Do not write seq>=start_seq+depth while reserved",
+    "capacity_action": "freeze last valid extent, markTRUNCATED/MAX_WINDOW; not valid replay",
+    "late_eop": "validate history still belongs to this record; stop before wrap even before EOP arrives"
+  },
+  "states": [
+    "FREE",
+    "ARMING",
+    "ARMED",
+    "CAPTURE",
+    "FROZEN_PENDING",
+    "FROZEN",
+    "RELEASE"
+  ],
+  "state_rules": {
+    "ARMING": "broadcast rolling input, establish fresh history",
+    "ARMED": "continue rolling writes; eligible for admission",
+    "CAPTURE": "continue writes but protect reserved start",
+    "FROZEN_PENDING": "last IQ stored; write disabled while late statistics align",
+    "FROZEN": "immutable RAW; independent record/replay consumers",
+    "RELEASE": "after last RAW consumer and no in-flight access, rearm; do not clear entire RAM"
+  },
+  "primary_admission": {
+    "groups": [
+      1,
+      2,
+      3
+    ],
+    "atomic_all_or_none": true,
+    "same_bank_id_required": false,
+    "same_pulse_time_context": true,
+    "degraded_partial_mode_default": false
+  },
+  "aux_admission": {
+    "group": 4,
+    "independent": true,
+    "borrowing_primary_banks_allowed": false
+  },
+  "ownership": {
+    "manager_single_clock": true,
+    "token_fields": [
+      "owner_epoch",
+      "stream_group_id",
+      "bank_id",
+      "generation",
+      "consumer_id"
+    ],
+    "owner_epoch_bits": 64,
+    "generation_bits": 64,
+    "reserve_before_descriptor_publish": true,
+    "consumers": [
+      "record",
+      "replay"
+    ],
+    "multiple_replay_requires_refcount_or_task_set": true,
+    "stale_or_duplicate_return": "reject and increment counter; no decrements",
+    "return_same_cycle": "single combined next-state update",
+    "default_RAW_release": "record bytes accepted into reliable owned downstream storage AND all needed replay RAM reads completed; task/coeff refs may live longer",
+    "transmission_error": "lost record event if RAW already released; retry-fromRAW requires longer retention policy"
+  },
+  "reset": "quiesce/cancel both readers, drain/isolate in-flight RAM/AXI/CDC, reset queues per busy rules, increment owner_epoch, rearm. Epoch alone does not stop hardware readers.",
+  "no_free_bank": "DROP_NEW plus counters/event; FIR/ADC continuous; never overwrite frozen bank",
+  "bank_sizing": "ceil(T_hold/PRI)+safety margin; hold includes rearm; pending replay and DMA share leases",
+  "quality": {
+    "default": "window OR and range stats required; optional8bit/sample sidecar",
+    "optional_sidecar_bytes": 262144,
+    "sidecar_hardware_implemented": false
+  },
+  "numbering": "frame stream_group_id1..4; Python behavioral group_index0..3 maps +1",
+  "verification_scope": "bank_model is behavioral, not real RAM pipeline or CDC model"
+}

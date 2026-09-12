@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "module": "range_qualification",
+  "status": "LOGICAL_EVALUATOR_NOT_COMPLETE_QUALIFICATION_PIPELINE",
+  "interface": "Combinational evaluation of immutable aligned six-channel statistics and frozen per-pulse configuration; caller owns snapshot and latching",
+  "channel_order": ["H_HIGH", "H_MID", "H_LOW", "V_HIGH", "V_MID", "V_LOW"],
+  "energy_format": "Unsigned 46-bit sum of IQ16 I^2+Q^2 over the window",
+  "noise_energy_format": "Unsigned 46-bit expected noise energy over the SAME window; external qualified estimator; zero or unknown rejects",
+  "snr_format": "Unsigned 32-bit Q16 linear excess-signal/noise ratio, NOT dB; 65536 represents SNR=1, 0 represents SNR=0",
+  "snr_comparison": "energy*65536 >= noise_energy*(65536+min_snr_q16); 79-bit product, no division or underflow",
+  "reason_bits": {"CONTEXT_OR_COUNT_INVALID": 0, "SAMPLE_BAD": 1, "CAL_UNQUALIFIED": 2, "NOISE_OR_THRESHOLD_UNKNOWN": 3, "SNR_BELOW_THRESHOLD": 4, "LINEARITY_UNKNOWN": 5, "LINEARITY_FAILED": 6, "RESERVED_ZERO": 7},
+  "selection": "All three frozen_stats_done and validated unique permutation required; highest calibrated gain whose H and V both qualify; no default LOW",
+  "not_implemented_here": ["noise estimator", "calibrated overlap linearity calculation", "physical gain measurements", "immutable context storage", "statistics-to-bank publish wiring", "register ABI", "pipeline timing closure"],
+  "binding_policy": "Physical mapping and calibration values remain outside core; simulation fixtures do not validate production binding"
+}

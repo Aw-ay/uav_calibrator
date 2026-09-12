@@ -1,0 +1,81 @@
+{
+  "status": "IMPLEMENTED_BOUNDED_C04_EXTENSION_NOT_BOARD_VALIDATED",
+  "source": "register_map.json; original release lacks command bitfields",
+  "module": "csr_control_axi",
+  "request_bits": {
+    "ARM": 0,
+    "STOP": 1,
+    "SNAPSHOT": 2
+  },
+  "request_semantics": "Exactly one strobed bit or zero no-op; mixed/unknown requests SLVERR. STOP always accepted. ARM is measurement-ready only, never TX. Requires no pending commit, acknowledged measure mode, nonzero detector bound, ctrl-domain calibration_valid, and no sticky/current fault. Fault or calibration loss disarms.",
+  "commit_bits": {
+    "SUBMIT": 0
+  },
+  "commit_status_bits": {
+    "BUSY": 0,
+    "REJECTED_STICKY_UNTIL_ACCEPTED": 1
+  },
+  "commit_semantics": "Freeze seven words until destination applies at rf_safe_boundary; busy/armed/unsupported mode/zero maximum/capacity overflow reject with SLVERR. Shadow writes remain allowed while busy. ACTIVE_CONFIG_ID changes only after returning acknowledgement. Modes 0 mute and 1 measure only.",
+  "state_bits": {
+    "MEASUREMENT_READY_ARMED": 0
+  },
+  "snapshot_status": {
+    "offset_hex": "0x0210",
+    "access": "RO",
+    "fields": {
+      "BUSY": [
+        0,
+        0
+      ],
+      "VALID": [
+        1,
+        1
+      ],
+      "COMPLETION_SEQUENCE": [
+        31,
+        2
+      ]
+    },
+    "semantics": "Sequence increments modulo 2^30 after coherent snapshot returns. Poll BUSY clear and sequence changed before reading LO/HI. Keep one software owner; another snapshot completion can replace both registers between independent reads."
+  },
+  "implemented_registers": [
+    "IP_ID",
+    "ABI_VERSION",
+    "BUILD_ID",
+    "CAPABILITIES",
+    "REQUEST",
+    "STATE",
+    "FAULT_STATUS",
+    "IRQ_ENABLE",
+    "IRQ_STATUS",
+    "SHADOW_MODE",
+    "SHADOW_CONFIG_ID",
+    "COMMIT",
+    "ACTIVE_CONFIG_ID",
+    "COMMIT_STATUS",
+    "GSC_SNAPSHOT_LO",
+    "GSC_SNAPSHOT_HI",
+    "EPOCH_ID",
+    "TIME_QUALITY",
+    "GSC_STRIDE",
+    "PRE_SAMPLES_SHADOW",
+    "POST_SAMPLES_SHADOW",
+    "MAX_PULSE_SAMPLES_SHADOW",
+    "EOP_HOLD_SAMPLES_SHADOW",
+    "DETECTOR_LATENCY_BOUND_SHADOW"
+  ],
+  "unsupported_semantics": "Every other read/write, WO read, RO write and unaligned address returns SLVERR, including event/bank/DSP/TX features. CAPABILITIES is zero because release has no frozen bit meanings.",
+  "time_semantics": "Free-running unsigned GSC64 increments contract stride 4 per 125 MHz RF clock. Reset starts new boot-local generation at zero; EPOCH_ID=0 and TIME_QUALITY=0 mean externally unqualified. No PPS or persistent epoch implemented.",
+  "cdc_reset_contract": "Both domains must observe coordinated reset assertion; integration supplies synchronous deassertion per clock. Independent one-domain reset is unsupported. Payload is stable throughout toggle request/ack. ASYNC_REG only marks two-flop control synchronizers; physical bundled-data timing/CDC closure remains required.",
+  "clock_domains": {
+    "AXI_fault_set_calibration_valid_armed_irq": "ctrl_clk nominal100MHz",
+    "rf_safe_boundary_active_config_gsc": "rf_clk125MHz"
+  },
+  "limitations": [
+    "No TX enable: output hard zero",
+    "External calibration_valid is integration evidence, not a software bypass; calibration engine absent",
+    "Window check only covers pre+post+max<=16384; system detector-history qualification still external",
+    "No events generated or acknowledged",
+    "No hardware synthesis timing or board validation claimed"
+  ]
+}

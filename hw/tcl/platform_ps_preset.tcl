@@ -1,0 +1,53 @@
+# Reviewed, bounded PS candidate for XCZU27DR-v2.1.
+# DDR geometry/timing values come from the vendor memory-test PS extract.
+# UART0 MIO42..43 comes from the schematic and the vendor GTY PS extract.
+# Only interfaces required by the platform candidate are enabled here.
+proc platform_ps_config {} {
+  return [list \
+    CONFIG.PSU_VALUE_SILVERSION {3} \
+    CONFIG.PSU__PSS_REF_CLK__FREQMHZ {33.333} \
+    CONFIG.PSU__ACT_DDR_FREQ_MHZ {1199.988037} \
+    CONFIG.PSU__DDRC__ENABLE {1} \
+    CONFIG.PSU__DDRC__MEMORY_TYPE {DDR 4} \
+    CONFIG.PSU__DDRC__DEVICE_CAPACITY {8192 MBits} \
+    CONFIG.PSU__DDRC__BUS_WIDTH {64 Bit} \
+    CONFIG.PSU__DDRC__DRAM_WIDTH {16 Bits} \
+    CONFIG.PSU__DDRC__SPEED_BIN {DDR4_2400P} \
+    CONFIG.PSU__DDRC__BANK_ADDR_COUNT {2} \
+    CONFIG.PSU__DDRC__BG_ADDR_COUNT {1} \
+    CONFIG.PSU__DDRC__COL_ADDR_COUNT {10} \
+    CONFIG.PSU__DDRC__ROW_ADDR_COUNT {16} \
+    CONFIG.PSU__DDRC__RANK_ADDR_COUNT {0} \
+    CONFIG.PSU__DDRC__CL {15} \
+    CONFIG.PSU__DDRC__CWL {12} \
+    CONFIG.PSU__DDRC__T_RCD {15} \
+    CONFIG.PSU__DDRC__T_RP {15} \
+    CONFIG.PSU__DDRC__T_RAS_MIN {32.0} \
+    CONFIG.PSU__DDRC__T_RC {44.5} \
+    CONFIG.PSU__DDRC__T_FAW {30.0} \
+    CONFIG.PSU__DDRC__BRC_MAPPING {ROW_BANK_COL} \
+    CONFIG.PSU__DDRC__ECC {Disabled} \
+    CONFIG.PSU__DDRC__TRAIN_DATA_EYE {1} \
+    CONFIG.PSU__DDRC__TRAIN_READ_GATE {1} \
+    CONFIG.PSU__DDRC__TRAIN_WRITE_LEVEL {1} \
+    CONFIG.PSU__DDRC__VREF {1} \
+    CONFIG.PSU__UART0__PERIPHERAL__ENABLE {1} \
+    CONFIG.PSU__UART0__PERIPHERAL__IO {MIO 42 .. 43} \
+    CONFIG.PSU__UART0__BAUD_RATE {115200} \
+    CONFIG.PSU__FPGA_PL0_ENABLE {1} \
+    CONFIG.PSU__FPGA_PL1_ENABLE {1} \
+    CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {100} \
+    CONFIG.PSU__CRL_APB__PL1_REF_CTRL__FREQMHZ {200} \
+    CONFIG.PSU__CRL_APB__PL1_REF_CTRL__SRCSEL {DPLL} \
+    CONFIG.PSU__USE__M_AXI_GP0 {1} \
+    CONFIG.PSU__MAXIGP0__DATA_WIDTH {32} \
+    CONFIG.PSU__USE__M_AXI_GP2 {0} \
+    CONFIG.PSU__USE__S_AXI_GP2 {1} \
+    CONFIG.PSU__SAXIGP2__DATA_WIDTH {128} \
+    CONFIG.PSU__USE__IRQ0 {1} \
+    CONFIG.PSU__NUM_FABRIC_RESETS {1}]
+}
+
+proc apply_platform_ps_config {cell} {
+  set_property -dict [platform_ps_config] $cell
+}

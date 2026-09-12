@@ -1,0 +1,18 @@
+set root [file normalize [file join [file dirname [info script]] ../..]]
+if {[version -short] ne "2025.2"} {error "Requires Vivado 2025.2"}
+set out [file join $root reports record_fifo_ooc]
+file mkdir $out
+create_project -in_memory -part xczu27dr-fsve1156-2-i
+read_verilog -sv [file join $root rtl data axis_record_fifo.sv]
+synth_design -top axis_record_fifo -mode out_of_context -part xczu27dr-fsve1156-2-i
+create_clock -name clk_mem -period 5.000 [get_ports clk]
+opt_design
+place_design
+route_design
+report_utilization -file [file join $out utilization.rpt]
+report_timing_summary -file [file join $out timing.rpt]
+report_drc -file [file join $out drc.rpt]
+write_checkpoint -force [file join $out route.dcp]
+close_project
+puts RECORD_FIFO_OOC_COMPLETE
+exit
