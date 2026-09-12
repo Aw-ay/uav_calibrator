@@ -3,6 +3,7 @@
 module calibrator_capture_system #(
  parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=1,FIFO_ADDR_W=12,PHYSICAL_MASKS_IN_TEMPLATE=0
 )(
+ output wire pdw_valid,output wire [255:0] pdw_key,output wire [1023:0] pdw_header,output wire [511:0] pdw_stats,output wire [191:0] pdw_peaks,
  output wire [15:0] replay_leased,
  input wire clk_rf,clk_mem,rst_n,arm_enable,reset_request,replay_quiescent,
  input wire sample_valid,input wire [63:0] sample_seq,input wire [255:0] group_data,

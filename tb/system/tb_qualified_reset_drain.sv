@@ -60,7 +60,7 @@ module tb_qualified_reset_drain;
  wire begin_ready,measurement_ready,noise_ready,event_ready,event_valid,event_published,event_rejected,bridge_idle;
  wire [255:0] event_key;wire [3:0] event_bank;wire [1023:0] event_header;wire [63:0] event_generation,event_epoch;
  wire disposition_valid,descriptor_accepted,disposition_rejected;
- qualification_publish_bridge qualification(
+ qualification_publish_bridge qualification(.measurement_peaks(192'd0),.event_stats(),.event_peaks(),
  .clk(rf),.rst(rst),.quiesce(quiesce),.begin_valid(begin_valid),.begin_ready(begin_ready),.want_replay(1'b1),
  .begin_key(begin_key),.config_data(config_data),.bank_ids(6'd0),.bank_generations(bank_generations),.headers(headers),
  .measurement_valid(measurement_valid),.measurement_key(measurement_key),.measurement_data(measurement_data),.measurement_ready(measurement_ready),

@@ -61,3 +61,38 @@ CRC 错误返回 REJECTED，当前活动表保持不变。
 
 正常主动关闭 PA 时不把预期的 PA 反馈下降当故障；TX 请求仍有效时的 PA 丢失、
 TR 与接收保护反馈异常仍受联锁检查。此逻辑不规定物理引脚、极性或板级等待参数。
+
+
+## 第五阶段：最终资格 PDW 队列
+
+现有 `CAPTURE_PDW` 64 字节 ABI 通过两条新增命令读取：
+
+| 命令 | opcode | 请求 | 结果 |
+|---|---:|---|---|
+| PDW_PEEK | 16 | 无 | 20 word：队列数量、累计丢弃数、64 bit 队首令牌、64 byte PDW |
+| PDW_POP | 17 | 64 bit 队首令牌，低 word 在前 | 精确匹配且非空才返回 OK，否则 REJECTED |
+
+队列深度 16，全部位于 RF 域，PS 跨域快照由现有命令网关完成。PEEK 不删除记录；
+重复读取返回同一队首及令牌，后台新记录不修改该队首。POP 的令牌与命令的 sequence
+属于不同身份，不能互换。空队列的令牌和 PDW 全零，但累计丢弃数保留。
+
+只有通过最终资格、实际被 RAW 描述符入口接收的 selected H/V 窗口才产生 PDW。
+复用扫描器真实峰值和能量，并按完整 context key 在资格映射中冻结；没有新增 bank
+读端口。队列满时丢弃新 PDW 并饱和累计 dropped，不阻塞 RAW、不释放任何 bank 引用。
+令牌从 1 递增且不会回绕，耗尽后丢弃新事件直到协调硬复位。
+
+ToA 为真实 GSC_FIRST + PRE×4；脉宽为 (sample_count−PRE−POST)×4，单位均为
+500 MHz GSC tick。PRE 由 bank owner 确定；CONFIG 在生产端/待判定/冻结 bank 存在时
+不能更新，因此生成 PDW 的边界上 POST 和 config_id 保持对应脉冲的值。队列入队前
+数据已冻结，后续配置或软复位不会改变历史记录。峰值为所选 H/V 窗口功率的较大值，
+能量为该对 H/V 的 PRE/body/POST 完整窗口能量和；它们不是减噪或物理增益校正结果。
+算术溢出、身份或统计不一致不设置对应有效位。
+
+捕获软 RESET 保留队列和历史 owner_epoch；协调硬复位清空队列、令牌及计数。
+未通过资格或生产端入口拒绝的记录继续走既有错误/丢弃通路，不伪造成功 PDW。
+PDW 不表示 DMA 字节已到 DDR，也不表示实际 RF 发射完成。
+
+C 接口 `pdw_control.h/.c` 提供 PEEK/POP 提交和结构化快照解码，复用现有
+`cal_event_decode` 检查 ABI/保留字/有效位。单一软件所有者完成 begin → poll → decode
+→ 处理事件 → POP → poll；提交不确定时按原 sequence 查询，禁止自动重发。
+这些 API 已加入 A53 静态库，仍需板级 BSP 提供有序 MMIO 实现。

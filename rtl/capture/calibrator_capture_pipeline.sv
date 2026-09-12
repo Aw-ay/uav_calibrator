@@ -5,6 +5,7 @@
 module calibrator_capture_pipeline #(
  parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=0,FIFO_ADDR_W=12
 )(
+ output wire pdw_valid,output wire [255:0] pdw_key,output wire [1023:0] pdw_header,output wire [511:0] pdw_stats,output wire [191:0] pdw_peaks,
  output wire [15:0] replay_leased,
  input wire clk_rf,clk_mem,rst_n,arm_enable,reset_request,producers_idle,replay_quiescent,
  input wire sample_valid,input wire [63:0] sample_seq,input wire [255:0] group_data,
@@ -42,7 +43,8 @@ module calibrator_capture_pipeline #(
  wire owner_reset_request,bridge_idle,scan_ready,bridge_ready,reader_busy;
  wire measurement_valid,measurement_ready;wire [255:0] measurement_key;wire [511:0] measurement_data;
  reg noise_pending;reg [255:0] noise_key,noise_data;wire noise_ready;
- wire event_valid,event_ready,event_published,event_rejected;
+ wire event_valid,event_ready,event_published,event_rejected;wire [511:0] event_stats;wire [191:0] event_peaks,measurement_peaks;
+ assign pdw_valid=descriptor_accepted;assign pdw_key=event_key;assign pdw_header=event_header;assign pdw_stats=event_stats;assign pdw_peaks=event_peaks;
  wire [255:0] event_key;wire [3:0] event_bank;wire [1023:0] event_header;wire [63:0] event_generation,event_epoch;
  wire noise_slot_ready=!noise_pending||noise_ready;
  assign request_ready=!rst&&!owner_reset_request&&scan_ready&&bridge_ready&&noise_slot_ready;
@@ -64,9 +66,10 @@ module calibrator_capture_pipeline #(
   .sample_count(sample_count),.owner_epoch(owner_epoch),.abort_request(1'b0),
   .ram_read_enable(pending_stats_enable),.ram_read_address(pending_stats_address),.ram_read_data(pending_stats_data),.ram_read_valid(pending_stats_valid),
   .busy(reader_busy),.result_valid(measurement_valid),.result_ready(measurement_ready),.result_key(measurement_key),.result_stats(measurement_data),
-  .result_peaks(),.result_bank_ids(),.result_generations(),.result_error(statistics_error));
+  .result_peaks(measurement_peaks),.result_bank_ids(),.result_generations(),.result_error(statistics_error));
  qualification_publish_bridge qualification(.clk(clk_rf),.rst(rst),.quiesce(quiesce),
   .begin_valid(admit),.begin_ready(bridge_ready),.begin_key(request_key),.config_data(config_data),.bank_ids(bank_ids),.bank_generations(bank_generations),.headers(headers),.want_replay(want_replay),
+  .measurement_peaks(measurement_peaks),.event_stats(event_stats),.event_peaks(event_peaks),
   .measurement_valid(measurement_valid),.measurement_key(measurement_key),.measurement_data(measurement_data),.measurement_ready(measurement_ready),
   .noise_valid(noise_pending),.noise_key(noise_key),.noise_data(noise_data),.noise_ready(noise_ready),
   .pending(pending),.qualified(qualified),.generation(generation),.pulse_id(pulse_id),.owner_epoch(owner_epoch),

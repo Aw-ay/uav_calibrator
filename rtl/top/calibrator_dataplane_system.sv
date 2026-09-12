@@ -5,6 +5,7 @@
 module calibrator_dataplane_system #(
  parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=1,FIFO_ADDR_W=12,AWG_DEPTH=16384,PHYSICAL_MASKS_IN_TEMPLATE=0
 )(
+ output wire pdw_valid,output wire [255:0] pdw_key,output wire [1023:0] pdw_header,output wire [511:0] pdw_stats,output wire [191:0] pdw_peaks,
  output wire [15:0] replay_leased,
  input wire  clk_rf,
  input wire  clk_mem,
@@ -337,6 +338,7 @@ module calibrator_dataplane_system #(
   .context_error_count(context_error_count),
   .header_error(header_error),
   .statistics_error(statistics_error),
+  .pdw_valid(pdw_valid),.pdw_key(pdw_key),.pdw_header(pdw_header),.pdw_stats(pdw_stats),.pdw_peaks(pdw_peaks),
   .disposition_valid(disposition_valid),
   .descriptor_accepted(descriptor_accepted),
   .disposition_rejected(disposition_rejected),

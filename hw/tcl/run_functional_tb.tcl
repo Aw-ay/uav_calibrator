@@ -50,6 +50,7 @@ proc stage3_sv {directory} {
 foreach stage3_top {tb_command_gateway tb_receive_frontend tb_receive_event_producer tb_calibrator_instrument_core tb_instrument_waveform_commands} {
  dict set sources $stage3_top [concat [stage3_sv [file join $root rtl]] [list tb/system/$stage3_top.sv]]
 }
+dict set sources tb_qualified_pdw_queue {rtl/generated/calibrator_contract_pkg.sv rtl/generated/capture_event_pkg.sv rtl/capture/capture_pdw_writer.sv rtl/control/qualified_pdw_queue.sv tb/unit/tb_qualified_pdw_queue.sv}
 if {![dict exists $sources $top]} {error "Unsupported top: $top"}
 create_project -force functional_$top [file join $root build functional_tb $top] -part xczu27dr-fsve1156-2-i
 foreach rel [dict get $sources $top] {add_files -fileset sim_1 -norecurse [file join $root $rel]}

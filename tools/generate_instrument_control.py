@@ -4,6 +4,7 @@ ROOT=Path(__file__).resolve().parents[1]
 d=json.loads((ROOT/'contracts/instrument_control.json').read_text())
 sv=['// Generated from contracts/instrument_control.json','package instrument_control_pkg;',f" localparam integer CONFIG_WORDS={d['config_words']};"]
 h=['/* Generated from contracts/instrument_control.json */','#ifndef CAL_INSTRUMENT_CONTROL_H','#define CAL_INSTRUMENT_CONTROL_H',f"#define CAL_CONFIG_WORDS {d['config_words']}u"]
+sv.append(f" localparam integer PDW_QUEUE_DEPTH={d['pdw_queue_depth']};");h.append(f"#define CAL_PDW_QUEUE_DEPTH {d['pdw_queue_depth']}u")
 for f in d['config_fields']:
     for suffix,value in [('BIT',f['bit']),('WIDTH',f['width'])]:
         n='CFG_'+f['name'].upper()+'_'+suffix
@@ -13,6 +14,9 @@ for n,o in d['commands'].items():
     sv.append(f" localparam [15:0] CMD_{n}_WORDS=16'd{o['words']};")
     h.append(f"#define CAL_CMD_{n} {o['opcode']}u")
     h.append(f"#define CAL_CMD_{n}_WORDS {o['words']}u")
+    if 'result_words' in o:
+        sv.append(f" localparam [15:0] CMD_{n}_RESULT_WORDS=16'd{o['result_words']};")
+        h.append(f"#define CAL_CMD_{n}_RESULT_WORDS {o['result_words']}u")
 mask=sum(((1<<f['width'])-1)<<f['bit'] for f in d['config_fields'])
 sv.append(f" localparam [8191:0] CONFIG_MASK=8192'h{mask:02048x};")
 sv.append('endpackage');h.append('#endif')

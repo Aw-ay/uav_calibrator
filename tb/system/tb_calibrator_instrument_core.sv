@@ -58,7 +58,7 @@ module tb_calibrator_instrument_core;
   end
  end endtask
  integer bytes_seen=0,frames=0,onsets=0,ends=0,completions=0;
- integer frame_file,sample_file;string root;reg [3711:0] snapshot;integer replay_samples=0;reg saw_dac=0;
+ integer frame_file,sample_file;string root;reg [3711:0] snapshot;integer pdw_file;reg [639:0] pdw_snapshot;reg [63:0] pdw_token;integer replay_samples=0;reg saw_dac=0;
  always @(posedge rf_clk)if(rst_n)begin
   if(dut.d_r_raw_valid)replay_samples=replay_samples+1;
   if(binding_valid&&native_dac_data!=0)saw_dac=1;
@@ -122,6 +122,13 @@ module tb_calibrator_instrument_core;
   if(completions!=0)$fatal(1,"stalled RAW retired early");
   m_axis_tready=1;wait(frames==1&&completions==1);repeat(20)@(negedge rf_clk);
   if(onsets!=1||ends!=1||dut.d_replay_leased==0||dut.source_dropped!=0)$fatal(1,"production or lease");
+  command(16,0,0);read_word(GW_RESULT_LENGTH);if(value!=20)$fatal(1,"PDW result length");
+  pdw_file=$fopen({root,"/instrument_pdw.hex"},"w");
+  for(integer w=0;w<20;w=w+1)begin read_word(GW_RESULT+4*w);pdw_snapshot[w*32+:32]=value;$fdisplay(pdw_file,"%08x",value);end
+  $fclose(pdw_file);if(pdw_snapshot[31:0]!=1||pdw_snapshot[63:32]!=0)$fatal(1,"expected one PDW without drops");
+  pdw_token=pdw_snapshot[127:64];payload=0;payload[63:0]=pdw_token+1;command(17,2,4);
+  command(16,0,0);read_word(GW_RESULT+16);if(value!=32'h00010001)$fatal(1,"PDW peek changed after wrong token");
+  command(16,0,0);read_word(GW_RESULT+8);if(value!=pdw_token[31:0])$fatal(1,"repeated PEEK changed token");
   command(CMD_STATUS,0,0);read_word(GW_RESULT+16);if(value!=7)$fatal(1,"snapshot config");
   for(integer w=0;w<116;w=w+1)begin read_word(GW_RESULT+4*w);snapshot[w*32+:32]=value;end
   if(snapshot[255:240]!=1)$fatal(1,"expected group 1 bank 0 lease");
@@ -141,6 +148,10 @@ module tb_calibrator_instrument_core;
   binding_valid=0;#1;if(native_dac_data!=0)$fatal(1,"binding loss zero code");
   command(CMD_STOP,0,0);if(run_enable)$fatal(1,"STOP not applied");
   command(CMD_RESET,0,0);if(dut.d_owner_epoch!=1||dut.d_replay_leased!=0)$fatal(1,"reset did not drain lease");
+  command(16,0,0);read_word(GW_RESULT);if(value!=1)$fatal(1,"soft reset lost historical PDW");
+  read_word(GW_RESULT+32);if(value!=0)$fatal(1,"historical PDW epoch rewritten by reset");
+  payload=0;payload[63:0]=pdw_token;command(17,2,0);command(17,2,4);
+  command(16,0,0);read_word(GW_RESULT);if(value!=0)$fatal(1,"PDW not popped");
   $fclose(frame_file);$fclose(sample_file);
   $display("PASS instrument core PS configuration ARM native ADC FIR detector capture RAW replay TX profiles UNBOUND STOP RESET bytes=%0d",bytes_seen);$finish;
  end

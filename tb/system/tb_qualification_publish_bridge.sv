@@ -25,6 +25,7 @@ module tb_qualification_publish_bridge;
  wire begin_ready,measurement_ready,noise_ready,event_valid,event_published,event_rejected,begin_rejected,measurement_rejected,noise_rejected,idle;
  wire [255:0] event_key;wire [3:0] event_bank;wire [1023:0] event_header;wire [63:0] event_generation,event_epoch;
  reg [3:0] seen;reg [255:0] held_key;
+ reg [191:0] measurement_peaks=0;wire [511:0] event_stats;wire [191:0] event_peaks;
  qualification_publish_bridge dut(.*);
  task tick;begin @(posedge clk);#1;@(negedge clk);end endtask
  task check(input bit ok,input string msg);if(!ok)$fatal(1,"%s",msg);endtask
@@ -48,14 +49,16 @@ module tb_qualification_publish_bridge;
   measurement_key=begin_key;noise_key=begin_key;measurement_data=0;noise_data=0;
   for(integer c=0;c<6;c=c+1)begin measurement_data[c*46+:46]=400;noise_data[c*32+:32]=25;end
   measurement_data[290:276]=4;measurement_data[299:297]=7;noise_data[197:192]=63;
+  measurement_peaks={6{32'd100+begin_key[31:0]}};
   measurement_valid=1;noise_valid=1;tick();measurement_valid=0;noise_valid=0;
  end endtask
  initial begin
  prepare();begin_valid=1;tick();begin_valid=0;
  // Caller map and header changes after begin may not rewrite this transaction.
  headers=0;bank_generations=0;bank_ids=63;config_data=0;
- send_results();while(!event_valid)tick();
+ send_results();measurement_peaks=0;measurement_data=0;while(!event_valid)tick();
  check(event_published&&!event_rejected&&event_bank==4&&frozen==16'h0010,"actual qualification selected MID and published owner");
+ check(event_stats[45:0]==400&&event_peaks[31:0]==223,"retained measurement and peak after source changes");
  check(event_header==1024'hbbb&&event_generation==1&&event_epoch==owner_epoch&&event_key==begin_key,"frozen selected header and generation");
  repeat(5)begin tick();check(event_valid&&event_header==1024'hbbb&&!idle,"event held with map ownership");end
  begin_valid=1;tick();begin_valid=0;check(begin_rejected,"published pending event identity cannot be reused");
@@ -82,6 +85,7 @@ module tb_qualification_publish_bridge;
  for(integer k=0;k<4;k=k+1)begin
   while(!event_valid)tick();
   check(event_rejected&&!event_published&&event_key[63:0]<4,"each stale map returns disposition");
+  check(event_peaks[31:0]==100+event_key[31:0],"out of order peak identity");
   check(!seen[event_key[1:0]],"no duplicate completion");seen[event_key[1:0]]=1;
   event_ready=1;tick();event_ready=0;
  end

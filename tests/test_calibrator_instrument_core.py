@@ -26,3 +26,12 @@ with tempfile.TemporaryDirectory() as tmp:
     assert samples==[observed[seq][1] for seq in range(onset-3,stop)]
     assert all(observed[seq][0]==header['gsc_first']+4*i for i,seq in enumerate(range(onset-3,stop)))
     print('PASS independent RAW decode CRC and every real FIR sample / GSC / PRE-body-POST boundary')
+    pdw_words=[int(x,16) for x in (directory/'instrument_pdw.hex').read_text().split()]
+    assert len(pdw_words)==20 and pdw_words[:2]==[1,0]
+    pdw=b''.join(x.to_bytes(4,'little') for x in pdw_words[4:])
+    tag,flags,pid,epoch,cfg,toa,width,peak,energy,selected=struct.unpack_from('<IIQQIQIIQI',pdw)
+    powers=[(hi*hi+hq*hq,vi*vi+vq*vq) for hi,hq,vi,vq in samples]
+    assert (tag,flags,pid,cfg,toa,width,selected)==(65537,31,header['pulse_id'],header['config_id'],gsc,(len(samples)-3-4)*4,header['range_id'])
+    assert epoch==0 and peak==max(max(v) for v in powers) and energy==sum(sum(v) for v in powers)
+    assert pdw[56:]==bytes(8)
+    print('PASS independent PDW decode and actual RAW H/V energy peak onset width identity')

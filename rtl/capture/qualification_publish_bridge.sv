@@ -5,7 +5,8 @@ module qualification_publish_bridge(
  input wire clk,rst,quiesce,begin_valid,want_replay,measurement_valid,noise_valid,event_ready,
  input wire [255:0] begin_key,measurement_key,noise_key,
  input wire [1023:0] config_data,
- input wire [511:0] measurement_data,
+ input wire [511:0] measurement_data,input wire [191:0] measurement_peaks,
+ output reg [511:0] event_stats,output reg [191:0] event_peaks,
  input wire [255:0] noise_data,
  input wire [5:0] bank_ids,
  input wire [191:0] bank_generations,
@@ -23,7 +24,7 @@ module qualification_publish_bridge(
  output wire [15:0] stats_valid,stats_good,publish,replay_pin,discard_pending,
  output wire [1023:0] stats_generation
 );
- reg [3:0] used;
+ reg [3:0] used,has_stats;reg [511:0] saved_stats[0:3];reg [191:0] saved_peaks[0:3];
  reg [255:0] keys[0:3];reg [5:0] ids[0:3];
  reg [191:0] gens[0:3];reg [3071:0] saved_headers[0:3];reg replay[0:3];
  reg active,event_held;reg [1:0] active_slot;
@@ -68,19 +69,27 @@ module qualification_publish_bridge(
   .discard_pending(discard_pending),.stats_generation(stats_generation));
  always @(posedge clk)begin
   if(rst)begin
-   used<=0;active<=0;active_slot<=0;event_held<=0;begin_rejected<=0;
+   used<=0;has_stats<=0;event_stats<=0;event_peaks<=0;active<=0;active_slot<=0;event_held<=0;begin_rejected<=0;
    event_published<=0;event_rejected<=0;event_key<=0;event_bank<=0;
    event_header<=0;event_generation<=0;event_epoch<=0;
-   for(i=0;i<4;i=i+1)begin keys[i]<=0;ids[i]<=0;gens[i]<=0;saved_headers[i]<=0;replay[i]<=0;end
+   for(i=0;i<4;i=i+1)begin saved_stats[i]<=0;saved_peaks[i]<=0;keys[i]<=0;ids[i]<=0;gens[i]<=0;saved_headers[i]<=0;replay[i]<=0;end
   end else begin
    begin_rejected<=begin_valid&&!begin_ready;
    if(begin_valid&&begin_ready)begin
+    has_stats[free_slot]<=0;saved_stats[free_slot]<=0;saved_peaks[free_slot]<=0;
     used[free_slot]<=1;keys[free_slot]<=begin_key;ids[free_slot]<=bank_ids;
     gens[free_slot]<=bank_generations;saved_headers[free_slot]<=headers;replay[free_slot]<=want_replay;
    end
+   // Freeze the first accepted scanner summary by full identity, independent
+   // of qualification pipeline order and subsequent changes at its input.
+   if(measurement_valid&&measurement_ready)for(integer m=0;m<4;m=m+1)
+    if(used[m]&&!has_stats[m]&&keys[m]==measurement_key)begin
+     saved_stats[m]<=measurement_data;saved_peaks[m]<=measurement_peaks;has_stats[m]<=1;
+    end
    if(commit_valid&&commit_ready)begin active<=1;active_slot<=match_slot;end
    // Invalid identity can reject immediately, without the commit's done pulse.
    if(active&&(commit_done||commit_rejected))begin
+    event_stats<=saved_stats[active_slot];event_peaks<=saved_peaks[active_slot];
     active<=0;event_held<=1;event_key<=keys[active_slot];
     event_epoch<=keys[active_slot][191:128];event_rejected<=commit_rejected;
     event_published<=commit_published;event_bank<=0;event_header<=0;event_generation<=0;

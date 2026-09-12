@@ -227,10 +227,21 @@
     "PRODUCER_ERROR_POP": {
       "opcode": 15,
       "words": 0
+    },
+    "PDW_PEEK": {
+      "opcode": 16,
+      "words": 0,
+      "result_words": 20
+    },
+    "PDW_POP": {
+      "opcode": 17,
+      "words": 2
     }
   },
   "config_policy": "atomic only when disarmed, RF disarmed and all consumers/producer contexts drained, no frozen or pending banks; padding must be zero",
   "binding_policy": "clock/time/MTS/map/binding/interlock dwell and normalized feedback remain trusted external inputs",
   "result_policy": "command success after actual module response; REPLAY success is queue acceptance, later reject held until REJECT_POP; STATUS is coherent RF snapshot",
-  "awg_commit_policy": "A loaded COMMIT returns BUSY without dispatch or table loss unless acquisition is stopped, active mode is MUTE, replay and generated sources are drained and detector is inactive. This prevents single-inflight gateway deadlock behind a future STOP. Unloaded COMMIT still returns REJECTED from the AWG core. BEGIN and WRITE may target the inactive bank while RF runs."
+  "awg_commit_policy": "A loaded COMMIT returns BUSY without dispatch or table loss unless acquisition is stopped, active mode is MUTE, replay and generated sources are drained and detector is inactive. This prevents single-inflight gateway deadlock behind a future STOP. Unloaded COMMIT still returns REJECTED from the AWG core. BEGIN and WRITE may target the inactive bank while RF runs.",
+  "pdw_policy": "PEEK returns 20 words: count32,dropped32,head_token64,CAPTURE_PDW512. POP requires exact head_token64 or returns REJECTED. Queue full drops only PDW with saturating count; hard reset flushes, soft capture reset preserves events. No DMA completion or RF emission is implied. Tokens never wrap: exhaustion drops new PDW until hard reset.",
+  "pdw_queue_depth": 16
 }

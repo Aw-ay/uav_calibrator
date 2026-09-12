@@ -35,6 +35,13 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
  always @(posedge rf_clk)if(rst)native_seq<=0;else native_seq<=native_seq+1'b1;
  gsc_timebase timebase(.rf_clk(rf_clk),.rst_n(rst_n),.gsc(gsc));
  command_gateway_axi gateway(.*);
+ wire pdw_valid;wire [255:0] pdw_key;wire [1023:0] pdw_header;wire [511:0] pdw_stats;wire [191:0] pdw_peaks;
+ wire [31:0] pdw_count,pdw_dropped;wire [63:0] pdw_token;wire [511:0] pdw_data;wire pdw_pop_ok;
+ qualified_pdw_queue #(.PRE_SAMPLES(PRE_SAMPLES),.ADDR_W($clog2(PDW_QUEUE_DEPTH))) pdw_queue(
+  .clk(rf_clk),.rst(rst),.in_valid(pdw_valid),.event_key(pdw_key),.event_header(pdw_header),.event_stats(pdw_stats),.event_peaks(pdw_peaks),
+  .post_samples(config_image[CFG_POST_SAMPLES_BIT+:CFG_POST_SAMPLES_WIDTH]),
+  .pop_valid(action_valid&&action_opcode==instrument_control_pkg::CMD_PDW_POP),.pop_token(action_payload[63:0]),
+  .count(pdw_count),.dropped(pdw_dropped),.head_token(pdw_token),.head_data(pdw_data),.pop_ok(pdw_pop_ok));
  wire [15:0] d_replay_leased;
  wire  d_onset_ready;
  wire  d_onset_accepted;
@@ -257,6 +264,7 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
   .context_error_count(d_context_error_count),
   .header_error(d_header_error),
   .statistics_error(d_statistics_error),
+  .pdw_valid(pdw_valid),.pdw_key(pdw_key),.pdw_header(pdw_header),.pdw_stats(pdw_stats),.pdw_peaks(pdw_peaks),
   .disposition_valid(d_disposition_valid),
   .descriptor_accepted(d_descriptor_accepted),
   .disposition_rejected(d_disposition_rejected),
@@ -485,6 +493,10 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
     outcome_words=1;outcome_payload[3:0]={d_t_awg_ctrl_active_valid,d_t_awg_ctrl_loaded,d_t_awg_ctrl_done_op};
    end
    instrument_control_pkg::CMD_AWG_PLAY:begin outcome_valid=d_t_awg_play_accepted||d_t_awg_play_rejected;outcome_code=d_t_awg_play_rejected?8'd4:8'd0;end
+   instrument_control_pkg::CMD_PDW_PEEK:begin
+    outcome_valid=action_valid;outcome_words=CMD_PDW_PEEK_RESULT_WORDS;outcome_payload[639:0]={pdw_data,pdw_token,pdw_dropped,pdw_count};
+   end
+   instrument_control_pkg::CMD_PDW_POP:begin outcome_valid=action_valid;outcome_code=pdw_pop_ok?8'd0:8'd4;end
    instrument_control_pkg::CMD_STATUS:begin
     outcome_valid=action_valid;outcome_words=116;
     outcome_payload[63:0]=gsc;outcome_payload[127:64]=d_owner_epoch;
