@@ -10,6 +10,11 @@ package command_gateway_pkg;
  localparam [31:0] GW_RESULT_LENGTH=32'h0000401c;
  localparam [31:0] GW_PAYLOAD=32'h00004400;
  localparam [31:0] GW_RESULT=32'h00004800;
+ localparam [31:0] GW_IRQ_ENABLE=32'h00004020;
+ localparam [31:0] GW_IRQ_STATUS=32'h00004024;
+ localparam [31:0] GW_IRQ_COMMAND_DONE=32'h00000001;
+ localparam [31:0] GW_IRQ_PDW_AVAILABLE=32'h00000002;
+ localparam [31:0] GW_IRQ_RESET_ENABLE=32'h00000001;
  localparam [31:0] GW_ID_VALUE=32'h434d4431;
  localparam integer GW_WORDS=256;
 endpackage

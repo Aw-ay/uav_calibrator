@@ -120,6 +120,8 @@ module tb_calibrator_instrument_core;
   repeat(100)@(negedge rf_clk);adc_level(1000);repeat(80)@(negedge rf_clk);adc_level(10);
   wait(dut.d_fifo_occupancy==4);repeat(100)@(negedge rf_clk);
   if(completions!=0)$fatal(1,"stalled RAW retired early");
+  write_word(32'h4020,2,0);write_word(GW_STATUS,2,0);
+  repeat(6)@(negedge ctrl_clk);if(!irq)$fatal(1,"actual qualified PDW interrupt missing while RAW stalled");
   m_axis_tready=1;wait(frames==1&&completions==1);repeat(20)@(negedge rf_clk);
   if(onsets!=1||ends!=1||dut.d_replay_leased==0||dut.source_dropped!=0)$fatal(1,"production or lease");
   command(16,0,0);read_word(GW_RESULT_LENGTH);if(value!=20)$fatal(1,"PDW result length");
@@ -149,11 +151,13 @@ module tb_calibrator_instrument_core;
   command(CMD_STOP,0,0);if(run_enable)$fatal(1,"STOP not applied");
   command(CMD_RESET,0,0);if(dut.d_owner_epoch!=1||dut.d_replay_leased!=0)$fatal(1,"reset did not drain lease");
   command(16,0,0);read_word(GW_RESULT);if(value!=1)$fatal(1,"soft reset lost historical PDW");
+  if(!irq)$fatal(1,"soft reset lost PDW IRQ");
   read_word(GW_RESULT+32);if(value!=0)$fatal(1,"historical PDW epoch rewritten by reset");
   payload=0;payload[63:0]=pdw_token;command(17,2,0);command(17,2,4);
   command(16,0,0);read_word(GW_RESULT);if(value!=0)$fatal(1,"PDW not popped");
+  repeat(6)@(negedge ctrl_clk);if(irq)$fatal(1,"PDW IRQ remains after final POP with DONE masked");
   $fclose(frame_file);$fclose(sample_file);
-  $display("PASS instrument core PS configuration ARM native ADC FIR detector capture RAW replay TX profiles UNBOUND STOP RESET bytes=%0d",bytes_seen);$finish;
+  $display("PASS instrument core PS configuration ARM native ADC FIR detector capture RAW replay TX profiles UNBOUND STOP RESET PDW_IRQ bytes=%0d",bytes_seen);$finish;
  end
  initial begin #100000;$fatal(1,"timeout opcode=%0d wait=%b onsets=%0d ends=%0d frozen=%h error=%d",dut.action_opcode,dut.executor.waiting,onsets,ends,dut.d_frozen,dut.d_record_errors);end
 endmodule

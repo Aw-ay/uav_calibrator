@@ -34,6 +34,10 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
  reg [63:0] native_seq;
  always @(posedge rf_clk)if(rst)native_seq<=0;else native_seq<=native_seq+1'b1;
  gsc_timebase timebase(.rf_clk(rf_clk),.rst_n(rst_n),.gsc(gsc));
+ reg pdw_available_rf;
+ always @(posedge rf_clk or negedge rst_n)begin
+  if(!rst_n)pdw_available_rf<=0;else pdw_available_rf<=pdw_count!=0;
+ end
  command_gateway_axi gateway(.*);
  wire pdw_valid;wire [255:0] pdw_key;wire [1023:0] pdw_header;wire [511:0] pdw_stats;wire [191:0] pdw_peaks;
  wire [31:0] pdw_count,pdw_dropped;wire [63:0] pdw_token;wire [511:0] pdw_data;wire pdw_pop_ok;

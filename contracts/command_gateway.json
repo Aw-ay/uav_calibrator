@@ -11,11 +11,13 @@
     "DONE_SEQUENCE": 16408,
     "RESULT_LENGTH": 16412,
     "PAYLOAD": 17408,
-    "RESULT": 18432
+    "RESULT": 18432,
+    "IRQ_ENABLE": 16416,
+    "IRQ_STATUS": 16420
   },
   "id": 1129137201,
   "crc": "CRC32C reflected0x82f63b78 seedFFFFFFFF final xorFFFFFFFF; header OP_LENGTH then SEQUENCE then length little-endian payload words",
-  "status": "BUSY bit0,DONE bit1,ERROR bit2,code bits15:8; DONE_SEQUENCE/result frozen until next completed command; write STATUS=2 clears DONE/IRQ without altering result; SUBMIT clears DONE",
+  "status": "BUSY bit0,DONE bit1,ERROR bit2,code bits15:8; DONE_SEQUENCE/result frozen until next completed command; write STATUS=2 clears command DONE (other IRQ sources unaffected) without altering result; SUBMIT clears DONE",
   "reset": "coordinated all-domain assertion, drops pending transactions; software must reconcile and serialize calls",
   "codes": {
     "OK": 0,
@@ -26,5 +28,11 @@
     "UNBOUND": 5
   },
   "max_inflight": 1,
-  "scope": "PS transaction transport; board binding never conveyed as authorization in this payload"
+  "scope": "PS transaction transport; board binding never conveyed as authorization in this payload",
+  "irq_bits": {
+    "COMMAND_DONE": 1,
+    "PDW_AVAILABLE": 2
+  },
+  "irq_reset_enable": 1,
+  "irq_policy": "IRQ_STATUS raw read-only bits; IRQ line OR of enabled raw sources. IRQ_ENABLE honors byte strobes and rejects set reserved bits. Reset enable=COMMAND_DONE for compatibility. STATUS=2 clears command DONE only; PDW_AVAILABLE is synchronized registered queue-nonempty level, deasserted after queue drains; PEEK/submission/soft capture reset do not clear it. PDW short levels already consumed may not reach PS; not an event counter or RF/DMA completion proof."
 }

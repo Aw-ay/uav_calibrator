@@ -5,6 +5,7 @@ module tb_command_gateway;
  reg [31:0] s_axi_awaddr=0,s_axi_wdata=0,s_axi_araddr=0;reg [3:0] s_axi_wstrb=15;
  reg s_axi_awvalid=0,s_axi_wvalid=0,s_axi_bready=1,s_axi_arvalid=0,s_axi_rready=1;
  wire s_axi_awready,s_axi_wready,s_axi_bvalid,s_axi_arready,s_axi_rvalid;wire [1:0] s_axi_bresp,s_axi_rresp;wire [31:0] s_axi_rdata;
+ reg pdw_available_rf=0;
  wire cmd_valid,irq,result_ready;reg cmd_ready=0,result_valid=0;wire [15:0] cmd_opcode,cmd_words;wire [31:0] cmd_sequence;wire [8191:0] cmd_payload;
  reg [7:0] result_code=0;reg [15:0] result_words=1;reg [8191:0] result_payload=0;
  command_gateway_axi dut(.*);
@@ -24,6 +25,18 @@ module tb_command_gateway;
  integer seen=0;always @(posedge rf_clk)if(cmd_valid&&cmd_ready)seen=seen+1;
  initial begin
   repeat(4)@(negedge ctrl_clk);rst_n=1;
+  read_word(32'h4020);if(value!=1)$fatal(1,"legacy IRQ enable reset");
+  pdw_available_rf=1;repeat(5)@(negedge ctrl_clk);
+  read_word(32'h4024);if(value!=2||irq)$fatal(1,"raw PDW masked by default");
+  write_word(32'h4020,2,0);if(!irq)$fatal(1,"enable existing PDW level");
+  write_word(GW_STATUS,2,0);if(!irq)$fatal(1,"DONE clear lost PDW level");
+  write_word(32'h4024,2,2);write_word(32'h4020,4,2);
+  s_axi_wstrb=2;write_word(32'h4020,0,0);s_axi_wstrb=15;
+  read_word(32'h4020);if(value!=2)$fatal(1,"byte mask corrupted IRQ enable");
+  write_word(32'h4020,0,0);if(irq)$fatal(1,"mask PDW");
+  write_word(32'h4020,3,0);if(!irq)$fatal(1,"unmask PDW");
+  pdw_available_rf=0;repeat(5)@(negedge ctrl_clk);if(irq)$fatal(1,"empty PDW deassert");
+  write_word(32'h4020,1,0);
   write_word(GW_OP_LENGTH,32'h00010009,0);write_word(GW_SEQUENCE,55,0);write_word(GW_PAYLOAD,32'h12345678,0);
   write_word(GW_CRC32C,~crc_word(crc_word(crc_word(32'hffffffff,32'h00010009),55),32'h12345678),0);
   write_word(GW_SUBMIT,1,0);wait(cmd_valid);
@@ -36,7 +49,16 @@ module tb_command_gateway;
   wait(irq);read_word(GW_DONE_SEQUENCE);if(value!=55||seen!=1)$fatal(1,"response identity");read_word(GW_RESULT);if(value!=32'hdeadbeef)$fatal(1,"response payload");
   write_word(GW_CRC32C,0,0);write_word(GW_SUBMIT,1,0);wait(irq);read_word(GW_STATUS);if(value[15:8]!=1||value[0]||seen!=1)$fatal(1,"CRC reject before RF execution");
   write_word(GW_OP_LENGTH,32'h01010001,0);write_word(GW_SUBMIT,1,2);write_word(GW_RESULT,0,2);
-  $display("PASS command gateway AXI frozen CRC request execution response identity bounds");$finish;
+  write_word(32'h4020,0,0);if(irq)$fatal(1,"DONE mask");
+  read_word(32'h4024);if(value!=1)$fatal(1,"masked DONE raw status");
+  pdw_available_rf=1;repeat(5)@(negedge ctrl_clk);
+  read_word(32'h4024);if(value!=3)$fatal(1,"simultaneous sources");
+  write_word(32'h4020,3,0);write_word(GW_STATUS,2,0);
+  read_word(32'h4024);if(value!=2||!irq)$fatal(1,"ack only DONE");
+  rst_n=0;#1;if(irq)$fatal(1,"hard reset IRQ");
+  pdw_available_rf=0;repeat(3)@(negedge ctrl_clk);rst_n=1;
+  read_word(32'h4020);if(value!=1||irq)$fatal(1,"hard reset enable");
+  $display("PASS command gateway AXI frozen CRC request execution response identity bounds PDW_IRQ mask raw reset");$finish;
  end
  initial begin #100000;$fatal(1,"timeout");end
 endmodule

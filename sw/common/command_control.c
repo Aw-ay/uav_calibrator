@@ -32,3 +32,15 @@ cal_command_status cal_command_poll(const cal_command_io *io,uint32_t seq,uint32
  result->words=(uint16_t)words;result->code=(uint8_t)(status>>8);
  return CAL_CMD_OK;
 }
+
+cal_command_status cal_command_irq_enable(const cal_command_io *io,uint32_t mask){
+ if(!valid_io(io)||(mask&~(CAL_GW_IRQ_COMMAND_DONE|CAL_GW_IRQ_PDW_AVAILABLE)))return CAL_CMD_ARGUMENT;
+ return io->write32(io->context,CAL_GW_IRQ_ENABLE,mask)?CAL_CMD_IO:CAL_CMD_OK;
+}
+cal_command_status cal_command_irq_status(const cal_command_io *io,uint32_t *out){
+ uint32_t value;
+ if(!valid_io(io)||!out)return CAL_CMD_ARGUMENT;
+ if(io->read32(io->context,CAL_GW_IRQ_STATUS,&value))return CAL_CMD_IO;
+ if(value&~(CAL_GW_IRQ_COMMAND_DONE|CAL_GW_IRQ_PDW_AVAILABLE))return CAL_CMD_PROTOCOL;
+ *out=value;return CAL_CMD_OK;
+}

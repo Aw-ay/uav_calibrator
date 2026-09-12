@@ -22,5 +22,13 @@ int main(void){
  fail_address=CAL_GW_SUBMIT;assert(cal_command_begin(&io,3,0,57,0)==CAL_CMD_SUBMIT_UNKNOWN);assert(submits==2);
  fail_address=CAL_GW_PAYLOAD;assert(cal_command_begin(&io,1,1,58,p)==CAL_CMD_IO);assert(submits==2);
  assert(cal_command_begin(&io,1,257,58,p)==CAL_CMD_ARGUMENT);
+ fail_address=UINT32_MAX;
+ assert(cal_command_irq_enable(&io,3)==CAL_CMD_OK);assert(mem[0x4020/4]==3);
+ assert(cal_command_irq_enable(&io,4)==CAL_CMD_ARGUMENT);assert(mem[0x4020/4]==3);
+ mem[0x4024/4]=2;assert(cal_command_irq_status(&io,&out[0])==CAL_CMD_OK&&out[0]==2);
+ mem[0x4024/4]=4;assert(cal_command_irq_status(&io,&out[0])==CAL_CMD_PROTOCOL&&out[0]==2);
+ fail_address=0x4024;assert(cal_command_irq_status(&io,&out[0])==CAL_CMD_IO&&out[0]==2);
+ fail_address=0x4020;assert(cal_command_irq_enable(&io,0)==CAL_CMD_IO);
+ assert(cal_command_irq_status(&io,0)==CAL_CMD_ARGUMENT);
  puts("PASS command control ordered submit busy identity capacity RF result ambiguous write no retry");return 0;
 }

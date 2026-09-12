@@ -96,3 +96,14 @@ C 接口 `pdw_control.h/.c` 提供 PEEK/POP 提交和结构化快照解码，复
 `cal_event_decode` 检查 ABI/保留字/有效位。单一软件所有者完成 begin → poll → decode
 → 处理事件 → POP → poll；提交不确定时按原 sequence 查询，禁止自动重发。
 这些 API 已加入 A53 静态库，仍需板级 BSP 提供有序 MMIO 实现。
+
+
+## 第六阶段：PDW 可用电平中断
+
+现有 `irq` 输出在 ctrl 时钟域合并两个可屏蔽源。`0x4020 IRQ_ENABLE` 可读写，bit0=COMMAND_DONE、bit1=PDW_AVAILABLE，硬复位值1；保留位写1返回 SLVERR，字节选通有效。`0x4024 IRQ_STATUS` 只读，返回未屏蔽的原始状态。掩码/位定义由 command_gateway.json 同源生成到 SV 和 C。
+
+PDW 队列非空在 RF 域寄存，再经两级 ASYNC_REG 同步到 ctrl 域；没有跨域采样多位计数。命令完成与 PDW 可用可以同时置位。写原 STATUS=2 只清命令 DONE；PEEK、SUBMIT、屏蔽中断和采集软复位均不清 PDW 队列。PS 用 PEEK/精确令牌 POP 取空后，PDW 电平经过同步延迟解除。它不是边沿计数器；已迅速被软件取空的短暂非空状态不保证产生中断，也没有尚未消费的数据因此丢失。队列满的丢弃数仍从 PEEK 获取。
+
+C 接口 `cal_command_irq_enable(io, mask)` 配置掩码，`cal_command_irq_status(io, &raw)` 读取原始状态；非法参数、保留位和 I/O 错误显式返回，失败时不改输出。推荐使能 PDW 后，在软件调度循环中读取状态、串行完成 PEEK/POP，直到队列为空；网关忙时等待已有命令完成，不从中断上下文重入事务。实际 GIC 路由/BSP、中断服务例程与板级验证仍待真实平台集成。
+
+该通知只证明数字队列可读，不代表 DMA 已写入 DDR 或 RF 已发射。旧 CSR IRQ 地址不在本阶段接入。

@@ -38,7 +38,7 @@ try:
     library = OUT/'libcalibrator_receive.a'
     run([BIN/'aarch64-none-elf-ar.exe', 'rcs', library, *objects])
     symbols = run([BIN/'aarch64-none-elf-nm.exe', '-g', '--defined-only', library])
-    for symbol in ['cal_command_begin','cal_command_poll','cal_dds_begin','cal_awg_load_begin','cal_awg_write','cal_awg_commit','cal_awg_play','cal_awg_crc32c','cal_pdw_peek_begin','cal_pdw_pop_begin','cal_pdw_snapshot_decode']:
+    for symbol in ['cal_command_irq_enable','cal_command_irq_status','cal_command_begin','cal_command_poll','cal_dds_begin','cal_awg_load_begin','cal_awg_write','cal_awg_commit','cal_awg_play','cal_awg_crc32c','cal_pdw_peek_begin','cal_pdw_pop_begin','cal_pdw_snapshot_decode']:
         if not any(line.split()[-2:] == ['T', symbol] for line in symbols.splitlines()):
             raise RuntimeError('Missing A53 archive API: ' + symbol)
     status = 'PASS'
