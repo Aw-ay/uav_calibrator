@@ -7,6 +7,8 @@ module csr_control_axi #(
  input wire [31:0] s_axi_araddr,input wire s_axi_arvalid,output wire s_axi_arready,
  output reg [31:0] s_axi_rdata,output reg [1:0] s_axi_rresp,output reg s_axi_rvalid,input wire s_axi_rready,
  input wire rf_safe_boundary,calibration_valid,input wire [31:0] fault_set,
+ input wire rf_event_valid,input wire [511:0] rf_event_data,
+ output wire rf_event_ready,output wire [31:0] rf_event_dropped,
  output reg [31:0] active_mode,active_config_id,active_pre,active_post,active_max_pulse,active_eop_hold,active_detector_latency,
  output reg armed,output wire tx_enable,irq,output wire [63:0] gsc);
  import calibrator_contract_pkg::*;
@@ -22,6 +24,14 @@ module csr_control_axi #(
  wire [31:0] mask={{8{wstrb[3]}},{8{wstrb[2]}},{8{wstrb[1]}},{8{wstrb[0]}}};
  wire [31:0] action=wdata&mask;
  wire execute=aw_full&&w_full&&!s_axi_bvalid;
+ wire [31:0] event_count,event_word;
+ wire event_latched;
+ wire event_latch=execute&&awaddr==REG_EVENT_LATCH&&action==1&&event_count!=0;
+ wire event_pop=execute&&awaddr==REG_EVENT_POP&&action==1&&event_latched;
+ event_mailbox events(.src_clk(rf_clk),.ctrl_clk(ctrl_clk),.rst_n(rst_n),
+  .event_valid(rf_event_valid),.event_data(rf_event_data),.event_ready(rf_event_ready),.dropped_events(rf_event_dropped),
+  .latch_head(event_latch),.pop(event_pop),.word_index(s_axi_araddr[5:2]),.word_data(event_word),
+  .event_count(event_count),.latched_valid(event_latched),.command_rejected());
  wire [31:0] clear_faults=(execute&&awaddr==REG_FAULT_STATUS)?action:0;
  assign s_axi_awready=!aw_full&&!s_axi_bvalid;
  assign s_axi_wready=!w_full&&!s_axi_bvalid;
@@ -55,6 +65,8 @@ module csr_control_axi #(
    if(execute)begin
     aw_full<=0;w_full<=0;s_axi_bvalid<=1;s_axi_bresp<=0;
     case(awaddr)
+     REG_EVENT_LATCH:if(action!=1||event_count==0)s_axi_bresp<=2;
+     REG_EVENT_POP:if(action!=1||!event_latched)s_axi_bresp<=2;
      REG_FAULT_STATUS:begin end
      REG_IRQ_ENABLE:irq_enable<=merge(irq_enable);
      REG_SHADOW_MODE:shadow_mode<=merge(shadow_mode);
@@ -81,6 +93,7 @@ module csr_control_axi #(
    if(s_axi_arvalid&&s_axi_arready)begin
     s_axi_rvalid<=1;s_axi_rresp<=0;s_axi_rdata<=0;
     case(s_axi_araddr)
+     REG_EVENT_COUNT:s_axi_rdata<=event_count;
      REG_IP_ID:s_axi_rdata<=REG_IP_ID_RESET;
      REG_ABI_VERSION:s_axi_rdata<=REG_ABI_VERSION_RESET;
      REG_BUILD_ID:s_axi_rdata<=BUILD_ID;
@@ -103,7 +116,10 @@ module csr_control_axi #(
      REG_GSC_SNAPSHOT_HI:s_axi_rdata<=snapshot_value[63:32];
      REG_EPOCH_ID,REG_TIME_QUALITY:s_axi_rdata<=0;
      REG_GSC_STRIDE:s_axi_rdata<=SYS_RATES_GSC_INCREMENT_PER_RF_CLOCK;
-     default:s_axi_rresp<=2;
+     default:begin
+      if(s_axi_araddr>=REG_EVENT_WORD_0&&s_axi_araddr<=REG_EVENT_WORD_15&&s_axi_araddr[1:0]==0&&event_latched)s_axi_rdata<=event_word;
+      else s_axi_rresp<=2;
+     end
     endcase
    end
   end

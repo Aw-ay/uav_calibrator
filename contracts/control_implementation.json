@@ -62,9 +62,28 @@
     "POST_SAMPLES_SHADOW",
     "MAX_PULSE_SAMPLES_SHADOW",
     "EOP_HOLD_SAMPLES_SHADOW",
-    "DETECTOR_LATENCY_BOUND_SHADOW"
+    "DETECTOR_LATENCY_BOUND_SHADOW",
+    "EVENT_COUNT",
+    "EVENT_LATCH",
+    "EVENT_POP",
+    "EVENT_WORD_0",
+    "EVENT_WORD_1",
+    "EVENT_WORD_2",
+    "EVENT_WORD_3",
+    "EVENT_WORD_4",
+    "EVENT_WORD_5",
+    "EVENT_WORD_6",
+    "EVENT_WORD_7",
+    "EVENT_WORD_8",
+    "EVENT_WORD_9",
+    "EVENT_WORD_10",
+    "EVENT_WORD_11",
+    "EVENT_WORD_12",
+    "EVENT_WORD_13",
+    "EVENT_WORD_14",
+    "EVENT_WORD_15"
   ],
-  "unsupported_semantics": "Every other read/write, WO read, RO write and unaligned address returns SLVERR, including event/bank/DSP/TX features. CAPABILITIES is zero because release has no frozen bit meanings.",
+  "unsupported_semantics": "Every other read/write, WO read, RO write and unaligned address returns SLVERR, including bank/DSP/TX control not explicitly implemented. CAPABILITIES stays zero: no allocated release bit meanings.",
   "time_semantics": "Free-running unsigned GSC64 increments contract stride 4 per 125 MHz RF clock. Reset starts new boot-local generation at zero; EPOCH_ID=0 and TIME_QUALITY=0 mean externally unqualified. No PPS or persistent epoch implemented.",
   "cdc_reset_contract": "Both domains must observe coordinated reset assertion; integration supplies synchronous deassertion per clock. Independent one-domain reset is unsupported. Payload is stable throughout toggle request/ack. ASYNC_REG only marks two-flop control synchronizers; physical bundled-data timing/CDC closure remains required.",
   "clock_domains": {
@@ -75,7 +94,7 @@
     "No TX enable: output hard zero",
     "External calibration_valid is integration evidence, not a software bypass; calibration engine absent",
     "Window check only covers pre+post+max<=16384; system detector-history qualification still external",
-    "No events generated or acknowledged",
     "No hardware synthesis timing or board validation claimed"
-  ]
+  ],
+  "event_semantics": "RF-domain512bit attempts pass through CDC mailbox to bounded ctrl queue(default16). EVENT_LATCH action1 snapshots nonempty head; EVENT_WORD0..15 read stable snapshot; EVENT_POP action1 removes only latched head. Invalid commands/empty/unlatched reads SLVERR. RF drop counter requires CDC snapshot before software exposure; not read asynchronously as DROP_EVENT."
 }

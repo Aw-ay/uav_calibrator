@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "kind": "CAPTURE_PDW",
+  "tag": 65537,
+  "bytes": 64,
+  "byte_order": "little",
+  "fields": [
+    ["tag", 0, 4], ["flags", 4, 4], ["pulse_id", 8, 8],
+    ["owner_epoch", 16, 8], ["config_id", 24, 4], ["toa_gsc", 28, 8],
+    ["width_ticks", 36, 4], ["peak_power", 40, 4], ["energy_sum", 44, 8],
+    ["selected_range", 52, 4], ["reserved", 56, 8]
+  ],
+  "valid_bits": {"toa": 0, "width": 1, "peak": 2, "energy": 3, "selected": 4},
+  "semantics": "Coarse capture ToA and PW in 500 MHz GSC ticks. Peak=max(H,V power), energy=sum(H,V energies) for selected range, never a host fine estimate. Unknown measurements zero with valid bit clear; unknown selected_range=0xffffffff. Reserved bytes zero. Config_id uses existing u32 ABI."
+}

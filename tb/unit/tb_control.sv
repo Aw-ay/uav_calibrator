@@ -10,6 +10,8 @@ wire [1:0] s_axi_bresp,s_axi_rresp; wire [31:0] s_axi_rdata;
 reg rf_safe_boundary=0,calibration_valid=0; reg [31:0] fault_set=0;
 wire [31:0] active_mode,active_config_id,active_pre,active_post,active_max_pulse,active_eop_hold,active_detector_latency;
 wire armed,tx_enable,irq; wire [63:0] gsc;
+reg rf_event_valid=0;reg [511:0] rf_event_data=0;
+wire rf_event_ready;wire [31:0] rf_event_dropped;
 csr_control_axi dut(.*);
 task aw(input [31:0] a); begin @(negedge ctrl_clk);s_axi_awaddr=a;s_axi_awvalid=1; do @(posedge ctrl_clk);while(!s_axi_awready);@(negedge ctrl_clk);s_axi_awvalid=0;end endtask
 task wd(input [31:0] d,input [3:0] st);begin @(negedge ctrl_clk);s_axi_wdata=d;s_axi_wstrb=st;s_axi_wvalid=1;do @(posedge ctrl_clk);while(!s_axi_wready);@(negedge ctrl_clk);s_axi_wvalid=0;end endtask
@@ -41,6 +43,13 @@ wr('h10,4,15,0);repeat(15)@(negedge ctrl_clk);saved=dut.snapshot_value;
 if(saved[63:32]!=2)$fatal(1,"rollover snapshot");rd('h210,10,0);rd('h200,saved[31:0],0);rd('h204,saved[63:32],0);
 wr('h810,32,15,0);wr('h108,1,15,0);rf_safe_boundary=1;repeat(15)@(negedge ctrl_clk);rf_safe_boundary=0;
 calibration_valid=1;wr('h10,1,15,0);if(!armed)$fatal(1,"ARM");wr('h10,2,15,0);if(armed)$fatal;
+rd('h300,0,0);wr('h308,1,15,2);
+@(negedge rf_clk);while(!rf_event_ready)@(negedge rf_clk);
+for(integer w=0;w<16;w=w+1)rf_event_data[w*32+:32]=32'h12340000+w;
+rf_event_valid=1;@(negedge rf_clk);rf_event_valid=0;
+repeat(12)@(negedge ctrl_clk);rd('h300,1,0);wr('h304,1,15,0);
+for(integer w=15;w>=0;w=w-1)rd('h340+w*4,32'h12340000+w,0);
+rd('h300,1,0);wr('h308,1,15,0);rd('h300,0,0);rd('h340,0,2);
 wr('h108,1,15,0);rst_n=0;#19;rst_n=1;repeat(15)@(negedge ctrl_clk);rd('h10c,0,0);rd('h110,0,0);
 if(armed||tx_enable)$fatal; $display("PASS control AXI CDC snapshot faults reset");$finish;
 end
