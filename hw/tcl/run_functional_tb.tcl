@@ -51,6 +51,7 @@ foreach stage3_top {tb_command_gateway tb_receive_frontend tb_receive_event_prod
  dict set sources $stage3_top [concat [stage3_sv [file join $root rtl]] [list tb/system/$stage3_top.sv]]
 }
 dict set sources tb_qualified_pdw_queue {rtl/generated/calibrator_contract_pkg.sv rtl/generated/capture_event_pkg.sv rtl/capture/capture_pdw_writer.sv rtl/control/qualified_pdw_queue.sv tb/unit/tb_qualified_pdw_queue.sv}
+dict set sources tb_rf_fault_queue {rtl/generated/instrument_control_pkg.sv rtl/control/rf_fault_queue.sv tb/unit/tb_rf_fault_queue.sv}
 dict set sources tb_source_event_queue {rtl/generated/instrument_control_pkg.sv rtl/control/source_event_queue.sv tb/unit/tb_source_event_queue.sv}
 if {![dict exists $sources $top]} {error "Unsupported top: $top"}
 create_project -force functional_$top [file join $root build functional_tb $top] -part xczu27dr-fsve1156-2-i

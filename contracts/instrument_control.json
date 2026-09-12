@@ -245,6 +245,15 @@
     "SOURCE_EVENT_POP": {
       "opcode": 19,
       "words": 2
+    },
+    "RF_FAULT_PEEK": {
+      "opcode": 20,
+      "words": 0,
+      "result_words": 12
+    },
+    "RF_FAULT_POP": {
+      "opcode": 21,
+      "words": 2
     }
   },
   "config_policy": "atomic only when disarmed, RF disarmed and all consumers/producer contexts drained, no frozen or pending banks; padding must be zero",
@@ -274,5 +283,21 @@
     "accept_observation_gsc64",
     "drain_observation_gsc64"
   ],
-  "source_event_policy": "PEEK14 words: count,dropped,token64,record320; exact-token POP. Observe mutually exclusive actual DDS/AWG acceptance; freeze command sequence and active TX config. Require matching done and actual sources_drained. First cancellation reason retained, within-cycle priority safety then STOP/reset then MUTE. Times denote observation cycles, not source sample or DAC/RF timing; flag1 requires time_valid at both observations and nonwrapping order, otherwise both times zero. Queue full drops event only; saturated drops also count malformed overlapping/invalid acceptance. Hard reset discards active observation and queue; capture soft reset preserves records. Tokens start1, never wrap; exhaustion drops new events. No DAC/FIR tail, RF emission, replay or DMA completion is implied."
+  "source_event_policy": "PEEK14 words: count,dropped,token64,record320; exact-token POP. Observe mutually exclusive actual DDS/AWG acceptance; freeze command sequence and active TX config. Require matching done and actual sources_drained. First cancellation reason retained, within-cycle priority safety then STOP/reset then MUTE. Times denote observation cycles, not source sample or DAC/RF timing; flag1 requires time_valid at both observations and nonwrapping order, otherwise both times zero. Queue full drops event only; saturated drops also count malformed overlapping/invalid acceptance. Hard reset discards active observation and queue; capture soft reset preserves records. Tokens start1, never wrap; exhaustion drops new events. No DAC/FIR tail, RF emission, replay or DMA completion is implied.",
+  "rf_fault_constants": {
+    "RF_FAULT_TAG": 196609,
+    "RF_FAULT_DEPTH": 16,
+    "RF_FAULT_TIME_VALID": 1,
+    "RF_FAULT_CONFIG_VALID": 2
+  },
+  "rf_fault_layout": [
+    "tag32",
+    "flags32",
+    "config_version32",
+    "rf_state32",
+    "normalized_inputs32",
+    "logical_outputs32",
+    "observation_gsc64"
+  ],
+  "rf_fault_policy": "Actual interlock fault_latched rising edges only, independent of source activity. PEEK12 words count/drop/token64/record256; exact-token POP. Flags time1 config2, invalid fields zero. Inputs bits0..9 binding,timing,hard_fault,PLL,heartbeat,PA_fb,TR_fb,RX_protected_fb,arm,request. Outputs bits0..5 PA_req,TR_req,RX_protect_req,DAC_mute,RF_permit,unbound. Snapshot is at observation after latch assertion, not root cause or physical RF timing. Held high does not repeat, clear allows a new assertion but retains history. First high after hard reset is recorded; capture soft reset preserves records. Queue16 drops new records when full without backpressure, saturating drop count; tokens start1 and never wrap."
 }

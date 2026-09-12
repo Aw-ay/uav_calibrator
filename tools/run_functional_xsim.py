@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 ROOT = Path(__file__).resolve().parents[1]
 VIVADO = Path('C:/AMDDesignTools/2025.2/Vivado/bin/vivado.bat')
 CASES = {
+    'tb_rf_fault_queue': 'PASS RF fault queue',
     'tb_source_event_queue': 'PASS source event queue',
     'tb_qualified_pdw_queue': 'PASS qualified PDW queue',
     'tb_instrument_waveform_commands': 'PASS instrument waveform commands',

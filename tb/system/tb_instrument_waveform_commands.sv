@@ -116,6 +116,15 @@ module tb_instrument_waveform_commands;
   protect_cycles=1;switch_cycles=1;pa_cycles=1;recovery_cycles=1;transition_timeout_cycles=100;watchdog_cycles=1000;
   repeat(6)@(negedge ctrl_clk);rst_n=1;adc_level(10);
   command(CMD_STATUS,0,0);read_word(GW_RESULT_LENGTH);if(value!=116)$fatal(1,"snapshot length");
+  command(20,0,0);read_word(GW_RESULT);if(value!==0)$fatal(1,"empty RF fault events");
+  @(negedge rf_clk);hard_fault=1;repeat(8)@(negedge rf_clk);
+  if(!rf_fault||native_dac_data!==0||config_loaded)$fatal(1,"idle unconfigured actual hard fault");
+  command(20,0,0);read_word(GW_RESULT);if(value!==1)$fatal(1,"idle fault history");
+  read_word(GW_RESULT+20);if(value!==1)$fatal(1,"unconfigured flags");
+  read_word(GW_RESULT+24);if(value!==0)$fatal(1,"unconfigured ID");
+  @(negedge rf_clk);hard_fault=0;timing_valid=1;payload=4;command(CMD_RF_REQUEST,1,0);
+  repeat(8)@(negedge rf_clk);if(rf_fault)$fatal(1,"clear actual fault");
+  timing_valid=0;
   command(18,0,0);read_word(GW_RESULT);if(value!==0)$fatal(1,"empty source events");
   command(CMD_ARM,0,3);
   q=0;for(integer c=0;c<6;c=c+1)q[c*32+:32]=65536;
@@ -196,8 +205,33 @@ module tb_instrument_waveform_commands;
   end
   repeat(6)@(negedge ctrl_clk);if(irq!==0)$fatal(1,"source IRQ after drain");
   command(18,0,0);read_word(GW_RESULT);if(value!==0)$fatal(1,"source queue empty");
+  // The earlier idle fault survives clear and capture RESET. A second idle
+  // assertion after CONFIG must create a distinct record without a source.
+  write_word(GW_IRQ_ENABLE,8,0);if(!irq)$fatal(1,"fault history IRQ");
+  command(20,0,0);read_word(GW_RESULT);if(value!==1)$fatal(1,"retained idle fault");
+  @(negedge rf_clk);hard_fault=1;repeat(8)@(negedge rf_clk);
+  if(!rf_fault||dut.d_t_dds_busy||native_dac_data!==0)$fatal(1,"second idle fault");
+  command(20,0,0);read_word(GW_RESULT);if(value!==2)$fatal(1,"second fault count");
+  repeat(30)@(negedge rf_clk);
+  for(integer e=0;e<2;e=e+1)begin
+   command(20,0,0);read_word(GW_RESULT_LENGTH);if(value!==12)$fatal(1,"fault length");
+   read_word(GW_RESULT);if(value!==2-e)$fatal(1,"fault flood");
+   read_word(GW_RESULT+4);if(value!==0)$fatal(1,"fault drops");
+   read_word(GW_RESULT+8);event_token[31:0]=value;read_word(GW_RESULT+12);event_token[63:32]=value;
+   read_word(GW_RESULT+16);if(value!==32'h30001)$fatal(1,"fault tag");
+   read_word(GW_RESULT+20);if(value!==((e==0)?1:3))$fatal(1,"fault flags");
+   read_word(GW_RESULT+24);if(value!==((e==0)?0:saved_config[CFG_CONFIG_VERSION_BIT+:32]))$fatal(1,"fault config");
+   read_word(GW_RESULT+32);if(!value[2]||value[9:8]!=0)$fatal(1,"fault disarmed context");
+   read_word(GW_RESULT+36);if(!value[3]||value[0])$fatal(1,"fault mute context");
+   payload=event_token+1;command(21,2,4);payload=event_token;command(21,2,0);
+  end
+  repeat(6)@(negedge ctrl_clk);if(irq)$fatal(1,"fault IRQ empty");
+  command(20,0,0);read_word(GW_RESULT);if(value!==0||!rf_fault)$fatal(1,"POP must not clear safety latch");
+  @(negedge rf_clk);hard_fault=0;payload=4;command(CMD_RF_REQUEST,1,0);repeat(8)@(negedge rf_clk);
+  if(rf_fault)$fatal(1,"final fault clear");
+  $display("PASS RF_FAULT_HISTORY actual idle latch clear reassert snapshot retained IRQ POP");
   $display("PASS SOURCE_EVENTS actual waveform identity completion cancellation IRQ");
   $display("PASS instrument waveform commands DDS exact chirp/GSC AWG CRC lifecycle STOP UNBOUND DAC");$finish;
  end
- initial begin #160000;$fatal(1,"waveform timeout");end
+ initial begin #200000;$fatal(1,"waveform timeout");end
 endmodule

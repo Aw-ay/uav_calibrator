@@ -1,7 +1,7 @@
 // Ordered PS transaction transport. Completion means RF execution response,
 // not request CDC capture. One in flight, stable response until next completion.
 module command_gateway_axi(
- input wire ctrl_clk,rf_clk,rst_n,input wire pdw_available_rf,source_event_available_rf,
+ input wire ctrl_clk,rf_clk,rst_n,input wire pdw_available_rf,source_event_available_rf,rf_fault_available_rf,
  input wire [31:0] s_axi_awaddr,input wire s_axi_awvalid,output wire s_axi_awready,
  input wire [31:0] s_axi_wdata,input wire [3:0] s_axi_wstrb,input wire s_axi_wvalid,output wire s_axi_wready,
  output reg [1:0] s_axi_bresp,output reg s_axi_bvalid,input wire s_axi_bready,
@@ -33,13 +33,14 @@ module command_gateway_axi(
  // The source level is registered in RF; no multi-bit count crosses domains.
  (* ASYNC_REG="TRUE" *) reg pdw_meta,pdw_sync;
  (* ASYNC_REG="TRUE" *) reg source_event_meta,source_event_sync;
+ (* ASYNC_REG="TRUE" *) reg rf_fault_meta,rf_fault_sync;
  reg [31:0] irq_enable;
- wire [31:0] irq_status=(done?GW_IRQ_COMMAND_DONE:0)|(pdw_sync?GW_IRQ_PDW_AVAILABLE:0)|(source_event_sync?GW_IRQ_SOURCE_EVENT_AVAILABLE:0);
+ wire [31:0] irq_status=(done?GW_IRQ_COMMAND_DONE:0)|(pdw_sync?GW_IRQ_PDW_AVAILABLE:0)|(source_event_sync?GW_IRQ_SOURCE_EVENT_AVAILABLE:0)|(rf_fault_sync?GW_IRQ_RF_FAULT_AVAILABLE:0);
  wire [31:0] irq_enable_next=(irq_enable&~mask)|action;
  assign irq=rst_n&&|(irq_status&irq_enable);
  always @(posedge ctrl_clk or negedge rst_n)begin
-  if(!rst_n)begin pdw_meta<=0;pdw_sync<=0;source_event_meta<=0;source_event_sync<=0;end
-  else begin pdw_meta<=pdw_available_rf;pdw_sync<=pdw_meta;source_event_meta<=source_event_available_rf;source_event_sync<=source_event_meta;end
+  if(!rst_n)begin pdw_meta<=0;pdw_sync<=0;source_event_meta<=0;source_event_sync<=0;rf_fault_meta<=0;rf_fault_sync<=0;end
+  else begin pdw_meta<=pdw_available_rf;pdw_sync<=pdw_meta;source_event_meta<=source_event_available_rf;source_event_sync<=source_event_meta;rf_fault_meta<=rf_fault_available_rf;rf_fault_sync<=rf_fault_meta;end
  end
  assign cmd_valid=command_pending;
  assign cmd_payload=command_hold[8191:0];assign cmd_opcode=command_hold[8192+:16];
@@ -88,7 +89,7 @@ module command_gateway_axi(
     else if(awaddr>=GW_PAYLOAD&&awaddr<GW_PAYLOAD+GW_WORDS*4)
      shadow[((awaddr-GW_PAYLOAD)>>2)*32+:32]<=(shadow[((awaddr-GW_PAYLOAD)>>2)*32+:32]&~mask)|action;
     else case(awaddr)
-     GW_IRQ_ENABLE:if((irq_enable_next&~(GW_IRQ_COMMAND_DONE|GW_IRQ_PDW_AVAILABLE|GW_IRQ_SOURCE_EVENT_AVAILABLE))!=0)s_axi_bresp<=2;else irq_enable<=irq_enable_next;
+     GW_IRQ_ENABLE:if((irq_enable_next&~(GW_IRQ_COMMAND_DONE|GW_IRQ_PDW_AVAILABLE|GW_IRQ_SOURCE_EVENT_AVAILABLE|GW_IRQ_RF_FAULT_AVAILABLE))!=0)s_axi_bresp<=2;else irq_enable<=irq_enable_next;
      GW_OP_LENGTH:header<=(header&~mask)|action;
      GW_SEQUENCE:sequence_reg<=(sequence_reg&~mask)|action;
      GW_CRC32C:expected_crc<=(expected_crc&~mask)|action;

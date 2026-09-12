@@ -118,3 +118,19 @@ SOURCE_EVENT_PEEK（18，0输入字）返回14字：队列项数、饱和丢弃�
 flags bit0表示两次观察时刻有效且未回绕；否则两时间均为0。时间单位是500 MHz tick，但记录的是观察周期，不是首/末DAC样点或射频时刻。完成事件仅证明源任务排空，不能代替 TX FIR尾部、DAC实际消费、回放任务或RF发射完成。
 
 IRQ_STATUS/IRQ_ENABLE 新增 bit2 SOURCE_EVENT_AVAILABLE，独立于 DONE和PDW，复位mask仍为1。RF域寄存非空电平，再经两级 ASYNC_REG 同步至ctrl。PEEK/清DONE/屏蔽均不清事件；精确POP取空后经同步延迟解除。使用 cal_source_event_peek_begin/pop_begin/decode，遵循现有网关单事务串行化与不自动重试原则。实际GIC/BSP路由与中断服务仍待板级平台集成。
+
+
+## 第八阶段：独立 RF 故障历史
+
+RF_FAULT_PEEK（20，0输入字）返回12字：count、dropped、token低/高、tag=0x00030001、flags、config_version、rf_state、normalized_inputs、logical_outputs、observation_gsc低/高。RF_FAULT_POP（21，2输入字）要求精确队首令牌，错误返回REJECTED。两命令无需先CONFIG；PEEK不删除，POP不清安全锁存位。
+
+观察实际联锁fault_latched的上升沿，不依赖DDS/AWG或采集活动。持续高电平只产生一项；故障清除后再断言产生新项。硬复位清空队列，复位后首次观察到高电平仍记一项。采集软复位、清故障命令、清DONE及屏蔽中断均保留历史。队列16项，满时仅丢新历史且计数饱和，令牌从1开始不回绕；耗尽后丢新记录直到硬复位。
+
+快照发生在故障锁存置位后的RF观察周期，并非故障根因捕获或物理时刻。flags bit0=时间有效，bit1=配置已装载；无效时间/配置字段各自置0。config_version是当前系统配置版本，不是TX校准编号或命令sequence。GSC单位500MHz tick。rf_state为原逻辑状态0..4，可能已经进入SAFE，不能反推故障前状态。
+
+normalized_inputs bit0..9依次为binding_valid、timing_valid、hard_fault、pll_locked、heartbeat、pa_on_fb、tr_tx_fb、rx_protected_fb、rf_arm、rf_request；logical_outputs bit0..5依次为pa_enable_req、tr_tx_req、rx_protect_req、rf_dac_mute、rf_permit、unbound。其余位保留0。全部来自归一化逻辑域，实际GPIO/极性/时序仍由板级绑定提供。未绑定若没有触发fault_latched，不会伪造故障历史；UNBOUND仍由原状态接口报告。
+
+IRQ bit3 RF_FAULT_AVAILABLE为独立非空电平，经RF寄存和两级ctrl ASYNC_REG，复位mask仍为1。PEEK/精确POP取空后中断经同步延迟解除。C接口rf_fault_control.h提供cal_rf_fault_peek_begin/pop_begin/decode，纳入A53库；单一软件所有者串行调用，不自动重试不确定提交。实际GIC/BSP与中断服务仍待板级集成。
+
+
+设计包统一EVENT通道要求512bit记录、跨生产域汇聚及高优先级fault保障。本阶段独立查询队列是阶段性接口，尚未接入该统一通道；满队列可能丢失后续历史快照，dropped对此计数，实时安全锁存不受POP或溢出影响。完整EVENT格式/旧CSR兼容与高优先级fault保留策略仍待完成，不能以本阶段测试替代该项验收。

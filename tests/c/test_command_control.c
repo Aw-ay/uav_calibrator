@@ -24,9 +24,9 @@ int main(void){
  assert(cal_command_begin(&io,1,257,58,p)==CAL_CMD_ARGUMENT);
  fail_address=UINT32_MAX;
  assert(cal_command_irq_enable(&io,3)==CAL_CMD_OK);assert(mem[0x4020/4]==3);
- assert(cal_command_irq_enable(&io,8)==CAL_CMD_ARGUMENT);assert(mem[0x4020/4]==3);
+ assert(cal_command_irq_enable(&io,16)==CAL_CMD_ARGUMENT);assert(mem[0x4020/4]==3);
  mem[0x4024/4]=2;assert(cal_command_irq_status(&io,&out[0])==CAL_CMD_OK&&out[0]==2);
- mem[0x4024/4]=8;assert(cal_command_irq_status(&io,&out[0])==CAL_CMD_PROTOCOL&&out[0]==2);
+ mem[0x4024/4]=16;assert(cal_command_irq_status(&io,&out[0])==CAL_CMD_PROTOCOL&&out[0]==2);
  fail_address=0x4024;assert(cal_command_irq_status(&io,&out[0])==CAL_CMD_IO&&out[0]==2);
  fail_address=0x4020;assert(cal_command_irq_enable(&io,0)==CAL_CMD_IO);
  assert(cal_command_irq_status(&io,0)==CAL_CMD_ARGUMENT);
