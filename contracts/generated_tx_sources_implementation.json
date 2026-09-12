@@ -1,0 +1,75 @@
+{
+  "schema_version": "0.5-generated-tx-sources-1",
+  "status": "INTEGRATED_SOURCE_RTL_FUNCTIONAL_PASS_NOT_FULL_TX_TOP",
+  "file": "rtl/source/generated_tx_sources.sv",
+  "rtl_sha256": "9253e517c8271c790755e8acd2d9779843e8d2ff5f80877fbd6a62562c8ae951",
+  "dependencies": [
+    "rtl/source/dds_burst_control.sv",
+    "rtl/source/dds_nco_wrapper.sv",
+    "rtl/source/awg_reader.sv",
+    "rtl/source/awg_load_cdc_wrapper.sv"
+  ],
+  "domains": {
+    "clk_rf_hz": 125000000,
+    "clk_ctrl_hz": 100000000,
+    "reset": "common active-low rst_n; asynchronous assertion output masks, per-domain synchronized release"
+  },
+  "tx_chain_mapping": {
+    "dds_data": "tx_processing_chain.dds_data",
+    "dds_valid": "tx_processing_chain.dds_valid",
+    "awg_data": "tx_processing_chain.awg_data",
+    "awg_valid": "tx_processing_chain.awg_valid",
+    "word_layout": "H_I bits15:0; H_Q31:16; V_I47:32; V_Q63:48; signed16 component codes",
+    "safe_boundary": "trusted clk_rf boundary for AWG atomic commit; internally also requires actual AWG reader and registered output drained",
+    "stop_request": "trusted clk_rf stop held for at least one RF edge; immediately masks outputs, then inhibits restart until all source state drains. Also drive appropriate TXchain permit/MUTE control; source masking alone does not suppress existing interpolation tails."
+  },
+  "dds": {
+    "implementation": "real dds_burst_control -> real48-bit phase accumulator and1024-point ROM NCO -> HV duplication, no sample lookup substitute or pre-generated waveform stream",
+    "command": "dds_cmd_valid strobe; dds_accepted/dds_rejected pulses. Same frozen burst/PW/PRI/count/chirp policy as underlying controller. Requests during stop/restart inhibit reject.",
+    "polarization": "H and V identical cos+j*sin, same phase and peak32767. No independently configurable H/V phase, amplitude, envelope shaping or attenuation inside this module. Per-DAC calibrated gain remains downstream.",
+    "valid": "envelope is registered alongside NCO output; dds_valid marks only pulse samples. PRI gaps have zero data and invalid source output while NCO phase still advances.",
+    "time": "dds_sample_gsc is the GSC of the NCO input sample consumed at the producing clock edge, carried with its registered waveform. First tag equals dds_start_gsc. It is a source-stage tag; downstream consumption is one RF edge later and all TX pipeline/RF latency remains external.",
+    "completion": "dds_busy includes controller plus NCO output register. dds_done occurs after last registered source sample drains, or after abort; it is completion/cancellation of source work, not proof of emitted RF.",
+    "stop": "stop_request aborts remaining burst schedule and immediately masks current registered output; releasing stop cannot resurrect that train"
+  },
+  "awg": {
+    "control": "unchanged asynchronous BEGIN/WRITE/COMMIT interface of awg_load_cdc_wrapper; ctrl_done is destination completion. Control loading may continue while output is stopped.",
+    "play": "awg_play clk_rf strobe; accept only with active table, no existing playback/registered final sample, and no stop/restart inhibit. accepted/rejected outputs are clk_rf pulses.",
+    "time": "play at sample-tag GSC T yields first registered table word tagged T+4; awg_sample_gsc accompanies each actual registered memory read. Subsequent tags advance4.",
+    "bank_lifetime": "core pins selected active bank through last actual read; integration additionally prevents commit while raw output-valid still presents final word. Asynchronous writes remain in inactive bank.",
+    "stop": "underlying reader has no abort port. Stop immediately masks source data/valid, latches cancellation, and lets the local read finish naturally while retaining the bank reference. Releasing stop before drain never exposes the canceled tail.",
+    "completion": "awg_done pulses after final raw output drains. awg_done_cancelled qualifies canceled playback. A new accepted play restarts at word0. Reset cancels all state without fabricated done.",
+    "maximum_stop_drain": "up to remaining table length plus registered output/control cleanup, <=16384 sample reads at default depth (~131.072us), excluding downstream TX drain"
+  },
+  "drain": {
+    "sources_drained": "rf reset release complete AND no scheduled/running DDS burst, no NCO registered sample, no AWG read and no AWG registered sample. Includes scheduled DDS gaps; source work must be stopped to cancel future pulses.",
+    "restart": "stop latches restart inhibition until sources_drained; new playback/commands do not bypass it",
+    "scope": "source-level only, not TXcal/FIR interpolation tail or RF guard completion. Combine with TXchain drain logic and validated RF safety controller."
+  },
+  "verification": {
+    "runner": "python tests/test_generated_tx_sources.py",
+    "testbench": "tb/unit/tb_generated_tx_sources.sv",
+    "icarus": "PASS actual chirp samples,8 source GSC tags, inflight DDS abort,256-word AWG integrity during asynchronous16-word inactive load and commit while playback busy, stop suppression/cancel drain/restart word0",
+    "vivado_ooc": "SYNTHESIS_PASS_VIVADO2025.2",
+    "script": "hw/tcl/generated_tx_sources_ooc.tcl",
+    "resources_full_default16384_awg_depth": {
+      "lut": 1475.0,
+      "ff": 1164.0,
+      "bram_tile": 58.0,
+      "dsp": 4.0
+    },
+    "cdc": {
+      "critical": 0,
+      "CDC-3_info": 4,
+      "CDC-15_warning": 135,
+      "note": "Same held payload capture paths as AWG CDC wrapper; physical timing review still required, no waivers applied."
+    }
+  },
+  "limitations": [
+    "no independent H/V phase/amplitude control",
+    "not a physical RF or full DAC loop proof",
+    "bundled-data AWG CDC still requires physical top-level payload timing review",
+    "dds command/stop/play inputs already synchronous to clk_rf; no PS command CDC for DDS supplied here",
+    "no change to existing tx_processing_chain or shared regression entry"
+  ]
+}

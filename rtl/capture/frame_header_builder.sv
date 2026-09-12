@@ -8,13 +8,15 @@ module frame_header_builder(
  output reg [1023:0] header_data,output reg rejected
 );
  import calibrator_contract_pkg::*;
- wire [63:0] delta=window_start_seq-time_origin_seq;
- wire [66:0] first_tick={3'b0,time_origin_gsc}+{1'b0,delta,2'b0};
+ wire before_origin=window_start_seq<time_origin_seq;
+ wire [63:0] delta=before_origin ? time_origin_seq-window_start_seq : window_start_seq-time_origin_seq;
+ wire [66:0] tick_distance={1'b0,delta,2'b0};
+ wire [66:0] first_tick=before_origin ? {3'b0,time_origin_gsc}-tick_distance : {3'b0,time_origin_gsc}+tick_distance;
  wire [31:0] payload_bytes={17'b0,sample_count}<<3;
  wire [31:0] flags=template_header[FRAME_QUALITY_FLAGS_OFFSET*8+:32];
  wire trailer=(flags&QUALITY_HAS_CRC_TRAILER)!=0;
  wire legal=sample_count!=0&&sample_count<=FRAME_MAX_SAMPLES&&
-            window_start_seq>=time_origin_seq&&first_tick[66:64]==0;
+            first_tick[66:64]==0;
  assign request_ready=!result_valid||result_ready;
  always @(posedge clk)begin
   if(rst)begin result_valid<=0;header_data<=0;rejected<=0;end

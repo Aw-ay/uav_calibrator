@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "status": "REAL_RAM_UNIT_SIMULATION_VERIFIED_NOT_ROOT_INTEGRATED",
+  "module": "rtl/replay/replay_task_dispatcher.sv",
+  "composition": ["replay_descriptor_queue", "replay_legality_checker", "frozen_replay_reader"],
+  "task_abi": "All1536 task bits are retained. Fields unpack using replay_control_layout_pkg generated from replay_contract.json; no manually maintained offsets.",
+  "clock": "All ports clk synchronous except combinational safety inhibition from already-normalized inputs; coordinated synchronous rst. No CDC or physical GPIO inside.",
+  "submit": "submit_valid one-cycle attempt; submit_accepted/rejected and reason from queue. Producer must already own immutable task/calibration/profile references and actual bank replay lease before submitting. A rejected submit does not transfer or release those references.",
+  "lookup": {
+    "output": "lookup_valid and lookup_task are current queued head, including all bank/source/profile IDs",
+    "input": "lookup_ready asserts only when current_generation/config_id/fir_id/source_epoch and bank_frozen/data_ready/qualified/lease_pinned/source_stable/profile/guard/slot/resource proofs refer to this exact head. current_owner_epoch is global current owner epoch, not head-specific historical state.",
+    "proofs": "task_profiles_valid must validate and retain all requested RX/TX/target/FD/reference/doppler versions; latency_validated and downstream_latency_ticks must reflect actual pinned pipeline. RF binding and rf_safe are trusted normalized live safety inputs, never raw software enables.",
+    "processing_ready": "Separate readiness of the single downstream DSP task engine. It delays dispatch while the head continues deadline/legal revalidation; it is not used as an invalidity proof. Tie resource proofs to actual frozen-bank/port/slot legality, not transient DSP busy if queuing is intended."
+  },
+  "dispatch": {
+    "atomic": "Queue dispatch and actual reader task admission occur on same clock using the same head/proofs/GSC. active_task snapshots full descriptor; task_started is the reader's registered accepted pulse. Metadata persists until next dispatch or reset, so downstream snapshots at task_started.",
+    "raw": "raw_valid/data are actual reader responses, no backpressure. raw_last=raw_valid&&actual_finish identifies final real RAM sample. ram_en/address/group/bank connect to existing FROZEN A-port mux; ram_response_valid/data are fixed one-clock RAM responses.",
+    "time": "Reader computes schedule once from target/reference and validated downstream latency; accepted times never change when the queue head changes. Actual start/finish GSC events are passed through.",
+    "runtime_cancel": "hard_fault, time/clock failure, explicit abort, RF permission/binding loss or global owner epoch mismatch suppress data/reads and invoke existing reader drain/cancellation. Missing fixed response yields actual reader UNDERFLOW token; no fabricated samples."
+  },
+  "ownership": {
+    "real_token": "token_valid/payload/status/ready are exclusively existing reader outputs. Queue inflight and same-bank exclusion retire only when this real token is accepted downstream. Backpressure holds the token and prevents next reader dispatch.",
+    "queued_reject": "rejected_valid/task/reason are held until reject_ready. A stale/late/illegal task not dispatched to RAM produces no bank-return token. Caller must disposition previously pinned producer references safely before acknowledging; this module never assumes an unproven lease exists.",
+    "defensive_admission_reject": "If the reader independently refuses despite head legality, retain active task/reason as held rejection and clear only queue bookkeeping on reject_ready. No RAW token is synthesized because no RAM read was admitted.",
+    "DSP_lifetime": "RAW token is not full DSP completion and does not release calibration/matrix/FD/task references. The downstream processing chain must keep processing_ready low through FIR tails and final arithmetic drain, hold its own copied metadata, and manage its coefficient references separately.",
+    "idle": "idle covers queue, active reader, held token and rejection only. Root global quiescence must additionally include the DSP chain, metadata/profile leases and producer work. Hard reset requires external coordinated drain/isolation."
+  },
+  "verification": {"command":"python tests/test_replay_task_dispatcher.py","bench":"tb/system/tb_replay_task_dispatcher.sv","tool":"C:/iverilog/bin/iverilog.exe and vvp.exe","result":"PASS","evidence":"../reports/replay_task_dispatcher.log"},
+  "limits": ["Root lookup/profile/guard resolver and DMA/bank-return wiring remain external", "No RF enable signal or board binding validation inferred", "Vivado synthesis/timing and final DSP chain integration not claimed"]
+}

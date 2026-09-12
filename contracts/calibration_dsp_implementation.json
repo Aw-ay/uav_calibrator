@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0",
+  "status": "UNIT_INTEGER_XSIM_AND_OOC_VERIFIED_NOT_SYSTEM_INTEGRATED",
+  "source_contracts": [
+    "module_catalog.json",
+    "system_contract.json",
+    "replay_contract.json"
+  ],
+  "physical_calibration_values": "EXTERNAL_UNBOUND; no measured gain, GPIO, physical route or validity inferred",
+  "clock": "125MHz8ns registered-boundary OOC routed on xczu27dr-fsve1156-2-i with Vivado2025.2; full system/board qualification separate",
+  "stream": {
+    "input": "16-bit signed integer IQ; one sample per in_valid cycle; no backpressure",
+    "latency": "RX/TX calibration and router:1stage; target_complex_operator:2stages; fractional_delay_profile:8stages; basic programmable fractional_delay:1stage (arithmetic-only, not hardware selected for63tap)",
+    "bubble": "valid/qualification/numeric output aligned through module-specific pipeline; numeric/status outputs zero on output bubbles",
+    "reset": "synchronous active-high; clears output and FIR history",
+    "invalid_table": "valid input produces valid zero sample, calibration/model/coeff validity false, saturation false; downstream must reject precision/RF operation",
+    "metadata": "Caller pipelines task/table IDs alongside data and snapshots all parameters for a record. No CDC, loader, age check or ID storage inside arithmetic modules.",
+    "edge_definition": "For input sampled immediately before rising edge n: one-stagecal/router output updates afteredge n; two-stagetarget afteredge n+1; eight-stageprofile afteredge n+7. A downstream registered consumer samples on the next edge. Use this definition rather than silently summing nanoseconds."
+  },
+  "arithmetic": {
+    "coefficient_format": "signed 18-bit two's complement, 16 fractional bits; range [-2, 2-2^-16]; unity=65536",
+    "rounding": "nearest ties to even for both signs, then clamp [-32768,32767]",
+    "fixed_round_sat": "combinational; IN_W>=OUT_W>=2, 0<=SHIFT<IN_W; SHIFT=0 supported",
+    "rx": "round_sat(((in_i-dc_i)+j*(in_q-dc_q))*(gain_i+j*gain_q),16)",
+    "tx": "round_sat((in_i+j*in_q)*(gain_i+j*gain_q)+(dc_i+j*dc_q)*65536,16)",
+    "cal_internal": "17-bit DC difference, 35-bit product, 37-bit accumulator",
+    "target": "M*H/V followed by external phase_i+j*phase_q, full intermediate precision; only final round_sat shift32",
+    "target_internal": "34-bit input/coefficient products, 36-bit matrix sums, 54-bit phase products, 55-bit final sums",
+    "doppler_policy": "External phasor applied exactly once. No oscillator/phase accumulation and no implicit one/two-way factor. Caller responsible for phase_id, timestamp and accepted task policy.",
+    "target_packing": "in/out bits15:0 HI,31:16 HQ,47:32 VI,63:48 VQ; matrix ascending 18-bit fields HH.real, HH.imag, HV.real, HV.imag, VH.real, VH.imag, VV.real, VV.imag",
+    "target_pipeline": "2stages: full36bit matrix sum with captured external phase, followed by phase multiply and final quantization. Delay task metadata and phase policy accordingly.",
+    "target_actual_dsp_budget": "34DSP observed versus24planning allowance; +10DSP disclosed, full intermediate precision retained"
+  },
+  "calibration_table": {
+    "storage_status": "FORMAT_DEFINED; table RAM/CSR loader and lifecycle validation not implemented here",
+    "entry_payload_bits": 128,
+    "byte_order": "little endian",
+    "fields": [
+      {
+        "name": "gain_i",
+        "lsb": 0,
+        "width": 18,
+        "signed": true,
+        "fraction_bits": 16
+      },
+      {
+        "name": "gain_q",
+        "lsb": 18,
+        "width": 18,
+        "signed": true,
+        "fraction_bits": 16
+      },
+      {
+        "name": "dc_i",
+        "lsb": 36,
+        "width": 16,
+        "signed": true,
+        "fraction_bits": 0
+      },
+      {
+        "name": "dc_q",
+        "lsb": 52,
+        "width": 16,
+        "signed": true,
+        "fraction_bits": 0
+      },
+      {
+        "name": "reserved_zero",
+        "lsb": 68,
+        "width": 60
+      }
+    ],
+    "required_envelope": [
+      "format_version",
+      "cal_id",
+      "generation",
+      "RX_or_TX",
+      "logical_channel",
+      "reference_plane_id",
+      "valid_from",
+      "valid_until",
+      "binding_id",
+      "payload_hash",
+      "valid"
+    ],
+    "acceptance": "Control validates envelope, channel/reference/binding and expiry, pins immutable generation through record, then asserts cal_valid; unbound/expired/mismatched entries remain invalid",
+    "scope": "One executor instance per channel: RX read copy only; TX after source mux and DAC routing for all sources. Common integer delay and FIR group delay bookkeeping belong to replay scheduler, not this gain executor."
+  },
+  "fractional_delay": {
+    "status": "PROGRAMMABLE_FIR_AND_VERSION_FROZEN_FD63_PROFILE_VERIFIED; INTERNAL_WIDEBAND_TARGET_PASSED_NOT_BOARD_ACCEPTED",
+    "TAPS": "parameter >=1, default4; no63tap placeholder",
+    "packing": "ascending 18-bit signed real coefficients h[0] through h[TAPS-1], each16 fractional bits",
+    "equation": "y[n]=round_sat(sum h[k]*x[n-k],16), separately I and Q; input-valid sample indexing",
+    "accumulator_bits": "34+ceil(log2(TAPS))",
+    "history": "advances on in_valid even if coeff_valid=0; bubbles pause; clear discards current sample and zeroes history/output; clear before a new record/profile",
+    "table_update": "caller snapshots coefficient vector; no atomic loader inside FIR; changing coefficients without clear intentionally filters existing history with new taps",
+    "demonstration_fraction_profile": "for mu_q16 in0..65535: h0=65536-mu_q16,h1=mu_q16,remaining0; true linear fractional interpolation, not approved wideband profile",
+    "demonstration_band_limit": "At fractional delay0.5 and50MHz/125MSps, two-tap interpolation magnitude=cos(0.4*pi)=0.3090, approx -10.20dB. Fails any precision flatness claim; no bandwidth acceptance inferred.",
+    "unresolved": [
+      "approved system amplitude/phase error allocation",
+      "full system scheduler integration and board precision"
+    ],
+    "profile_sweep_evidence": "reports/fractional_delay_linear_profile.json",
+    "wideband_candidate": "contracts/fractional_delay_profile.json; generated FD63_KAISER8_PHASE256_Q16, signed18,Q16, all256phase",
+    "profile_wrapper": {
+      "module": "fractional_delay_profile",
+      "latency": "8registered stages: product, six balanced binary sum levels, final quantizer; no additional wrapper data register",
+      "phase": "shadow_phase8bit gives mu=phase/256",
+      "commit": "accept iff profile_commit && safe_boundary && !in_valid && shadow_version==table_version; otherwise reject pulse; no deferred pending request",
+      "freeze": "latch whole1134bit coefficient vector, phase and32bit version on accepted commit; clear old FIR history same edge; values remain immutable until next accepted boundary",
+      "boundary": "caller guarantees previous record,62validzero tail samples and8stage output pipeline are drained; input bubble alone is not safe_boundary",
+      "version": "generated32bit SHA256 prefix; full SHA256 retained in coefficient contract; source/memory file must be hash checked by build, 32bit tag is identity not integrity proof",
+      "validity": "before accepted profile commit, coeff-valid false and numeric output zero; this profile-validity is not RF calibration-validity",
+      "group_delay": "31+phase/256 samples =248ns+phase*0.03125ns at125MS/s;8processing register stages separate;62validzero tail samples then pipeline drain",
+      "memory": "256x1134bit generated embedded constantROM; no COEFF_FILE parameter or runtime file access; golden.mem retained for review/hash"
+    }
+  },
+  "verification": {
+    "command": "python tests/test_calibration_dsp.py",
+    "oracle": "Python arbitrary precision signed integer arithmetic, independently packs expected SV vectors",
+    "evidence": "reports/calibration_dsp.log; 400 vectors including extrema, identity, quadrature, clipping, convergent rounding, FIR histories, bubbles, invalid tables, clear and reset",
+    "red_evidence": "Initial test compilation failed with Unknown module type for all five new requested modules before RTL created",
+    "limits": "No board calibration, RFenable or fullsystem precision claim; fixture externalIO and integrated clocktree not qualified by OOC",
+    "exhaustive_quantizer": "768 cases, every signed8 input with shifts0/1/3 and signed4 output",
+    "profile_pipeline": "tests/test_fractional_delay_profile.py passes36352 exact IQ vectors:all256phase,80data+62tail perphase,8stage scoreboard and drain",
+    "physical_timing": "reports/calibration_timing_summary.json; RX WNS+2.224ns, target2stage+1.236ns, FD8stageembeddedROM+2.412ns, router+6.581ns; all have0unconstrained internal endpoints/0no_clock/0routing errors",
+    "portable_rom": "tools/run_fractional_delay_portable_xsim.py:actual2025.2 XSim in nonrepo launcher/projectsim directories, no coefficientmem staged, all256phase/36352vectorsPASS; old relativeROM actual failure retained"
+  },
+  "tx_channel_router": {
+    "input": "packed64 H.I,H.Q,V.I,V.Q as target operator",
+    "output": "8 ascending32bit complex lanes, I low16 Q high16; lane_valid8bit per-lane input qualifier for each TXCAL",
+    "controls": "shadow_select bit i:0 H,1 V; shadow_enable bit i enables lane; reset all disabled",
+    "commit": "atomic accept route_commit && safe_boundary && !in_valid; otherwise pulse commit_rejected and keep active config; accepted pulse commit_ack; no deferred pending write",
+    "latency": "one registered stage",
+    "integration": "each lane feeds TXCAL with in_valid=lane_valid[i]; gating is essential to prevent TX DC insertion into disabled lanes; physical mapping and RF safety external"
+  }
+}

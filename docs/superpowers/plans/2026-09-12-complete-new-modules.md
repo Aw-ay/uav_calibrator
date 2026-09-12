@@ -18,3 +18,7 @@
 - [ ] Update original Vivado project, status matrix with actual implementation aliases and evidence, manifest, and local commits. Retain explicit NOT_RUN for physical RF and board tests.
 
 Each implementation batch: inspect source contract; add independent failing test; implement; run focused verification; inspect result; integrate only verified changes; checkpoint commit. No new global contract field silently gains hardware capability status. No automatic Git push, flash programming or guessed board bindings.
+
+## Requested pause
+
+2026-09-12: User requests pause after synthesis and a branch progress report. Stop further development after current synthesis/evidence capture. Functional modules and capture/replay/transmit subsystems are implemented; unified platform integration and complete-system timing remain open. See reports/branch-development.md.

@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "status": "REAL_OWNER_UNIT_SIMULATION_VERIFIED_NOT_ROOT_INTEGRATED",
+  "module": "rtl/capture/capture_producer_tracker.sv",
+  "clock": "clk with synchronous rst; all owner/detector inputs synchronous to this clock",
+  "capacity": "Four contexts, each owns onset metadata until downstream request handshake or held error acknowledgement. Only one owner-admission response may be outstanding. Context transfer never releases RAW.",
+  "onset": {
+    "protocol": "onset_valid is a one-cycle attempt, onset_ready previews admission. Accepted only with a free context, no pending owner-response, no duplicate live pulse/epoch, an ARMED candidate in each primary group, !block_new_work and !rst. Unready attempts pulse onset_rejected and saturating onset_reject_count.",
+    "joint_admission": "primary_trigger is emitted only for the same accepted onset edge that reserves the producer context. Real owner remains final authority over full prehistory/window eligibility. On the next clock primary_admitted must reflect that trigger; failure becomes held error1. No trigger is emitted when producer capacity is exhausted.",
+    "frozen": "onset_seq/onset_gsc64, pulse/epoch/config_version64, config1024, noise256, metadata1024, onset_bad_channels6 and onset_want_replay are captured atomically. Later software/settings changes cannot alter request outputs.",
+    "binding": "Snapshot all16bank generations before the trigger; after owner acceptance identify exactly one bank per primary group whose generation incremented by1 and pulse matches, with not-ARMED/not-FROZEN state and unchanged epoch. Retain three independent64-bit generations and2-bit bank IDs.",
+    "key": "Established full256 layout is {pulse_id64,owner_epoch64,group0_actual_bank_generation64,config_version64}. Group0 generation is installed only after actual binding; groups1/2 generations remain independently retained. Before binding key generation is0 and held error_bound=0, explicitly not a valid bank-bound key.",
+    "metadata_identity": "Onset metadata pulse_id is overwritten from onset_pulse_id and config_id from config_version using generated calibrator_contract_pkg offsets. Config_version upper32 nonzero rejects onset before any owner trigger, rather than silently truncating the ABI5 identity."
+  },
+  "eop": {
+    "evidence": "Only an actual upstream detector eop_event_valid supplies end-of-pulse evidence. Tracker never predicts EOP from future truth or invents an earlier stop.",
+    "post": "eop_event_stop is exclusive absolute sample sequence INCLUDING POST. A real detected EOP may specify future post samples; no stop<=current_seq restriction. Require stop>frozen onset_seq, matching pulse/owner_epoch and no previous EOP for that context.",
+    "timing": "Supports EOP concurrent with accepted onset, during WAIT_OWNER and during tracking. Retains until actual bank map exists, then emits one registered owner EOP command with matching three-bank generations. Unknown, duplicate or invalid events pulse eop_rejected and saturating eop_reject_count.",
+    "quality": "Frozen onset flags OR detector EOP cumulative bad flags OR actual bound-bank truncation. Truncation from an old/unbound bank is never imported while waiting for new binding. H/V flag order follows qualification_payload.json."
+  },
+  "request": {
+    "ready_condition": "All three bound banks PENDING with unchanged owner epoch, pulse and independent generations, not FROZEN/ARMED. Equal starts and counts1..min(2^ADDR_W,16384) yield normal qualification. Mismatched or invalid geometry with intact identities still yields a held request with all six bad bits, want_replay0, actual starts/counts and context_error_count increment, so ordinary qualification disposes all matching banks and reset can drain.",
+    "outputs": "Held request_key256/config1024/noise256/metadata1024/want_replay, bank_ids6/generations192/bad_channels6, three actual start_seq64 packed192 and three zero-extended count15 packed45, plus onset_seq/gsc64.",
+    "stability": "A selected request remains immutable until request_ready. Other contexts may become ready but cannot change the selected output. Occupancy remains until handshake. Existing scanner/publish bridge must revalidate live bank identities before reading/disposing.",
+    "header": "Root frame_header_builder uses frozen metadata template, actual start/count and frozen signal-time reference; no header fields or CRC are synthesized here."
+  },
+  "errors": {
+    "protocol": "Context errors are held in their slot; error_valid/key/map/generations/reason/error_bound held until error_ready. No silent overwrite or automatic bank discard. Caller must disposition any still-owned matching banks before acknowledging, and must never interpret error_bound0 as valid bank identity.",
+    "reasons": {
+      "1": "OWNER_ADMISSION_REJECTED",
+      "2": "POST_ADMISSION_BINDING_NOT_UNIQUE_OR_EPOCH_MISMATCH",
+      "3": "BOUND_IDENTITY_OR_STATE_LOST"
+    },
+    "counter": "context_error_count saturates u32, incremented once per newly faulted context, including multiple independent context faults in one cycle",
+    "window_fault": "Internal diagnostic reason4 is a downgrade to all-bad request, never a held context error, while identities remain valid. Error records are reserved for owner rejection or actual binding/identity loss."
+  },
+  "reset": "block_new_work blocks only new onsets; owner response, EOP handling, PENDING readiness, request and error drainage remain active. producers_idle requires all four contexts free and neither request nor error held. Owner/reset coordinator must additionally track downstream banks/readers. Hard rst requires coordinated ownership drain or reset; it discards producer state only under that external protocol.",
+  "verification": {
+    "command": "python tests/test_capture_producer_tracker.py",
+    "tool": "C:/iverilog/bin/iverilog.exe and vvp.exe",
+    "bench": "tb/system/tb_capture_producer_tracker.sv",
+    "result": "PASS",
+    "log": "../reports/capture_producer_tracker.log",
+    "additional_system_test": "python tests/test_capture_tracker_error_drain.py; real calibrator_capture_system with unequal exported PENDING counts, no record or replay output, all banks discarded and owner epoch reset completes",
+    "compile_dependency": "rtl/generated/calibrator_contract_pkg.sv must precede capture_producer_tracker.sv"
+  },
+  "limits": [
+    "No root integration/source or shared tools edited by subtask",
+    "No internal detector, guessed EOP, live calibration binding, RAW lease release or frame-header construction",
+    "No Vivado synthesis/timing claim; register arrays retain frozen metadata for four contexts"
+  ]
+}

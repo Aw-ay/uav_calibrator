@@ -26,7 +26,8 @@ task tick;begin @(posedge clk);#1;@(negedge clk);end endtask
 initial begin tick();rst=0;
 """+'\n'.join(checks)+"""
 sample_count=0;request_valid=1;tick();if(!rejected||result_valid)$fatal(1,"zero count");
-sample_count=1;window_start_seq=999;tick();if(!rejected||result_valid)$fatal(1,"past time origin");
+sample_count=1;window_start_seq=999;tick();if(rejected||!result_valid||header_data[320+:64]!=39996)$fatal(1,"pretrigger time mapping");
+request_valid=0;result_ready=1;tick();result_ready=0;request_valid=1;time_origin_gsc=3;tick();if(!rejected||result_valid)$fatal(1,"GSC underflow");
 window_start_seq=1060;time_origin_gsc=64'hfffffffffffffff0;tick();if(!rejected||result_valid)$fatal(1,"GSC overflow");
 $display("PASS frame header builder independent ABI bytes bounds stall");$finish;end
 initial begin #10000;$fatal(1,"watchdog");end

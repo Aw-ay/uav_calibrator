@@ -1,0 +1,99 @@
+{
+  "schema_version": "0.5-calibrator-transmit-system-1",
+  "status": "DIGITAL_END_TO_END_FUNCTIONAL_PASS_PRODUCTION_RF_UNBOUND",
+  "file": "rtl/top/calibrator_transmit_system.sv",
+  "rtl_sha256": "06ad217bb81024d8cd0f38251e1e4246d25efc23637c313aab7d16866f9f0988",
+  "architecture": [
+    "trusted external board binding and normalized feedback -> rf_safety_interlock",
+    "real DDS/AWG -> generated_tx_sources",
+    "external LIVE/DRFM + generated DDS/AWG -> tx_processing_chain",
+    "common H/V router ->8 independent TX calibration paths ->real FIR75/HB19 interpolation ->8 native DAC buses",
+    "final zero-code masking on current MUTE/stop/interlock deny"
+  ],
+  "domains": {
+    "clk_rf_hz": 125000000,
+    "clk_ctrl_hz": 100000000,
+    "controls": "All non-AWG-control inputs synchronous clk_rf; normalized physical feedback requires board-specific CDC upstream. AWG preload uses existing acknowledged asynchronous loader.",
+    "reset": "Common rst_n; source CDC has per-domain release synchronizers. Top reset/fanout synchronization and physical shutdown remain integration responsibilities."
+  },
+  "safety": {
+    "binding": "binding_valid must come from trusted validated board adapter, not software enable. UNBOUND yields rf_permit=0, PA enable request0, native DAC all-zero with valid0xff, and rejects nonzero mode/DDS/AWG start. Simulation test binding is not production binding.",
+    "rf_permit": "derived from actual rf_safety_interlock dac_mute/fault plus binding/timing/reset, not from tx_request alone",
+    "external_parameters": [
+      "protect_cycles",
+      "switch_cycles",
+      "pa_cycles",
+      "recovery_cycles",
+      "transition_timeout_cycles",
+      "watchdog_cycles"
+    ],
+    "parameter_rules": "Unsigned clk_rf counts, validated and held stable while armed; nonzero timeout/watchdog. No physical levels, pins, RF codes or measured gains are embedded.",
+    "normalized_feedback": [
+      "pa_on_fb",
+      "tr_tx_fb",
+      "rx_protected_fb",
+      "pll_locked"
+    ],
+    "heartbeat": "External authoritative event; production must not tie high or auto-generate while host is stalled. Testbench heartbeat high is only a deterministic simulation fixture.",
+    "stop": "stop_request masks output immediately, suppresses RF tx_request, auto-selects MUTE, and stops internal sources. Caller may hold it through drain.",
+    "mode_zero": "A current mode0 request immediately masks output and cancels source work. It selects digital MUTE; RF arm/tx_request remain externally controlled.",
+    "fault": "Current hard fault or denied interlock output immediately masks DAC codes; PA request follows sequencer inhibition. Fault/permit loss auto-selects MUTE. Fault recovery requires clear_fault disarmed with healthy prerequisites, tx_request low to reach RX, then new TX preparation/mode/source commands. No waveform auto-resume.",
+    "clock_loss": "Logic clock disappearance still requires independent board fail-safe; not certified by this RTL"
+  },
+  "admission": {
+    "configuration": "config_commit goes to existing atomic TXchain commit policy: source-drained safe_boundary, mode0, FIR tail drained, no mode request. Configuration remains frozen otherwise. config_seen is latched only after real config_accepted.",
+    "mode": "Nonzero modes only forwarded when interlock permit, pipeline_ready, configuration, safe boundary and source drain all hold. Invalid mode or OTA LIVE still rejects through existing MUX. No nonzero mode request is queued before RF preparation.",
+    "start_ready": "After selected DDS/AWG mode is stable for two RF edges, path readiness and source drain must hold. AWG also requires synchronized completed active-table status. DDS/AWG commands outside this readiness or wrong mode reject explicitly.",
+    "purpose": "DDS cannot begin during TURNAROUND and lose its prefix before actual TX permission. DDS still applies its own future/aligned GSC legality checks.",
+    "external_live_drfm": "External streams enter same common chain and are valid-gated by path readiness. Upstream source owner must align stream start after accepted corresponding mode; LIVE single-antenna OTA remains forbidden."
+  },
+  "awg": {
+    "loading": "Asynchronous acknowledged BEGIN/WRITE/COMMIT interface unchanged. In this full transmitter, actual table commit additionally requires mode0 and sources_drained safe boundary. Loading inactive memory is still possible while other work runs.",
+    "ownership_stop": "Stopped playback silently completes remaining local reads; canceled tail is never exposed after stop deassertion. sources_drained is only true once raw source state is empty.",
+    "status_cdc": "ctrl_active_valid response snapshot is synchronized back into clk_rf with2 ASYNC_REG stages for conservative AWG start readiness. Playback core also independently validates active table.",
+    "limits": "Default stop source drain may require remaining16384-table reads; no IP abort/DDR/MM2S added."
+  },
+  "tx_data": {
+    "native_layout": "8 paths x128bits, each4complex samples with I/Q signed16 native words; exact hardware RFDC mapping still external",
+    "calibration": "Per-DAC dc/gain/cal_valid/route values entirely input-supplied and latched by TXchain; no invented physical calibration constants.",
+    "DDS_limits": "H/V same phase and same peak32767; no independent polarization source gain/phase control here",
+    "drain": "pipeline_ready is existing TXchain guarded permit, including its58-clock FIR drain after stop/fault. sources_drained additionally covers canceled AWG reads/DDS pipeline. Together gate new mode/start, but physical RF guards remain interlock/board responsibility."
+  },
+  "operator_sequence": [
+    "Reset both domains and establish trusted timing/binding/feedback.",
+    "In mode0 at a safe drained boundary, commit TX routing/calibration; optionally preload and commit AWG.",
+    "Arm with tx_request low to enter RX, then assert tx_request and wait for RF TX permit and pipeline_ready.",
+    "Request intended mode at safe boundary; require mode_accepted.",
+    "Wait start_ready, then issue future DDS command or AWG play; require accepted pulse.",
+    "For stop/fault, outputs immediately zero and source/TX state drains; perform required RF recovery and submit new mode/waveform commands."
+  ],
+  "verification": {
+    "runner": "python tests/test_calibrator_transmit_system.py",
+    "bench": "tb/system/tb_calibrator_transmit_system.sv",
+    "icarus": "PASS UNBOUND/early-start rejection,128 actual DDS calibrated samples on8 lanes, actual AWG eight DAC paths and steady-state H/V2:1 amplitudes, immediate faultzero-valid, reprepare no old tail, fresh8-sample DDS",
+    "vivado_ooc": "SYNTHESIS_PASS_VIVADO2025.2",
+    "script": "hw/tcl/calibrator_transmit_ooc.tcl",
+    "test_fixture": "binding_valid/timing/feedback/unity gains and heartbeat are logical simulation stimuli, not physical validation",
+    "resources_default_awg16384": {
+      "lut": 11735.0,
+      "ff": 24909.0,
+      "bram_tile": 58.0,
+      "dsp": 1108.0
+    },
+    "cdc": {
+      "critical": 0,
+      "CDC-3_info": 5,
+      "CDC-15_warning": 135,
+      "note": "Includes the active-AWG-status synchronizer; held payload warnings remain physical timing-review requirements, not waivers."
+    },
+    "synthesis_warnings": "28 inherited generated FIR unused-zero/history/tree-element removal warnings; no synthesis errors/critical warnings. OOC clock-buffer location unknown, external IO unconstrained."
+  },
+  "not_claimed": [
+    "physical RF binding or RF emission measurement",
+    "placed/routed125MHz timing closure",
+    "full CDC/reset/board signoff",
+    "ADC/replay capture integration",
+    "eight independent generators",
+    "main fixed FIR coefficient hot reload"
+  ]
+}

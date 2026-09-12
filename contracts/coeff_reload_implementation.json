@@ -1,0 +1,78 @@
+{
+  "schema_version": "0.5-coeff-reload-implementation-1",
+  "status": "STANDALONE_PROTOCOL_BRIDGE_FUNCTIONAL_PASS_MAIN_FIR_NOT_CONNECTED",
+  "file": "rtl/control/coeff_reload_bridge.sv",
+  "rtl_sha256": "84ff3cc958f81ded3b691899d0cab11433acc355ffe59f245c443f69fb2262ee",
+  "clock_domain": "clk_rf125MHz; every control input already synchronous, upstream CDC required",
+  "profile": {
+    "reload_width_bits": 24,
+    "config_width_bits": 8,
+    "max_reload_words": 256,
+    "max_config_words": 16,
+    "parameter_domain": "Widths are byte multiples8..32; counts positive and within compiled capacities. Each local storage word is32 bits.",
+    "ip_binding": "Caller must bind widths/counts/content/order/filter-set prefix/config mode from a concrete generated FIR Compiler7.2 instance. Defaults do not claim equivalence to the existing fixed FIRs."
+  },
+  "protocol_sources": {
+    "local": "C:/AMDDesignTools/2025.2/Vivado/data/ip/xilinx/fir_compiler_v7_2/component.xml confirms reload/config AXIS and TLAST event port names",
+    "official": [
+      "https://docs.amd.com/r/en-US/pg149-fir-compiler/CONFIG-Channel",
+      "https://docs.amd.com/r/en-US/2026.1/pg149-fir-compiler/RELOAD-Channel",
+      "https://www.xilinx.com/support/documents/ip_documentation/fir_compiler/v7_2/pg149-fir-compiler.pdf"
+    ],
+    "source_limit": "Local2025.2 package had interface metadata but no PG149 PDF discovered. Official PG149 references corroborate protocol; exact generated2025.2 reload packet profile remains to be bound."
+  },
+  "loading": {
+    "banks": 2,
+    "order": "load_begin snapshots nonzero version, reload_count, config_count, expected CRC. Subsequent accepted32-bit words are complete RELOAD packet followed by complete CONFIG packet, both already in IP-specific order.",
+    "crc": "CRC32C polynomial0x82f63b78 reflected, init0xffffffff final complement, low byte/bit first across every32-bit container word including CONFIG. Unused upper bits above configured AXIS width must be zero.",
+    "ownership": "Only inactive bank is written. bank_ref_busy blocks begin and every write to that bank. Partial/CRC-bad tables never set loaded. Version cannot equal current active_version.",
+    "control": "Commands are strobes, and loader must issue load_valid only when load_ready. Conflicting begin/write/commit strobes reject. While busy, new begin/commit rejects and cannot mutate snapshots.",
+    "version_freeze": "candidate_version/lengths/CRC snapshotted at BEGIN; input changes afterward cannot alter committed version or packet lengths"
+  },
+  "commit": {
+    "admission": "commit requires complete verified candidate and known FIR reset state. It freezes loading and raises quiesce_request.",
+    "boundary": "Wait for safe_boundary and both bank_ref_busy bits clear before offering first RELOAD word. Caller must block new references for the entire quiesce_request interval. Native ADC sampling must continue; no ordinary ADC backpressure is implied. The boundary is a grant to keep coefficient-dependent output/jobs safe until quiesce_request drops; it is not permission to admit new pulses while a stalled update is pending.",
+    "axis": "Each RELOAD/CONFIG tvalid remains asserted across stalls; word/index/TLAST advance only on ready. RELOAD precedes CONFIG. Each packet marks only final word TLAST. There is no timeout withdrawal of an offered transaction.",
+    "activation": "RELOAD does not activate coefficients. active_valid clears before CONFIG is offered because the old active mapping may transition. Final CONFIG handshake only enters WAIT_APPLY. commit_done/active_version/new active_bank_id occur only on subsequent apply_confirmed.",
+    "apply_confirmed": "Authoritative external event from validated FIR synchronization/consumption instrumentation, not config_ready, software plan, guessed fixed delay or testbench tied-high constant. Tie low until this path exists."
+  },
+  "errors_and_reset": {
+    "ip_events": "OR actual FIR reload_tlast_missing/unexpected into ip_reload_error; OR applicable config TLAST errors into ip_config_error.",
+    "fault": "Any IP error invalidates active_valid, sets reset_required, and disallows further updates. An already offered packet drains with stable AXIS fields through final handshake or is canceled only by coordinated reset. No error path emits commit_done or publishes a new active version.",
+    "recovery": "rst clears bridge knowledge. Before any load, fir_reset_done must confirm the actual attached FIR has reset and discarded pending packets. fir_reset_done cancels local candidate/inflight transfer and invalidates version; it does not claim startup coefficients have a known version.",
+    "limitations": "Both rst and fir_reset_done must be driven by a coordinated trusted reset controller. A bridge-only reset cannot prove an external FIR discarded partially received packets."
+  },
+  "integration": {
+    "main_fir": "NOT_CONNECTED: current HB19/FIR75 custom RTL uses fixed coefficients; this bridge does not alter it",
+    "not_implemented": [
+      "generated reloadable AMD FIR instance",
+      "exact reload_order/profile binding",
+      "actual apply-confirmation instrumentation",
+      "PS register/CDC loading endpoint",
+      "top-level coefficient reference ownership integration",
+      "wideband calibration or physical measured-gain generation"
+    ]
+  },
+  "verification": {
+    "runner": "python tests/test_coeff_reload.py",
+    "icarus": "PASS",
+    "testbench": "tb/unit/tb_coeff_reload.sv",
+    "vivado_ooc": "SYNTHESIS_PASS_VIVADO2025.2",
+    "script": "hw/tcl/coeff_reload_ooc.tcl",
+    "not_claimed": [
+      "AMD FIR numerical reload simulation",
+      "main FIR hot update",
+      "routed timing closure"
+    ],
+    "resources": {
+      "lut": 853.0,
+      "ff": 273.0,
+      "bram_tile": 0.0,
+      "dsp": 0.0
+    },
+    "warnings": [
+      "Netlist29-101 flat hierarchy floorplanning advisory",
+      "Timing38-242 OOC clock buffer location missing; external IO unconstrained; not routed timing"
+    ]
+  }
+}

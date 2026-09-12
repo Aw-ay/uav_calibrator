@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "module": "rtl/replay/calibrator_replay_system.sv",
+  "status": "ICARUS_VERIFIED_SYNTHESIS_NOT_RUN_PAUSED",
+  "composition": ["replay_task_dispatcher", "replay_processing_chain"],
+  "task_abi": "192-byte descriptor decoded only with generated replay_control_layout_pkg offsets.",
+  "readiness": "processing_ready requires source_ready, !dsp_busy and !profile_commit. Wrapper idle additionally requires dispatcher idle and no DSP tail.",
+  "profile": "External profile_commit explicitly freezes coefficients, RX calibration ID, target matrix ID, Doppler phase ID, FD phase and version. No ID-to-coefficient loading is implied. Commit is blocked while reader owns a task or DSP is busy. task_profiles_valid remains an external proof for all remaining immutable profile references. Head RX/target/Doppler IDs must match committed IDs; fraction_q32 must equal {active_fd_phase,24'd0} exactly.",
+  "stream": "Real reader raw_data/raw_valid/raw_last feed DSP in_hv/in_valid/in_last directly. DSP performs 2 RXCAL -> 2 FD63 -> target, injects 62 valid zeros after RXCAL, then drains ten FD/target registers. RAW return-token retirement is independent of DSP completion.",
+  "cancel": "hard_fault, abort, loss of RF/binding/time/clock permission, nonzero real token status, and owner epoch change while reader or DSP active drive DSP hard_fault. This cancels a missing-last underflow and old tails even after RAW token retirement. Restart requires a fresh accepted profile.",
+  "phase": "External phase_valid/phase_i/phase_q must refer to the current FD-output sampling time at the target input. Doppler lookup and phase timing proof remain external.",
+  "latency": "11 register stages plus 31+mu samples FD signal delay. TB phase0 demonstrates 168 GSC ticks at four ticks/sample for this digital chain only. Validated physical DAC/RF latency and RF-plane scheduling remain external inputs; no board latency claim.",
+  "ownership": "Only frozen_replay_reader produces bank return tokens. Queued rejections require external disposition and never fabricate lease returns. Calibration/profile lifetime must include DSP tail independently of RAW lease retirement.",
+  "verification": {
+    "commands": ["python tests/test_replay_task_dispatcher.py", "python tests/test_calibrator_replay_system.py"],
+    "bench": "tb/system/tb_calibrator_replay_system.sv",
+    "coverage": ["actual 16-bank RAM to RXCAL/FD63/target exact sample oracle", "held scheduled task rejects profile rewrite", "RAW token retirement does not assert idle before DSP tail", "profile mismatch prevents RAM admission", "missing response cancels missing-last DSP stream", "epoch change after RAW return immediately cancels DSP tail"],
+    "synthesis": "NOT_RUN: no existing wrapper synthesis entry found; new synthesis development stopped at user request"
+  },
+  "remaining": ["Root physical-port and RF integration", "External immutable profile resolver and lifetime owner", "Vivado synthesis, timing, implementation and board verification"]
+}

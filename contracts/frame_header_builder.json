@@ -1,0 +1,26 @@
+{
+  "status": "IMPLEMENTED_UNIT_TESTED",
+  "module": "frame_header_builder",
+  "source_contract": "contracts/frame_format.json",
+  "interface": "one ready/valid registered header slot; holds output under backpressure",
+  "metadata": "template must be frozen at onset; caller supplies semantic format/range/source/calibration IDs and flags without invented physical qualification",
+  "derived_fields": [
+    "magic",
+    "schema_version",
+    "header_bytes",
+    "record_bytes",
+    "payload_bytes",
+    "sample_count",
+    "gsc_first",
+    "sample_stride_ticks",
+    "sample_rate_num",
+    "sample_rate_den",
+    "header_crc32c=0",
+    "reserved=0"
+  ],
+  "time_mapping": "window_start_seq referenced to an explicit time_origin_seq/time_origin_gsc; +/-4 GSC ticks per core sample, pretrigger supported, u64 underflow/overflow rejected; no implicit FIR latency correction",
+  "bounds": "1..16384 samples; illegal requests handshake with rejected pulse and no result",
+  "crc_owner": "record_formatter computes header CRC after any qualification metadata update; builder leaves CRC zero",
+  "tests": "tests/test_frame_header_builder.py; independent Python ABI headers for 4 groups x 3 lengths, stalls, invalid zero length, pretrigger and both time overflow boundaries",
+  "timing": "NOT_RUN"
+}

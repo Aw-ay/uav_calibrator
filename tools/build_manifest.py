@@ -36,7 +36,7 @@ files.add(ROOT/'reports/range_statistics.log')
 files.add(ROOT/'reports/range_statistics_ooc/synth.dcp')
 files.add(ROOT/'reports/range_statistics_ooc/utilization.rpt')
 files.update((ROOT/'reports').glob('xsim_functional_*.log'))
-for folder in ('rtl','contracts','hw/boards','hw/tcl','hw/coefficients','sw/common','tests','tb','tools'):
+for folder in ('rtl','contracts','hw/boards','hw/tcl','hw/coefficients','sw/common','sw/matlab','tests','tb','tools'):
     files.update(p for p in (ROOT/folder).rglob('*') if p.is_file() and '__pycache__' not in p.parts)
 for name in ('capture_ram_probe','dma_probe','rfdc_probe'):
     files.add(ROOT/f'build/ip_probe_2025_2/calibrator_ip_probe.srcs/sources_1/ip/{name}/{name}.xci')
@@ -69,6 +69,14 @@ for rel in ('docs/TB验证说明.md','reports/detector_scoreboard.json','reports
             'reports/regression_latest.json','reports/xsim_capture_bmg.log',
             'build/calibrator_zu27dr/calibrator_zu27dr.xpr'):
     files.add(ROOT/rel)
+# Branch evidence retains focused runs and routed fixtures, including failure history.
+files.update(p for p in (ROOT/'reports').glob('*.json') if not p.name.startswith('artifact_manifest'))
+files.update((ROOT/'reports').glob('*progress.md'))
+files.add(ROOT/'reports/branch-development.md')
+for folder in ('calibration_timing','pulse_detector_registered_timing','tx_chain_registered_timing','capture_system_ooc','calibrator_transmit_ooc','generated_tx_sources_ooc','coeff_reload_ooc'):
+    files.update(p for p in (ROOT/'reports'/folder).rglob('*') if p.is_file())
+for name in ('event_control.o','calibration_table.o'):
+    files.add(ROOT/'build/ps_common_a53_2025_2'/name)
 missing=[str(p.relative_to(ROOT)) for p in sorted(files) if not p.is_file()]
 if missing: raise SystemExit('Missing artifacts: '+', '.join(missing))
 report={
@@ -77,7 +85,7 @@ report={
  'vivado':'2025.2','sw_build':'6299465','part':'xczu27dr-fsve1156-2-i',
  'part_evidence_status':'PROJECT_TARGET_PHYSICAL_SPEED_GRADE_NOT_VERIFIED',
  'full_system_timing':'NOT_RUN','hardware_validation':'NOT_RUN',
- 'detector_interface_timing':'DIAGNOSTIC_HOLD_VIOLATIONS_NOT_CLOSED',
+ 'detector_interface_timing':'REGISTERED_125MHZ_OOC_PASS_WNS_1.599_WHS_0.041_OLD_ZERO_IO_DELAY_DIAGNOSTIC_RETAINED',
  'historical_evidence':{'reports/record_upload_ooc':'Predates added idle_rf output; current upload hierarchy synthesized within capture_record_ooc'},
  'bitstream':'NOT_GENERATED','xsa':'NOT_GENERATED','elf':'NOT_GENERATED',
  'hashes':{p.relative_to(ROOT).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(files)}
