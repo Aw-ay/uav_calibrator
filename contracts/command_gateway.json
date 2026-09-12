@@ -31,8 +31,9 @@
   "scope": "PS transaction transport; board binding never conveyed as authorization in this payload",
   "irq_bits": {
     "COMMAND_DONE": 1,
-    "PDW_AVAILABLE": 2
+    "PDW_AVAILABLE": 2,
+    "SOURCE_EVENT_AVAILABLE": 4
   },
   "irq_reset_enable": 1,
-  "irq_policy": "IRQ_STATUS raw read-only bits; IRQ line OR of enabled raw sources. IRQ_ENABLE honors byte strobes and rejects set reserved bits. Reset enable=COMMAND_DONE for compatibility. STATUS=2 clears command DONE only; PDW_AVAILABLE is synchronized registered queue-nonempty level, deasserted after queue drains; PEEK/submission/soft capture reset do not clear it. PDW short levels already consumed may not reach PS; not an event counter or RF/DMA completion proof."
+  "irq_policy": "IRQ_STATUS raw read-only bits; IRQ line OR of enabled raw sources. IRQ_ENABLE honors byte strobes and rejects set reserved bits. Reset enable=COMMAND_DONE for compatibility. STATUS=2 clears command DONE only; PDW_AVAILABLE is synchronized registered queue-nonempty level, deasserted after queue drains; PEEK/submission/soft capture reset do not clear it. PDW short levels already consumed may not reach PS; not an event counter or RF/DMA completion proof. SOURCE_EVENT_AVAILABLE bit2 is an independent synchronized registered source-event queue nonempty level; same masking/reset semantics as PDW."
 }

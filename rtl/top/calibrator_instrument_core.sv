@@ -34,9 +34,12 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
  reg [63:0] native_seq;
  always @(posedge rf_clk)if(rst)native_seq<=0;else native_seq<=native_seq+1'b1;
  gsc_timebase timebase(.rf_clk(rf_clk),.rst_n(rst_n),.gsc(gsc));
- reg pdw_available_rf;
+ reg pdw_available_rf,source_event_available_rf;
+ wire [31:0] source_event_count,source_event_dropped;wire [63:0] source_event_token;
+ wire [319:0] source_event_data;wire source_event_pop_ok;
  always @(posedge rf_clk or negedge rst_n)begin
-  if(!rst_n)pdw_available_rf<=0;else pdw_available_rf<=pdw_count!=0;
+  if(!rst_n)begin pdw_available_rf<=0;source_event_available_rf<=0;end
+  else begin pdw_available_rf<=pdw_count!=0;source_event_available_rf<=source_event_count!=0;end
  end
  command_gateway_axi gateway(.*);
  wire pdw_valid;wire [255:0] pdw_key;wire [1023:0] pdw_header;wire [511:0] pdw_stats;wire [191:0] pdw_peaks;
@@ -219,6 +222,17 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
   .detector_validated(config_loaded),.owner_epoch(d_owner_epoch),.config_version({32'd0,config_image[CFG_CONFIG_VERSION_BIT+:CFG_CONFIG_VERSION_WIDTH]}),
   .config_data(config_image[CFG_QUALIFICATION_BIT+:CFG_QUALIFICATION_WIDTH]),.metadata(capture_metadata),.want_replay(config_image[CFG_WANT_REPLAY_BIT+:CFG_WANT_REPLAY_WIDTH]),
   .onset_ready(d_onset_ready),.idle(source_idle),.dropped_onsets(source_dropped),.*);
+ wire [31:0] source_cancel_reason=(hard_fault||!binding_valid||!timing_valid||d_t_rf_fault)?SOURCE_REASON_SAFETY:
+  ((!rf_arm||!rf_request||reset_request)?SOURCE_REASON_STOP:
+   ((action_valid&&action_opcode==instrument_control_pkg::CMD_MODE&&action_payload[31:0]==0)?SOURCE_REASON_MUTE:
+    ((!d_t_rf_permit||!d_t_pipeline_ready)?SOURCE_REASON_SAFETY:SOURCE_REASON_NORMAL)));
+ source_event_queue #(.ADDR_W($clog2(SOURCE_EVENT_DEPTH))) source_events(
+  .clk(rf_clk),.rst(rst),.accept_valid(d_t_dds_accepted||d_t_awg_play_accepted),
+  .accept_source(d_t_dds_accepted?instrument_control_pkg::SOURCE_DDS:instrument_control_pkg::SOURCE_AWG),.command_sequence(cmd_sequence),.config_id(d_t_active_config_id),
+  .dds_done(d_t_dds_done),.awg_done(d_t_awg_done),.drained(d_t_sources_drained),.time_valid(time_valid),.gsc(gsc),
+  .cancel_reason(source_cancel_reason),.pop_valid(action_valid&&action_opcode==instrument_control_pkg::CMD_SOURCE_EVENT_POP),
+  .pop_token(action_payload[63:0]),.count(source_event_count),.dropped(source_event_dropped),
+  .head_token(source_event_token),.head_data(source_event_data),.pop_ok(source_event_pop_ok));
  wire mode_payload_ok=action_payload[31:3]==0&&action_payload[2:0]<=4;
  wire dds_payload_ok=action_payload[287:257]==0;
  wire awg_payload_ok=action_payload[31:2]==0;
@@ -497,6 +511,11 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
     outcome_words=1;outcome_payload[3:0]={d_t_awg_ctrl_active_valid,d_t_awg_ctrl_loaded,d_t_awg_ctrl_done_op};
    end
    instrument_control_pkg::CMD_AWG_PLAY:begin outcome_valid=d_t_awg_play_accepted||d_t_awg_play_rejected;outcome_code=d_t_awg_play_rejected?8'd4:8'd0;end
+   instrument_control_pkg::CMD_SOURCE_EVENT_PEEK:begin
+    outcome_valid=action_valid;outcome_words=CMD_SOURCE_EVENT_PEEK_RESULT_WORDS;
+    outcome_payload[447:0]={source_event_data,source_event_token,source_event_dropped,source_event_count};
+   end
+   instrument_control_pkg::CMD_SOURCE_EVENT_POP:begin outcome_valid=action_valid;outcome_code=source_event_pop_ok?8'd0:8'd4;end
    instrument_control_pkg::CMD_PDW_PEEK:begin
     outcome_valid=action_valid;outcome_words=CMD_PDW_PEEK_RESULT_WORDS;outcome_payload[639:0]={pdw_data,pdw_token,pdw_dropped,pdw_count};
    end

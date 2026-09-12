@@ -107,3 +107,14 @@ PDW 队列非空在 RF 域寄存，再经两级 ASYNC_REG 同步到 ctrl 域；�
 C 接口 `cal_command_irq_enable(io, mask)` 配置掩码，`cal_command_irq_status(io, &raw)` 读取原始状态；非法参数、保留位和 I/O 错误显式返回，失败时不改输出。推荐使能 PDW 后，在软件调度循环中读取状态、串行完成 PEEK/POP，直到队列为空；网关忙时等待已有命令完成，不从中断上下文重入事务。实际 GIC 路由/BSP、中断服务例程与板级验证仍待真实平台集成。
 
 该通知只证明数字队列可读，不代表 DMA 已写入 DDR 或 RF 已发射。旧 CSR IRQ 地址不在本阶段接入。
+
+
+## 第七阶段：DDS/AWG 源任务事件
+
+SOURCE_EVENT_PEEK（18，0输入字）返回14字：队列项数、饱和丢弃数、队首令牌64位、事件320位。SOURCE_EVENT_POP（19，2输入字）只删除匹配令牌的队首，否则 REJECTED。无需先装配置即可读取历史。队列深度16；满时丢新事件，不阻塞波形源；令牌从1开始且不回绕；硬复位清空观察器/队列，采集软复位保留历史。
+
+事件10字依次为 tag=0x00020001、source（1 DDS/2 AWG）、reason（0正常/1 STOP或复位/2联锁或绑定/3 MUTE）、原命令sequence、实际TX profile config_id、flags、accept_gsc低/高、drain_gsc低/高。字段与命令常量来自 instrument_control.json。接受身份取自真实 source accepted；匹配 done 到达且 sources_drained 后才发布。首次非零取消原因锁存；同周期安全优先于STOP，STOP优先于MUTE。上游现有互斥准入必须保持；非法/重叠观察计入丢弃并保留原身份。
+
+flags bit0表示两次观察时刻有效且未回绕；否则两时间均为0。时间单位是500 MHz tick，但记录的是观察周期，不是首/末DAC样点或射频时刻。完成事件仅证明源任务排空，不能代替 TX FIR尾部、DAC实际消费、回放任务或RF发射完成。
+
+IRQ_STATUS/IRQ_ENABLE 新增 bit2 SOURCE_EVENT_AVAILABLE，独立于 DONE和PDW，复位mask仍为1。RF域寄存非空电平，再经两级 ASYNC_REG 同步至ctrl。PEEK/清DONE/屏蔽均不清事件；精确POP取空后经同步延迟解除。使用 cal_source_event_peek_begin/pop_begin/decode，遵循现有网关单事务串行化与不自动重试原则。实际GIC/BSP路由与中断服务仍待板级平台集成。

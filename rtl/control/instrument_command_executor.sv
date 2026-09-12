@@ -26,6 +26,8 @@ module instrument_command_executor(
     CMD_DDS:length_ok=cmd_words==CMD_DDS_WORDS;
     CMD_AWG_LOAD:length_ok=cmd_words==CMD_AWG_LOAD_WORDS;
     CMD_AWG_PLAY:length_ok=cmd_words==CMD_AWG_PLAY_WORDS;
+    CMD_SOURCE_EVENT_PEEK:length_ok=cmd_words==CMD_SOURCE_EVENT_PEEK_WORDS;
+    CMD_SOURCE_EVENT_POP:length_ok=cmd_words==CMD_SOURCE_EVENT_POP_WORDS;
     CMD_PDW_PEEK:length_ok=cmd_words==CMD_PDW_PEEK_WORDS;
     CMD_PDW_POP:length_ok=cmd_words==CMD_PDW_POP_WORDS;
     CMD_STATUS:length_ok=cmd_words==CMD_STATUS_WORDS;
@@ -69,7 +71,7 @@ module instrument_command_executor(
       else begin rf_arm<=cmd_payload[0];rf_request<=cmd_payload[1];action_valid<=1;action_opcode<=cmd_opcode;action_payload<=cmd_payload;end
      end
      default:begin
-      if(!config_loaded&&cmd_opcode!=CMD_STATUS&&cmd_opcode!=CMD_RESET&&cmd_opcode!=CMD_PDW_PEEK&&cmd_opcode!=CMD_PDW_POP)begin result_valid<=1;result_code<=3;end
+      if(!config_loaded&&cmd_opcode!=CMD_STATUS&&cmd_opcode!=CMD_RESET&&cmd_opcode!=CMD_PDW_PEEK&&cmd_opcode!=CMD_PDW_POP&&cmd_opcode!=CMD_SOURCE_EVENT_PEEK&&cmd_opcode!=CMD_SOURCE_EVENT_POP)begin result_valid<=1;result_code<=3;end
       else begin
        waiting<=1;action_valid<=1;action_opcode<=cmd_opcode;action_payload<=cmd_payload;
        if(cmd_opcode==CMD_RESET)begin reset_request<=1;run_enable<=0;rf_arm<=0;rf_request<=0;end

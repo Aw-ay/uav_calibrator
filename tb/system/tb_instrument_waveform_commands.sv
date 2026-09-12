@@ -38,9 +38,14 @@ module tb_instrument_waveform_commands;
  end endtask
  function automatic [31:0] crc_word(input [31:0] initial_crc,v);reg [31:0] c;begin c=initial_crc;for(integer k=0;k<32;k=k+1)c=(c>>1)^((c[0]^v[k])?32'h82f63b78:0);crc_word=c;end endfunction
 
+ integer expected_events=0;reg [31:0] expected_event_seq[0:15];reg [31:0] expected_event_source[0:15];reg [63:0] event_token;
  reg [8191:0] payload=0,saved_config=0;integer sequence_id=0;
  task command(input [15:0] op,words,input [7:0] expected);reg [31:0] crc;integer polls;begin
-  sequence_id=sequence_id+1;$display("COMMAND %0d time=%0t",op,$time);
+  sequence_id=sequence_id+1;
+  if(expected==0&&(op==CMD_DDS||op==CMD_AWG_PLAY))begin
+   expected_event_seq[expected_events]=sequence_id;expected_event_source[expected_events]=(op==CMD_DDS)?1:2;expected_events=expected_events+1;
+  end
+  $display("COMMAND %0d time=%0t",op,$time);
   write_word(GW_STATUS,2,0);
   for(integer w=0;w<words;w=w+1)write_word(GW_PAYLOAD+4*w,payload[w*32+:32],0);
   write_word(GW_OP_LENGTH,{words,op},0);write_word(GW_SEQUENCE,sequence_id,0);
@@ -111,6 +116,7 @@ module tb_instrument_waveform_commands;
   protect_cycles=1;switch_cycles=1;pa_cycles=1;recovery_cycles=1;transition_timeout_cycles=100;watchdog_cycles=1000;
   repeat(6)@(negedge ctrl_clk);rst_n=1;adc_level(10);
   command(CMD_STATUS,0,0);read_word(GW_RESULT_LENGTH);if(value!=116)$fatal(1,"snapshot length");
+  command(18,0,0);read_word(GW_RESULT);if(value!==0)$fatal(1,"empty source events");
   command(CMD_ARM,0,3);
   q=0;for(integer c=0;c<6;c=c+1)q[c*32+:32]=65536;
   q[239:224]=6553;q[223:192]=65536;q[245:240]=6'b100100;
@@ -130,7 +136,7 @@ module tb_instrument_waveform_commands;
   payload[CFG_R_SHADOW_FD_VERSION_BIT+:32]=32'h9d1dc12a;payload[CFG_R_SHADOW_RX_CAL_ID_BIT+:32]=101;payload[CFG_R_SHADOW_TARGET_MATRIX_ID_BIT+:32]=102;
   payload[CFG_R_SHADOW_DOPPLER_PHASE_ID_BIT+:32]=103;payload[CFG_T_ROUTE_ENABLE_BIT+:8]=255;
   payload[CFG_T_CAL_VALID_BIT+:8]=255;payload[CFG_T_CONFIG_ID_BIT+:32]=7;
-  saved_config=payload;command(CMD_CONFIG,CONFIG_WORDS,0);
+  saved_config=payload;command(CMD_CONFIG,CONFIG_WORDS,0);write_word(GW_IRQ_ENABLE,4,0);
   repeat(100)@(negedge rf_clk);command(CMD_TX_PROFILE,0,0);
   // BEGIN/WRITE may run while muted. COMMIT is acknowledged only in MUTE.
   awg(1,0,0,1,4);awg(0,0,0,0,4);awg(3,0,0,0,4);
@@ -172,7 +178,26 @@ module tb_instrument_waveform_commands;
   repeat(100)@(negedge rf_clk);if(dut.d_t_dds_busy)$fatal(1,"binding loss source drain");
   payload=3;command(CMD_RF_REQUEST,1,5);dds(gsc+6000,4,6,2,4);
   command(CMD_RESET,0,0);
+  if(expected_events!=7||!irq)$fatal(1,"source event IRQ or expected count");
+  for(integer e=0;e<7;e=e+1)begin
+   command(18,0,0);read_word(GW_RESULT_LENGTH);if(value!==14)$fatal(1,"source PEEK length");
+   read_word(GW_RESULT);if(value!==7-e)$fatal(1,"source event count");
+   read_word(GW_RESULT+4);if(value!==0)$fatal(1,"source event drops");
+   read_word(GW_RESULT+8);event_token[31:0]=value;read_word(GW_RESULT+12);event_token[63:32]=value;
+   read_word(GW_RESULT+16);if(value!==32'h00020001)$fatal(1,"source event tag");
+   read_word(GW_RESULT+20);if(value!==expected_event_source[e])$fatal(1,"source kind");
+   read_word(GW_RESULT+24);if(value!==((e<4)?0:((e==6)?2:1)))$fatal(1,"source reason e=%0d got=%0d",e,value);
+   read_word(GW_RESULT+28);if(value!==expected_event_seq[e])$fatal(1,"source command identity");
+   read_word(GW_RESULT+32);if(value!==7)$fatal(1,"source config identity");
+   read_word(GW_RESULT+36);if(value!==1)$fatal(1,"source timestamps validity");
+   payload=0;payload[63:0]=event_token+1;command(19,2,4);
+   command(18,0,0);read_word(GW_RESULT+8);if(value!==event_token[31:0])$fatal(1,"wrong token changed event");
+   payload=0;payload[63:0]=event_token;command(19,2,0);
+  end
+  repeat(6)@(negedge ctrl_clk);if(irq!==0)$fatal(1,"source IRQ after drain");
+  command(18,0,0);read_word(GW_RESULT);if(value!==0)$fatal(1,"source queue empty");
+  $display("PASS SOURCE_EVENTS actual waveform identity completion cancellation IRQ");
   $display("PASS instrument waveform commands DDS exact chirp/GSC AWG CRC lifecycle STOP UNBOUND DAC");$finish;
  end
- initial begin #110000;$fatal(1,"waveform timeout");end
+ initial begin #160000;$fatal(1,"waveform timeout");end
 endmodule

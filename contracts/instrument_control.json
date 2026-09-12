@@ -236,6 +236,15 @@
     "PDW_POP": {
       "opcode": 17,
       "words": 2
+    },
+    "SOURCE_EVENT_PEEK": {
+      "opcode": 18,
+      "words": 0,
+      "result_words": 14
+    },
+    "SOURCE_EVENT_POP": {
+      "opcode": 19,
+      "words": 2
     }
   },
   "config_policy": "atomic only when disarmed, RF disarmed and all consumers/producer contexts drained, no frozen or pending banks; padding must be zero",
@@ -243,5 +252,27 @@
   "result_policy": "command success after actual module response; REPLAY success is queue acceptance, later reject held until REJECT_POP; STATUS is coherent RF snapshot",
   "awg_commit_policy": "A loaded COMMIT returns BUSY without dispatch or table loss unless acquisition is stopped, active mode is MUTE, replay and generated sources are drained and detector is inactive. This prevents single-inflight gateway deadlock behind a future STOP. Unloaded COMMIT still returns REJECTED from the AWG core. BEGIN and WRITE may target the inactive bank while RF runs.",
   "pdw_policy": "PEEK returns 20 words: count32,dropped32,head_token64,CAPTURE_PDW512. POP requires exact head_token64 or returns REJECTED. Queue full drops only PDW with saturating count; hard reset flushes, soft capture reset preserves events. No DMA completion or RF emission is implied. Tokens never wrap: exhaustion drops new PDW until hard reset.",
-  "pdw_queue_depth": 16
+  "pdw_queue_depth": 16,
+  "source_event_constants": {
+    "SOURCE_EVENT_TAG": 131073,
+    "SOURCE_EVENT_DEPTH": 16,
+    "SOURCE_DDS": 1,
+    "SOURCE_AWG": 2,
+    "SOURCE_REASON_NORMAL": 0,
+    "SOURCE_REASON_STOP": 1,
+    "SOURCE_REASON_SAFETY": 2,
+    "SOURCE_REASON_MUTE": 3,
+    "SOURCE_EVENT_TIME_VALID": 1
+  },
+  "source_event_layout": [
+    "tag32",
+    "source32",
+    "reason32",
+    "command_sequence32",
+    "active_tx_config_id32",
+    "flags32",
+    "accept_observation_gsc64",
+    "drain_observation_gsc64"
+  ],
+  "source_event_policy": "PEEK14 words: count,dropped,token64,record320; exact-token POP. Observe mutually exclusive actual DDS/AWG acceptance; freeze command sequence and active TX config. Require matching done and actual sources_drained. First cancellation reason retained, within-cycle priority safety then STOP/reset then MUTE. Times denote observation cycles, not source sample or DAC/RF timing; flag1 requires time_valid at both observations and nonwrapping order, otherwise both times zero. Queue full drops event only; saturated drops also count malformed overlapping/invalid acceptance. Hard reset discards active observation and queue; capture soft reset preserves records. Tokens start1, never wrap; exhaustion drops new events. No DAC/FIR tail, RF emission, replay or DMA completion is implied."
 }
