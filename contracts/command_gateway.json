@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "words": 256,
+  "registers": {
+    "ID": 16384,
+    "STATUS": 16388,
+    "OP_LENGTH": 16392,
+    "SEQUENCE": 16396,
+    "CRC32C": 16400,
+    "SUBMIT": 16404,
+    "DONE_SEQUENCE": 16408,
+    "RESULT_LENGTH": 16412,
+    "PAYLOAD": 17408,
+    "RESULT": 18432
+  },
+  "id": 1129137201,
+  "crc": "CRC32C reflected0x82f63b78 seedFFFFFFFF final xorFFFFFFFF; header OP_LENGTH then SEQUENCE then length little-endian payload words",
+  "status": "BUSY bit0,DONE bit1,ERROR bit2,code bits15:8; DONE_SEQUENCE/result frozen until next completed command; write STATUS=2 clears DONE/IRQ without altering result; SUBMIT clears DONE",
+  "reset": "coordinated all-domain assertion, drops pending transactions; software must reconcile and serialize calls",
+  "codes": {
+    "OK": 0,
+    "CRC": 1,
+    "INVALID": 2,
+    "BUSY": 3,
+    "REJECTED": 4,
+    "UNBOUND": 5
+  },
+  "max_inflight": 1,
+  "scope": "PS transaction transport; board binding never conveyed as authorization in this payload"
+}

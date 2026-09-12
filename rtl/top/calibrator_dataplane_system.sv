@@ -3,7 +3,7 @@
 // Configuration transactions and normalized sample/onset producers remain explicit
 // external interfaces. This is not the PS/RFDC board wrapper.
 module calibrator_dataplane_system #(
- parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=1,FIFO_ADDR_W=12,AWG_DEPTH=16384
+ parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=1,FIFO_ADDR_W=12,AWG_DEPTH=16384,PHYSICAL_MASKS_IN_TEMPLATE=0
 )(
  output wire [15:0] replay_leased,
  input wire  clk_rf,
@@ -294,7 +294,7 @@ module calibrator_dataplane_system #(
   .token_valid(r_token_valid),.token_owner_epoch(r_token_owner_epoch),.token_generation(r_token_generation),
   .token_group(r_token_group),.token_bank(r_token_bank),.token_consumer(r_token_consumer),.token_ready(token_ready),
   .ack_replay(ack_replay),.ack_replay_bank(ack_replay_bank),.ack_replay_epoch(ack_replay_epoch),.ack_replay_generation(ack_replay_generation),.rejected_tokens(rejected_tokens));
- calibrator_capture_system #(.PRE_SAMPLES(PRE_SAMPLES),.DETECTOR_LATENCY(DETECTOR_LATENCY),.FIFO_ADDR_W(FIFO_ADDR_W)) capture(
+ calibrator_capture_system #(.PRE_SAMPLES(PRE_SAMPLES),.DETECTOR_LATENCY(DETECTOR_LATENCY),.FIFO_ADDR_W(FIFO_ADDR_W),.PHYSICAL_MASKS_IN_TEMPLATE(PHYSICAL_MASKS_IN_TEMPLATE)) capture(
   .replay_leased(replay_leased),
   .clk_rf(clk_rf),
   .clk_mem(clk_mem),

@@ -1,7 +1,7 @@
 // Owns the onset snapshot while actual completed-window headers are built.
 // A malformed time/count is forwarded as all-bad, so qualification discards
 // its banks through the normal owner protocol rather than leaking ownership.
-module capture_admission_bridge(
+module capture_admission_bridge #(parameter integer PHYSICAL_MASKS_IN_TEMPLATE=0)(
  input wire clk,rst,in_valid,output wire in_ready,
  input wire [255:0] in_key,in_noise,input wire [1023:0] in_config,in_metadata,
  input wire [5:0] in_bank_ids,in_bad_channels,input wire [191:0] in_generations,in_start_seq,
@@ -32,7 +32,10 @@ module capture_admission_bridge(
    // ABI5 logical PRIMARY groups. These are not board GPIO or RF control codes.
    group_metadata[FRAME_STREAM_GROUP_ID_OFFSET*8+:8]=g+1;
    group_metadata[FRAME_RANGE_ID_OFFSET*8+:8]=g+1;
-   group_metadata[FRAME_PHYSICAL_ADC_MASK_OFFSET*8+:8]=8'h11<<g;
+   // Internal onset template may carry frozen physical masks in reserved bytes.
+   // frame_header_builder always clears these bytes before emitting the ABI frame.
+   group_metadata[FRAME_PHYSICAL_ADC_MASK_OFFSET*8+:8]=PHYSICAL_MASKS_IN_TEMPLATE ?
+       metadata[FRAME_RESERVED_OFFSET*8+g*8+:8] : (8'h11<<g);
    group_metadata[FRAME_CHANNEL_MASK_OFFSET*8+:8]=3;
   end
   frame_header_builder builder(.clk(clk),.rst(rst),.request_valid(state==BUILD),.request_ready(),

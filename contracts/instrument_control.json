@@ -1,0 +1,235 @@
+{
+  "config_words": 122,
+  "config_fields": [
+    {
+      "name": "config_version",
+      "bit": 0,
+      "width": 32
+    },
+    {
+      "name": "qualification",
+      "bit": 32,
+      "width": 1024
+    },
+    {
+      "name": "metadata",
+      "bit": 1056,
+      "width": 1024
+    },
+    {
+      "name": "want_replay",
+      "bit": 2080,
+      "width": 1
+    },
+    {
+      "name": "detector_range",
+      "bit": 2112,
+      "width": 2
+    },
+    {
+      "name": "on_power",
+      "bit": 2144,
+      "width": 33
+    },
+    {
+      "name": "off_power",
+      "bit": 2208,
+      "width": 33
+    },
+    {
+      "name": "eop_hold",
+      "bit": 2272,
+      "width": 14
+    },
+    {
+      "name": "max_body",
+      "bit": 2304,
+      "width": 14
+    },
+    {
+      "name": "post_samples",
+      "bit": 2336,
+      "width": 16
+    },
+    {
+      "name": "noise_enable",
+      "bit": 2368,
+      "width": 1
+    },
+    {
+      "name": "noise_shift",
+      "bit": 2400,
+      "width": 5
+    },
+    {
+      "name": "noise_max_age",
+      "bit": 2432,
+      "width": 32
+    },
+    {
+      "name": "near_clip_threshold",
+      "bit": 2464,
+      "width": 136
+    },
+    {
+      "name": "threshold_validated",
+      "bit": 2624,
+      "width": 8
+    },
+    {
+      "name": "r_current_fir_id",
+      "bit": 2656,
+      "width": 32
+    },
+    {
+      "name": "r_shadow_cal_valid",
+      "bit": 2688,
+      "width": 2
+    },
+    {
+      "name": "r_shadow_dc",
+      "bit": 2720,
+      "width": 64
+    },
+    {
+      "name": "r_shadow_gain",
+      "bit": 2784,
+      "width": 72
+    },
+    {
+      "name": "r_shadow_matrix",
+      "bit": 2880,
+      "width": 144
+    },
+    {
+      "name": "r_shadow_fd_phase",
+      "bit": 3040,
+      "width": 8
+    },
+    {
+      "name": "r_shadow_fd_version",
+      "bit": 3072,
+      "width": 32
+    },
+    {
+      "name": "r_shadow_rx_cal_id",
+      "bit": 3104,
+      "width": 32
+    },
+    {
+      "name": "r_shadow_target_matrix_id",
+      "bit": 3136,
+      "width": 32
+    },
+    {
+      "name": "r_shadow_doppler_phase_id",
+      "bit": 3168,
+      "width": 32
+    },
+    {
+      "name": "t_route_select",
+      "bit": 3200,
+      "width": 8
+    },
+    {
+      "name": "t_route_enable",
+      "bit": 3232,
+      "width": 8
+    },
+    {
+      "name": "t_cal_valid",
+      "bit": 3264,
+      "width": 8
+    },
+    {
+      "name": "t_dc_i",
+      "bit": 3296,
+      "width": 128
+    },
+    {
+      "name": "t_dc_q",
+      "bit": 3424,
+      "width": 128
+    },
+    {
+      "name": "t_gain_i",
+      "bit": 3552,
+      "width": 144
+    },
+    {
+      "name": "t_gain_q",
+      "bit": 3712,
+      "width": 144
+    },
+    {
+      "name": "t_config_id",
+      "bit": 3872,
+      "width": 32
+    }
+  ],
+  "commands": {
+    "CONFIG": {
+      "opcode": 1,
+      "words": 122
+    },
+    "ARM": {
+      "opcode": 2,
+      "words": 0
+    },
+    "STOP": {
+      "opcode": 3,
+      "words": 0
+    },
+    "RESET": {
+      "opcode": 4,
+      "words": 0
+    },
+    "RF_REQUEST": {
+      "opcode": 5,
+      "words": 1
+    },
+    "MODE": {
+      "opcode": 6,
+      "words": 1
+    },
+    "RX_PROFILE": {
+      "opcode": 7,
+      "words": 0
+    },
+    "TX_PROFILE": {
+      "opcode": 8,
+      "words": 0
+    },
+    "REPLAY": {
+      "opcode": 9,
+      "words": 48
+    },
+    "DDS": {
+      "opcode": 10,
+      "words": 9
+    },
+    "AWG_LOAD": {
+      "opcode": 11,
+      "words": 5
+    },
+    "AWG_PLAY": {
+      "opcode": 12,
+      "words": 0
+    },
+    "STATUS": {
+      "opcode": 13,
+      "words": 0
+    },
+    "REJECT_POP": {
+      "opcode": 14,
+      "words": 0
+    },
+    "PRODUCER_ERROR_POP": {
+      "opcode": 15,
+      "words": 0
+    }
+  },
+  "config_policy": "atomic only when disarmed, RF disarmed and all consumers/producer contexts drained, no frozen or pending banks; padding must be zero",
+  "binding_policy": "clock/time/MTS/map/binding/interlock dwell and normalized feedback remain trusted external inputs",
+  "result_policy": "command success after actual module response; REPLAY success is queue acceptance, later reject held until REJECT_POP; STATUS is coherent RF snapshot"
+}

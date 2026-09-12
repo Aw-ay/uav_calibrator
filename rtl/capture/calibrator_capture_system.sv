@@ -1,7 +1,7 @@
 // Onset snapshot -> producer ownership -> actual header generation -> RAW upload.
 // Producer errors remain explicit held records; accepting an error is not a RAW ACK.
 module calibrator_capture_system #(
- parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=1,FIFO_ADDR_W=12
+ parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=1,FIFO_ADDR_W=12,PHYSICAL_MASKS_IN_TEMPLATE=0
 )(
  output wire [15:0] replay_leased,
  input wire clk_rf,clk_mem,rst_n,arm_enable,reset_request,replay_quiescent,
@@ -64,7 +64,7 @@ module calibrator_capture_system #(
   .request_bank_ids(producer_bank_ids),.request_bad_channels(producer_bad_channels),.request_generations(producer_generations),.request_starts(producer_starts),.request_counts(producer_counts),.request_onset_seq(producer_onset_seq),.request_onset_gsc(producer_onset_gsc),
   .error_valid(producer_error_valid),.error_ready(producer_error_ready),.error_key(producer_error_key),.error_bank_ids(producer_error_bank_ids),.error_generations(producer_error_generations),.error_reason(producer_error_reason),.error_bound(producer_error_bound),
   .occupied(),.producers_idle(tracker_idle),.onset_reject_count(onset_reject_count),.eop_reject_count(eop_reject_count),.context_error_count(context_error_count));
- capture_admission_bridge admission(.clk(clk_rf),.rst(rst),.in_valid(producer_valid),.in_ready(producer_ready),
+ capture_admission_bridge #(.PHYSICAL_MASKS_IN_TEMPLATE(PHYSICAL_MASKS_IN_TEMPLATE)) admission(.clk(clk_rf),.rst(rst),.in_valid(producer_valid),.in_ready(producer_ready),
   .in_key(producer_key),.in_noise(producer_noise),.in_config(producer_config),.in_metadata(producer_metadata),
   .in_bank_ids(producer_bank_ids),.in_bad_channels(producer_bad_channels),.in_generations(producer_generations),.in_start_seq(producer_starts),.in_sample_count(producer_counts),
   .in_onset_seq(producer_onset_seq),.in_onset_gsc(producer_onset_gsc),.in_want_replay(producer_want_replay),

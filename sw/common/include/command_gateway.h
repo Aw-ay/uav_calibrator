@@ -1,0 +1,15 @@
+/* Generated from contracts/command_gateway.json */
+#ifndef CAL_COMMAND_GATEWAY_H
+#define CAL_COMMAND_GATEWAY_H
+#define CAL_GW_ID 0x00004000u
+#define CAL_GW_STATUS 0x00004004u
+#define CAL_GW_OP_LENGTH 0x00004008u
+#define CAL_GW_SEQUENCE 0x0000400cu
+#define CAL_GW_CRC32C 0x00004010u
+#define CAL_GW_SUBMIT 0x00004014u
+#define CAL_GW_DONE_SEQUENCE 0x00004018u
+#define CAL_GW_RESULT_LENGTH 0x0000401cu
+#define CAL_GW_PAYLOAD 0x00004400u
+#define CAL_GW_RESULT 0x00004800u
+#define CAL_GW_WORDS 256u
+#endif

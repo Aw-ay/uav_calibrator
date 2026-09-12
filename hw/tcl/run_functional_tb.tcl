@@ -42,20 +42,28 @@ dict set sources tb_replay_processing_chain {rtl/arithmetic/fixed_round_sat.sv r
 dict set sources tb_capture_replay_binding {rtl/replay/replay_control_layout_pkg.sv rtl/top/capture_replay_binding.sv tb/system/tb_capture_replay_binding.sv}
 dict set sources tb_calibrator_dataplane_system {rtl/generated/calibrator_contract_pkg.sv rtl/generated/capture_event_pkg.sv rtl/replay/replay_control_layout_pkg.sv rtl/calibrator_top.sv rtl/arithmetic/complex_cal_core.sv rtl/arithmetic/fixed_round_sat.sv rtl/arithmetic/fractional_delay.sv rtl/arithmetic/fractional_delay_pipelined.sv rtl/arithmetic/fractional_delay_profile.sv rtl/arithmetic/rx_cal_executor.sv rtl/arithmetic/target_complex_operator.sv rtl/arithmetic/tx_cal_executor.sv rtl/backend/dac_stream_adapter.sv rtl/backend/fir_tx_fir75.sv rtl/backend/fir_tx_hb19.sv rtl/backend/fir_tx_lane.sv rtl/backend/tx_channel_router.sv rtl/backend/tx_processing_chain.sv rtl/capture/calibrator_capture_pipeline.sv rtl/capture/calibrator_capture_system.sv rtl/capture/capture_admission_bridge.sv rtl/capture/capture_bank_array.sv rtl/capture/capture_bank_manager.sv rtl/capture/capture_pdw_writer.sv rtl/capture/capture_producer_tracker.sv rtl/capture/capture_ram.sv rtl/capture/capture_range_select.sv rtl/capture/capture_record_system.sv rtl/capture/capture_reset_coordinator.sv rtl/capture/capture_statistics_reader.sv rtl/capture/frame_header_builder.sv rtl/capture/frozen_record_reader.sv rtl/capture/noise_snapshot.sv rtl/capture/noise_window_energy.sv rtl/capture/pulse_context_join.sv rtl/capture/pulse_context_pool.sv rtl/capture/pulse_detector.sv rtl/capture/pulse_qualification_engine.sv rtl/capture/pulse_range_statistics.sv rtl/capture/qualification_bank_commit.sv rtl/capture/qualification_publish_bridge.sv rtl/capture/qualification_record_source.sv rtl/capture/range_linearity.sv rtl/capture/range_qualification.sv rtl/capture/record_dma_bridge.sv rtl/capture/record_formatter.sv rtl/control/aux_source_controller.sv rtl/control/cdc_mailbox.sv rtl/control/coeff_reload_bridge.sv rtl/control/csr_control_axi.sv rtl/control/event_mailbox.sv rtl/control/rf_safety_interlock.sv rtl/data/axis_record_fifo.sv rtl/data/record_descriptor_arbiter.sv rtl/data/record_upload_groups.sv rtl/data/record_upload_path.sv rtl/frontend/channel_epoch_aligner.sv rtl/frontend/fir_quantize.sv rtl/frontend/fir_rx_fir75.sv rtl/frontend/fir_rx_hb19.sv rtl/frontend/fir_rx_lane.sv rtl/frontend/native_overload_monitor.sv rtl/frontend/rfdc_stream_adapter.sv rtl/generated/fractional_delay_coeff_rom.sv rtl/monitor/tx_reference_analyzer.sv rtl/replay/calibrator_replay_system.sv rtl/replay/frozen_replay_reader.sv rtl/replay/replay_descriptor_queue.sv rtl/replay/replay_legality_checker.sv rtl/replay/replay_processing_chain.sv rtl/replay/replay_task_dispatcher.sv rtl/source/awg_load_cdc_wrapper.sv rtl/source/awg_reader.sv rtl/source/dds_burst_control.sv rtl/source/dds_nco_wrapper.sv rtl/source/generated_tx_sources.sv rtl/source/tx_source_mux.sv rtl/time/gsc_timebase.sv rtl/top/calibrator_dataplane_system.sv rtl/top/calibrator_transmit_system.sv rtl/top/capture_replay_binding.sv tb/system/tb_calibrator_dataplane_system.sv}
 dict set sources tb_calibrator_dataplane_cancel [dict get $sources tb_calibrator_dataplane_system]
+proc stage3_sv {directory} {
+ set result [glob -nocomplain -directory $directory *.sv]
+ foreach child [glob -nocomplain -types d -directory $directory *] {set result [concat $result [stage3_sv $child]]}
+ return $result
+}
+foreach stage3_top {tb_command_gateway tb_receive_frontend tb_receive_event_producer tb_calibrator_instrument_core} {
+ dict set sources $stage3_top [concat [stage3_sv [file join $root rtl]] [list tb/system/$stage3_top.sv]]
+}
 if {![dict exists $sources $top]} {error "Unsupported top: $top"}
 create_project -force functional_$top [file join $root build functional_tb $top] -part xczu27dr-fsve1156-2-i
 foreach rel [dict get $sources $top] {add_files -fileset sim_1 -norecurse [file join $root $rel]}
 set_property top $top [get_filesets sim_1]
 set_property xsim.simulate.runtime 0ns [get_filesets sim_1]
-if {$top eq "tb_qualified_record_upload" || $top eq "tb_qualified_reset_drain" || $top eq "tb_calibrator_capture_pipeline" || $top eq "tb_calibrator_capture_system" || $top eq "tb_calibrator_dataplane_system" || $top eq "tb_calibrator_dataplane_cancel"} {
+if {$top eq "tb_qualified_record_upload" || $top eq "tb_qualified_reset_drain" || $top eq "tb_calibrator_capture_pipeline" || $top eq "tb_calibrator_capture_system" || $top eq "tb_calibrator_dataplane_system" || $top eq "tb_calibrator_dataplane_cancel" || $top eq "tb_calibrator_instrument_core"} {
  set vectors [file join $root build qualified_upload_vectors]
- if {$top eq "tb_calibrator_capture_system" || $top eq "tb_calibrator_dataplane_system" || $top eq "tb_calibrator_dataplane_cancel"} {set vectors [file join $root build capture_system_vectors]}
+ if {$top eq "tb_calibrator_capture_system" || $top eq "tb_calibrator_dataplane_system" || $top eq "tb_calibrator_dataplane_cancel" || $top eq "tb_calibrator_instrument_core"} {set vectors [file join $root build capture_system_vectors]}
  if {![file exists [file join $vectors expected.hex]]} {error "Run tests/test_qualified_record_upload.py to generate independent vectors first"}
  set_property -dict [list xsim.simulate.xsim.more_options "-testplusarg ROOT=$vectors"] [get_filesets sim_1]
 }
 update_compile_order -fileset sim_1
 launch_simulation -simset sim_1 -mode behavioral
-log_wave -r /*
+if {$top ne "tb_calibrator_instrument_core"} {log_wave -r /*}
 run all
 close_sim
 close_project

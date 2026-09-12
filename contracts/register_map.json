@@ -714,7 +714,9 @@
     "0x1000-0x17FF": "task mailbox; replay_contract layout authoritative",
     "0x1800-0x1FFF": "coefficient validation/pin",
     "0x2030-0x2FFF": "perchannel health",
-    "0x3400-0xFFFF": "unallocated"
+    "0x3400-0x3FFF": "unallocated",
+    "0x4000-0x4BFF": "command gateway extension; contracts/command_gateway.json authoritative; gaps return SLVERR",
+    "0x4C00-0xFFFF": "unallocated"
   },
   "abi_version": 5,
   "bank_snapshot_table": {
@@ -773,5 +775,10 @@
       }
     ],
     "access": "RO atomic snapshot; remaining bytes0"
+  },
+  "command_gateway_extension": {
+    "contract": "command_gateway.json",
+    "core": "calibrator_instrument_core",
+    "legacy_csr_in_core": false
   }
 }
