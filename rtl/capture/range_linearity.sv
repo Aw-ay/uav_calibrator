@@ -11,13 +11,32 @@ module range_linearity(
  output wire [5:0] pair_known,pair_pass,linearity_known,linearity_pass
 );
  wire [77:0] normalized[0:5];
+ wire [467:0] normalized_bus;
  wire [5:0] eligible;
- genvar c,p;
+ genvar c;
  generate for(c=0;c<6;c=c+1)begin: channel
   wire [45:0] e=energy[c*46+:46];
   wire [31:0] scale=power_scale_q16[c*32+:32];
+  assign normalized_bus[c*78+:78]=normalized[c];
   assign normalized[c]={32'd0,e}*{46'd0,scale};
   assign eligible[c]=context_valid&&tolerance_valid&&calibration_valid[c]&&overlap_valid[c]&&e!=0&&scale!=0;
+ end
+ endgenerate
+ range_linearity_normalized compare(.normalized_energy(normalized_bus),.eligible(eligible),
+  .tolerance_q16(tolerance_q16),.common_known(common_known),.common_pass(common_pass),
+  .pair_known(pair_known),.pair_pass(pair_pass),.linearity_known(linearity_known),.linearity_pass(linearity_pass));
+endmodule
+
+// Shared exact comparison, after an optional registered normalization stage.
+module range_linearity_normalized(
+ input wire [467:0] normalized_energy,input wire [5:0] eligible,
+ input wire [15:0] tolerance_q16,input wire common_known,common_pass,
+ output wire [5:0] pair_known,pair_pass,linearity_known,linearity_pass
+);
+ wire [77:0] normalized[0:5];
+ genvar c,p;
+ generate for(c=0;c<6;c=c+1)begin: unpack_energy
+  assign normalized[c]=normalized_energy[c*78+:78];
  end
  for(p=0;p<6;p=p+1)begin: pair_check
   // Pair order H01,H12,H02,V01,V12,V02.

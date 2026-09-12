@@ -1,0 +1,16 @@
+{
+  "status": "VERIFIED_FUNCTIONAL_AND_CAPTURE_SUBSYSTEM_POST_SYNTH",
+  "module": "pulse_qualification_engine",
+  "payload_contract": "contracts/qualification_payload.json",
+  "stages_after_pool": [
+    "s0: selected pool payload register",
+    "norm: exact 46x32 power normalization plus noise energy conversion",
+    "s1: relative linearity comparison and metadata",
+    "output: qualification/range/identity"
+  ],
+  "latency": "four ready/valid register stages after pool, previously two; stalls hold all paired metadata",
+  "numeric_policy": "no rounding/truncation added to 78-bit normalized energy or 94-bit tolerance comparison",
+  "duplicate_policy": "pool and all four stages retain full-key duplicate protection",
+  "cancel_reset": "clears all four valid bits and pool; delayed producers cannot resurrect a cancelled context",
+  "evidence": "reports/stage1_capture_closure.md"
+}

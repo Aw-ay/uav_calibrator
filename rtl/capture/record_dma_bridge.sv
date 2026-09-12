@@ -27,6 +27,17 @@ module record_dma_bridge(
  wire request_busy,request_valid,request_take,return_busy,return_valid,return_send;
  wire[1184:0] request_data;
  wire[132:0] return_data;
+ // Capture the held CDC payload before using it in owner identity/control logic.
+ (* KEEP="TRUE" *) reg [132:0] completion_hold;
+ reg completion_pending;
+ wire return_take=rf_run&&return_valid&&!completion_pending;
+ always @(posedge clk_rf or negedge rst_n)begin
+  if(!rst_n)begin completion_hold<=0;completion_pending<=0;end
+  else if(rf_run)begin
+   if(completion_valid&&completion_ready)completion_pending<=0;
+   if(return_take)begin completion_hold<=return_data;completion_pending<=1;end
+  end
+ end
  assign desc_ready=rf_run&&!outstanding&&!request_busy;
  always @(posedge clk_rf or negedge rst_n)begin
   if(!rst_n)outstanding<=0;
@@ -47,9 +58,9 @@ module record_dma_bridge(
  assign return_send=mem_run&&state==RETURN&&!return_busy;
  cdc_mailbox #(.WIDTH(133)) completion_cdc(.src_clk(clk_mem),.dst_clk(clk_rf),.rst_n(rst_n),
   .src_send(return_send),.src_data({error,token}),.src_busy(return_busy),.src_done(),
-  .dst_valid(return_valid),.dst_data(return_data),.dst_take(completion_valid&&completion_ready));
- assign completion_valid=rf_run&&return_valid;
- assign {completion_error,completion_epoch,completion_generation,completion_group,completion_bank}=return_data;
+  .dst_valid(return_valid),.dst_data(return_data),.dst_take(return_take));
+ assign completion_valid=rf_run&&completion_pending;
+ assign {completion_error,completion_epoch,completion_generation,completion_group,completion_bank}=completion_hold;
  // A handshake alone does not prove a valid header: formatter reports rejection
  // on the next cycle. CHECK observes that result before ever launching the reader.
  always @(posedge clk_mem)begin

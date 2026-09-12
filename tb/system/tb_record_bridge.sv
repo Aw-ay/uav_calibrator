@@ -12,6 +12,11 @@ module tb_record_bridge #(parameter USE_FIFO=0);
  reg[31:0] rng=32'hfeed1234;
  wire[15:0] enables,leases;wire[207:0] addresses;reg[2047:0] responses;
  reg tail_pause=0;
+ realtime last_rf_edge=0;
+ always @(posedge rf)last_rf_edge=$realtime;
+ // Completion identity must enter owner logic through an RF-domain register.
+ always @(ep or gen or grp or bnk or ce)if(rst_n&&$realtime>40&&$realtime!=last_rf_edge)
+  $fatal(1,"completion identity changed outside receiving clock edge");
  generate if(USE_FIFO)begin: upload
  record_upload_path dut(.clk_rf(rf),.clk_mem(memclk),.rst_n(rst_n),.desc_valid(dv),.desc_ready(dr),.desc_header(dh),.desc_start(sp),.desc_count(cnt),.desc_epoch(dep),.desc_generation(dgen),.desc_group(dg),.desc_bank(db),.completion_valid(cv),.completion_ready(cr),.completion_error(ce),.completion_epoch(ep),.completion_generation(gen),.completion_group(grp),.completion_bank(bnk),.record_enable(enables),.record_lease(leases),.record_address(addresses),.record_data(responses),.m_axis_tdata(data),.m_axis_tkeep(keep),.m_axis_tvalid(valid),.m_axis_tready(ready),.m_axis_tlast(last),.fifo_occupancy(occupancy));
  assign ren=|enables;assign rg=dut.ram_group;assign rb=dut.ram_bank;assign addr=addresses[{rg,rb}*13+:13];
