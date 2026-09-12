@@ -44,6 +44,9 @@ CASES = {
     'tb_detector_scoreboard': 'PASS detector scoreboard',
     'tb_pulse_detector': 'PASS pulse_detector',
     'tb_frozen_replay_reader': 'PASS frozen replay reader',
+    'tb_capture_replay_binding': 'PASS capture replay binding',
+    'tb_calibrator_dataplane_cancel': 'PASS integrated dataplane soft reset',
+    'tb_calibrator_dataplane_system': 'PASS integrated dataplane',
     'tb_control': 'PASS control AXI CDC snapshot faults reset',
 }
 results = []

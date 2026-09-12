@@ -5,6 +5,7 @@
 module capture_bank_manager #(
  parameter integer ADDR_W=14, PRE_SAMPLES=250, DETECTOR_LATENCY=0
 )(
+ output wire [15:0] replay_leased,
  input wire clk,rst,arm_enable,reset_request,readers_quiescent,output wire quiesce,
  input wire sample_valid,input wire [63:0] sample_seq,
  input wire primary_trigger,input wire [63:0] primary_onset,primary_pulse_id,
@@ -27,6 +28,7 @@ module capture_bank_manager #(
  reg [2:0] state[0:15];reg [63:0] starts[0:15],gens[0:15],pulses[0:15],lasts[0:15],stops[0:15];
  reg [ADDR_W:0] history[0:15],counts[0:15];
  reg [15:0] stop_known,stats_done,record_ref,replay_ref;
+ assign replay_leased=replay_ref;
  reg resetting,reset_seen;
  integer i,g,b,pick[0:3],reject_delta;reg eligible;reg [1:0] refs;
  reg [63:0] onset_temp,start_temp,stop_temp;reg stop_now;

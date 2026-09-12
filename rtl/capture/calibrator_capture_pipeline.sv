@@ -5,6 +5,7 @@
 module calibrator_capture_pipeline #(
  parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=0,FIFO_ADDR_W=12
 )(
+ output wire [15:0] replay_leased,
  input wire clk_rf,clk_mem,rst_n,arm_enable,reset_request,producers_idle,replay_quiescent,
  input wire sample_valid,input wire [63:0] sample_seq,input wire [255:0] group_data,
  input wire primary_trigger,input wire [63:0] primary_onset,primary_pulse_id,
@@ -80,7 +81,7 @@ module calibrator_capture_pipeline #(
   .aux_trigger(1'b0),.aux_onset(64'd0),.aux_pulse_id(64'd0),.aux_admitted(),
   .eop_valid(eop_valid),.eop_stop(eop_stop),.eop_generation(eop_generation),
   .discard_pending(discard_pending),.stats_valid(stats_valid),.stats_generation(stats_generation),.stats_good(stats_good),.publish(publish),.replay_pin(replay_pin),
-  .ack_replay(ack_replay),.ack_replay_bank(ack_replay_bank),.ack_replay_epoch(ack_replay_epoch),.ack_replay_generation(ack_replay_generation),
+  .replay_leased(replay_leased),.ack_replay(ack_replay),.ack_replay_bank(ack_replay_bank),.ack_replay_epoch(ack_replay_epoch),.ack_replay_generation(ack_replay_generation),
   .replay_enable(replay_enable),.replay_address(replay_address),.replay_data(replay_data),.replay_valid(replay_valid),
   .pending_stats_enable(pending_stats_enable),.pending_stats_address(pending_stats_address),.pending_stats_data(pending_stats_data),.pending_stats_valid(pending_stats_valid),
   .desc_valid(desc_valid),.desc_ready(desc_ready),.desc_headers(desc_headers),.desc_banks(desc_banks),.source_expected_epoch(source_expected_epoch),.source_expected_generation(source_expected_generation),.stale_descriptor(stale_descriptor),

@@ -1,0 +1,52 @@
+{
+  "status": "FUNCTIONAL_AND_POST_SYNTH_VERIFIED_BOARD_INTEGRATION_PENDING",
+  "module": "calibrator_dataplane_system",
+  "scope": "normalized RF data plane; not the PS/RFDC board wrapper",
+  "clocks": {
+    "clk_rf_mhz": 125,
+    "clk_mem_mhz": 200,
+    "clk_ctrl_mhz": 100
+  },
+  "parameters": {
+    "PRE_SAMPLES": 250,
+    "DETECTOR_LATENCY": 1,
+    "FIFO_ADDR_W": 12,
+    "AWG_DEPTH": 16384
+  },
+  "capture": {
+    "group_data": "four groups x HI,HQ,VI,VQ signed16 (HI in low16); group0..2 logical ranges; group3 AUX",
+    "sample_seq": "external RF sample index, continuous across missing data; one index per125MHz edge",
+    "onset_and_eop": "external validated producer; includes actual onset GSC and immutable context/noise snapshots",
+    "record_axis": "128-bit clk_mem AXIS, retain data/keep/last under backpressure; completion is buffer ownership, not host delivery"
+  },
+  "replay": {
+    "bank_truth": "read-only actual owner frozen/qualified/replay_leased/epoch/generation/pulse/start/count",
+    "group_index": "task groups1..4 and banks0..3 map to16 physical bank indices",
+    "read_response": "index captured with issued read, not selected from following cycle request",
+    "identity_policy": "epoch,generation,pulse,start sequence/start pointer exact; positive count no larger than frozen bank count",
+    "active_identity": "uses active task until actual RAW token retirement; next queue head cannot replace active reader generation",
+    "return_policy": "consumer2, legal group/bank, actual frozen lease and epoch/generation match; bad tokens counted and consumed without ACK",
+    "downstream_admission": "actual RF permit, pipeline ready, DRFM mode2, no stop/config/mode change; task DAC mask equals frozen configured enabled calibrated lanes",
+    "latency_contract": "downstream_latency_ticks and latency_validated must describe the configured reference plane and complete downstream path; the integration test uses168 ticks for the DSP reference and does not validate RF/DAC absolute output time"
+  },
+  "live": {
+    "selection": "external explicitly qualified range0..2; range3 or invalid deasserts source validity",
+    "limitation": "does not independently establish analog range qualification"
+  },
+  "reset": {
+    "hard": "coordinated assertion across domains; board/control adapter must ensure safe release and DMA isolation",
+    "soft": "block new captures/replay submits; drain producers/upload/queue/DSP; owner increments epoch and clears remaining unsubmitted leases",
+    "blocked_submit": "explicit rejected pulse/reason2"
+  },
+  "external_control_domains": {
+    "capture_inputs_and_r_prefix": "clk_rf except m_axis uses clk_mem",
+    "t_prefix": "clk_rf except t_awg_ctrl_* use clk_ctrl; feedback already normalized/synchronized by trusted board adapter",
+    "binding": "all RF physical codes, gains, polarities, pins and timing stay in external contracts"
+  },
+  "remaining": [
+    "PS register/profile/task loading and CSR/event wiring",
+    "RFDC native streams and ADC FIR/quality/detector/noise producer integration",
+    "real board clocks/reset/physical CDC and pin constraints",
+    "complete-instrument place/route and board acceptance"
+  ]
+}

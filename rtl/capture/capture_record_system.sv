@@ -14,6 +14,7 @@
 module capture_record_system #(
  parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=0,FIFO_ADDR_W=12,STATS_PORT_ENABLED=0
 )(
+ output wire [15:0] replay_leased,
  input wire clk_rf,clk_mem,rst_n,arm_enable,reset_request,replay_quiescent,
  input wire sample_valid,input wire [63:0] sample_seq,input wire [255:0] group_data,
  input wire primary_trigger,input wire [63:0] primary_onset,primary_pulse_id,
@@ -128,7 +129,7 @@ module capture_record_system #(
   .stats_good(stats_good),.publish(publish),.replay_pin(replay_pin),
   .ack_record(completion_valid),.ack_record_bank({completion_group,completion_bank}),
   .ack_record_epoch(completion_epoch),.ack_record_generation(completion_generation),
-  .ack_replay(ack_replay),.ack_replay_bank(ack_replay_bank),.ack_replay_epoch(ack_replay_epoch),.ack_replay_generation(ack_replay_generation),
+  .replay_leased(replay_leased),.ack_replay(ack_replay),.ack_replay_bank(ack_replay_bank),.ack_replay_epoch(ack_replay_epoch),.ack_replay_generation(ack_replay_generation),
   .write_enable(write_enable),.armed(armed),.pending(pending),.frozen(frozen),.truncated(truncated),.qualified(qualified),
   .start_seq(start_seq),.generation(generation),.pulse_id(pulse_id),.sample_count(sample_count),.owner_epoch(owner_epoch),
   .rejected_returns(rejected_returns),.dropped_triggers(dropped_triggers),.primary_admitted(primary_admitted),.aux_admitted(aux_admitted));

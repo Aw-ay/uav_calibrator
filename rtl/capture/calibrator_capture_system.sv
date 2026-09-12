@@ -3,6 +3,7 @@
 module calibrator_capture_system #(
  parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=1,FIFO_ADDR_W=12
 )(
+ output wire [15:0] replay_leased,
  input wire clk_rf,clk_mem,rst_n,arm_enable,reset_request,replay_quiescent,
  input wire sample_valid,input wire [63:0] sample_seq,input wire [255:0] group_data,
  input wire onset_valid,output wire onset_ready,onset_accepted,onset_rejected,

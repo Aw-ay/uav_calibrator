@@ -4,7 +4,7 @@
 
 用户已要求按阶段恢复，全部在当前任务操作，不使用子窗口或子任务。第一阶段定位并修复采集子系统时序/CDC问题，验证后汇报并停在阶段边界。
 
-第一阶段已完成：53项回归、3项XSim通过；采集综合 WNS +0.629 ns、CDC Critical 0。详见 reports/stage1_capture_closure.md。当前停在阶段边界，未启动第二阶段顶层集成。
+第一阶段已完成：53项回归、3项XSim通过；采集综合 WNS +0.629 ns、CDC Critical 0。详见 reports/stage1_capture_closure.md。用户已再次要求继续，第二阶段业务数据顶层集成现已完成：55项回归、3项XSim及联合综合通过，WNS +0.387ns，CDC Critical 0。当前工程顶层calibrator_dataplane_system，尚非PS/RFDC板级顶层。见 reports/stage2_dataplane_integration.md；按阶段边界暂停，未启动第三阶段。
 
 ## 历史暂停状态
 

@@ -30,7 +30,9 @@ if {[file exists $candidate] && [file exists $candidate_test]} {
 foreach f [sv_files [file join $root tb]] {
  if {![llength [get_files -quiet $f]]} {add_files -fileset sim_1 -norecurse $f}
 }
-set_property top calibrator_top [get_filesets sources_1]
+# Stage 2 integration target exposes normalized producers and configuration transactions.
+# PS/RFDC board wrapper remains a separate pending integration stage.
+set_property top calibrator_dataplane_system [get_filesets sources_1]
 set_property top tb_native_adapters [get_filesets sim_1]
 # Retain the user's existing BD contents; board clock/preset and logical analog
 # assignments remain unresolved. This BD was already excluded from synthesis.
