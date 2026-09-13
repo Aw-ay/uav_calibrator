@@ -11,6 +11,7 @@ with tempfile.TemporaryDirectory() as tmp:
     exe = Path(tmp)/'reader.exe'
     run([gcc, '-std=c11', '-Wall', '-Wextra', '-Werror', '-pedantic', '-I', 'sw/common/include',
          '-I', 'sw/common', 'sw/common/event_control.c', 'sw/common/fault_event_decode.c',
-         'sw/common/unified_event_reader.c', 'tests/c/test_unified_event_reader.c', '-o', exe])
+         'sw/common/tx_lifecycle_decode.c', 'sw/common/unified_event_reader.c', 'tests/c/test_unified_event_reader.c', '-o', exe])
     print(run([sys.executable, 'tests/test_fault_event_transport.py']))
-    print(run([exe, ROOT/'reports/module_stage11/rtl_records.txt']))
+    print(run([sys.executable, 'tests/test_tx_lifecycle_tracker.py']))
+    print(run([exe, ROOT/'reports/module_stage11/rtl_records.txt', ROOT/'reports/module_stage16/rtl_records.txt']))

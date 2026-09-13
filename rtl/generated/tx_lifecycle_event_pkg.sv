@@ -1,0 +1,26 @@
+// Generated from contracts/tx_lifecycle_event.json
+package tx_lifecycle_event_pkg;
+ localparam [31:0] TX_LIFECYCLE_BYTES=32'd64;
+ localparam [31:0] TX_LIFECYCLE_TAG=32'd327681;
+ localparam [31:0] TX_LIFECYCLE_TAG_OFFSET=32'd0;
+ localparam [31:0] TX_LIFECYCLE_FLAGS_OFFSET=32'd4;
+ localparam [31:0] TX_LIFECYCLE_SOURCE_OFFSET=32'd8;
+ localparam [31:0] TX_LIFECYCLE_REASON_OFFSET=32'd12;
+ localparam [31:0] TX_LIFECYCLE_COMMAND_SEQUENCE_OFFSET=32'd16;
+ localparam [31:0] TX_LIFECYCLE_CONFIG_ID_OFFSET=32'd20;
+ localparam [31:0] TX_LIFECYCLE_TOKEN_OFFSET=32'd24;
+ localparam [31:0] TX_LIFECYCLE_ACCEPT_GSC_OFFSET=32'd32;
+ localparam [31:0] TX_LIFECYCLE_DRAIN_GSC_OFFSET=32'd40;
+ localparam [31:0] TX_LIFECYCLE_RETIRE_GSC_OFFSET=32'd48;
+ localparam [31:0] TX_LIFECYCLE_RESERVED_OFFSET=32'd56;
+ localparam [31:0] TX_LIFECYCLE_DIGITAL_DRAINED=32'd1;
+ localparam [31:0] TX_LIFECYCLE_TIME_VALID=32'd2;
+ localparam [31:0] TX_LIFECYCLE_SINK_CONFIRMED=32'd4;
+ localparam [31:0] TX_LIFECYCLE_SOURCE_DDS=32'd1;
+ localparam [31:0] TX_LIFECYCLE_SOURCE_AWG=32'd2;
+ localparam [31:0] TX_LIFECYCLE_SOURCE_REPLAY=32'd3;
+ localparam [31:0] TX_LIFECYCLE_REASON_NORMAL=32'd0;
+ localparam [31:0] TX_LIFECYCLE_REASON_STOP=32'd1;
+ localparam [31:0] TX_LIFECYCLE_REASON_SAFETY=32'd2;
+ localparam [31:0] TX_LIFECYCLE_REASON_MUTE=32'd3;
+endpackage

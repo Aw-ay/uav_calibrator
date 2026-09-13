@@ -25,6 +25,9 @@ cal_unified_event_status cal_unified_event_fetch(const cal_event_io *io,cal_unif
  }else if(tag==FAULT_EVENT_TAG){
   next.kind=CAL_UE_FAULT;next.decode_status=cal_fault_event_decode(next.raw,sizeof next.raw,&next.decoded.fault);
   if(next.decode_status!=CAL_FE_OK)result=CAL_UE_INVALID_RECORD;
+ }else if(tag==TX_LIFECYCLE_TAG){
+  next.kind=CAL_UE_TX;next.decode_status=cal_tx_lifecycle_decode(next.raw,sizeof next.raw,&next.decoded.tx);
+  if(next.decode_status!=CAL_TX_OK)result=CAL_UE_INVALID_RECORD;
  }else result=CAL_UE_UNSUPPORTED;
  *r=next;return result;
 }

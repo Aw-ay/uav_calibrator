@@ -24,8 +24,9 @@ static int wr(void *ctx,uint32_t off,uint32_t v){
 static void reset(model *m){m->head=0;m->ops=0;m->pops=0;m->reads=0;m->fail_count=0;m->fail_latch=0;m->fail_word=-1;m->fail_pop=0;}
 int main(int argc,char **argv){
  model m={0};cal_event_io io={&m,rd,wr};cal_unified_event_reader r,before;unsigned normals=0,faults=0,fi=0;
- assert(argc==2);FILE *f=fopen(argv[1],"r");assert(f);
+ assert(argc==3);FILE *f=fopen(argv[1],"r");assert(f);
  while(m.count<8&&fscanf(f,"%x",&m.rows[m.count][0])==1){for(unsigned j=1;j<16;j++)assert(fscanf(f,"%x",&m.rows[m.count][j])==1);m.count++;}fclose(f);assert(m.count==7);
+ f=fopen(argv[2],"r");assert(f);for(unsigned j=0;j<16;j++)assert(fscanf(f,"%x",&m.rows[7][j])==1);fclose(f);m.count=8;
  reset(&m);cal_unified_event_init(&r);
  assert(cal_unified_event_fetch(NULL,&r)==CAL_UE_ARGUMENT);
  assert(cal_unified_event_fetch(&io,NULL)==CAL_UE_ARGUMENT);
@@ -35,11 +36,12 @@ int main(int argc,char **argv){
  for(unsigned i=0;i<m.count;i++){
   assert(cal_unified_event_fetch(&io,&r)==CAL_UE_OK&&m.pops==i);
   if(r.kind==CAL_UE_CAPTURE){normals++;assert(r.decoded.capture.pulse_id==normals);}
+  else if(r.kind==CAL_UE_TX){assert(r.decoded.tx.token==1&&r.decoded.tx.command_sequence==7&&r.decoded.tx.flags==3);}
   else {assert(r.kind==CAL_UE_FAULT);faults+=r.decoded.fault.occurrences;fi=i;}
   unsigned ops=m.ops;assert(cal_unified_event_fetch(&io,&r)==CAL_UE_BUSY&&m.ops==ops);
   assert(cal_unified_event_pop(&io,&r)==CAL_UE_OK&&r.state==CAL_UE_IDLE);
  }
- assert(normals==5&&faults==40&&m.reads==112);
+ assert(normals==5&&faults==40&&m.reads==128);
  before=r;assert(cal_unified_event_fetch(&io,&r)==CAL_UE_EMPTY&&!memcmp(&r,&before,sizeof r));
  for(unsigned kind=0;kind<2;kind++)for(int j=0;j<16;j++){
   reset(&m);m.head=kind?fi:0;cal_unified_event_init(&r);before=r;m.fail_word=j;
@@ -67,5 +69,5 @@ int main(int argc,char **argv){
  reset(&m);m.rows[0][1]=UINT32_MAX;cal_unified_event_init(&r);
  assert(cal_unified_event_fetch(&io,&r)==CAL_UE_INVALID_RECORD&&r.kind==CAL_UE_CAPTURE&&r.decode_status==CAL_EVENT_SCHEMA&&m.pops==0);
  assert(r.decoded.capture.pulse_id==0&&cal_unified_event_pop(&io,&r)==CAL_UE_OK);
- puts("PASS unified reader: 7 RTL records, 40 faults, 5 PDWs; 32 word failures; explicit POP and ambiguous completion guard");return 0;
+ puts("PASS unified reader: 8 RTL records including TX, 40 faults, 5 PDWs; 32 word failures; explicit POP and ambiguous completion guard");return 0;
 }

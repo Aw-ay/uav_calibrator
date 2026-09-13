@@ -2,17 +2,18 @@
 #define CAL_UNIFIED_EVENT_READER_H
 #include "../event_control.h"
 #include "fault_event_decode.h"
+#include "tx_lifecycle_decode.h"
 typedef enum {CAL_UE_OK=0,CAL_UE_ARGUMENT,CAL_UE_EMPTY,CAL_UE_BUSY,
  CAL_UE_IO_COUNT,CAL_UE_IO_LATCH,CAL_UE_IO_READ,CAL_UE_UNSUPPORTED,
  CAL_UE_INVALID_RECORD,CAL_UE_POP_UNCERTAIN,CAL_UE_NOT_LATCHED} cal_unified_event_status;
 typedef enum {CAL_UE_IDLE=0,CAL_UE_SNAPSHOT,CAL_UE_UNCERTAIN} cal_unified_event_state;
-typedef enum {CAL_UE_RAW=0,CAL_UE_CAPTURE,CAL_UE_FAULT} cal_unified_event_kind;
+typedef enum {CAL_UE_RAW=0,CAL_UE_CAPTURE,CAL_UE_FAULT,CAL_UE_TX} cal_unified_event_kind;
 typedef struct {
  cal_unified_event_state state;
  cal_unified_event_kind kind;
  int decode_status;
  uint8_t raw[EVENT_BYTES];
- union {cal_event capture;cal_fault_event fault;} decoded;
+ union {cal_event capture;cal_fault_event fault;cal_tx_lifecycle_event tx;} decoded;
 } cal_unified_event_reader;
 /* Single owner must serialize fetch/inspect/pop and coordinate queue reset.
  * Callbacks return zero only for completed, ordered hardware operations.

@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "kind": "TX_DIGITAL_RETIRE",
+  "tag": 327681,
+  "bytes": 64,
+  "byte_order": "little",
+  "fields": [
+    [
+      "tag",
+      0,
+      4
+    ],
+    [
+      "flags",
+      4,
+      4
+    ],
+    [
+      "source",
+      8,
+      4
+    ],
+    [
+      "reason",
+      12,
+      4
+    ],
+    [
+      "command_sequence",
+      16,
+      4
+    ],
+    [
+      "config_id",
+      20,
+      4
+    ],
+    [
+      "token",
+      24,
+      8
+    ],
+    [
+      "accept_gsc",
+      32,
+      8
+    ],
+    [
+      "drain_gsc",
+      40,
+      8
+    ],
+    [
+      "retire_gsc",
+      48,
+      8
+    ],
+    [
+      "reserved",
+      56,
+      8
+    ]
+  ],
+  "flags": {
+    "digital_drained": 0,
+    "time_valid": 1,
+    "sink_confirmed": 2
+  },
+  "sources": {
+    "DDS": 1,
+    "AWG": 2,
+    "REPLAY": 3
+  },
+  "reasons": {
+    "NORMAL": 0,
+    "STOP": 1,
+    "SAFETY": 2,
+    "MUTE": 3
+  },
+  "policy": "One active task plus immutable pending record. Source completion and digital tail-empty are both required. Optional bound sink fence/ack with exact token is required only when requested at start; absent binding never sets sink_confirmed. First nonzero cancellation reason is retained; invalid time clears all timestamps. Hard reset discards state; no soft reset input. No RF output completion claim."
+}
