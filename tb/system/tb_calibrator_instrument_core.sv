@@ -143,7 +143,7 @@ module tb_calibrator_instrument_core;
   payload[START_PTR_BIT+:32]=snapshot[1311:1280]&16383;payload[STREAM_GROUP_ID_BIT+:32]=1;
   payload[SAMPLE_COUNT_BIT+:32]={17'd0,snapshot[3342:3328]};payload[CONFIG_ID_BIT+:32]=7;
   payload[FIR_ID_BIT+:32]=12;payload[SOURCE_EPOCH_BIT+:32]=13;payload[SOURCE_ROLE_BIT+:32]=1;
-  payload[TARGET_GSC_BIT+:64]=gsc+6000;payload[TASK_ID_BIT+:64]=77;payload[OUTPUT_DAC_MASK_BIT+:32]=255;
+  payload[TARGET_GSC_BIT+:64]=gsc+6000;payload[TASK_ID_BIT+:64]=64'hfedcba9876543210;payload[OUTPUT_DAC_MASK_BIT+:32]=255;
   payload[RX_CAL_ID_BIT+:32]=101;payload[TARGET_MATRIX_ID_BIT+:32]=102;payload[DOPPLER_PHASE_ID_BIT+:32]=103;
   command(CMD_REPLAY,48,0);wait(dut.d_r_dsp_done||dut.d_r_rejected_valid);
   if(dut.d_r_rejected_valid)$fatal(1,"PS replay rejection %0d",dut.d_r_reject_reason);
@@ -159,10 +159,23 @@ module tb_calibrator_instrument_core;
   command(16,0,0);read_word(GW_RESULT);if(value!=0)$fatal(1,"PDW not popped");
   repeat(6)@(negedge ctrl_clk);if(irq)$fatal(1,"PDW IRQ remains after final POP with DONE masked");
   // Unified event is independent of legacy POP and survives capture RESET.
-  write_word(GW_IRQ_ENABLE,16,0);read_word(32'h300);if(value!=1||!irq)$fatal(1,"unified PDW count/IRQ");
+  write_word(GW_IRQ_ENABLE,16,0);read_word(32'h300);if(value!=3||!irq)$fatal(1,"unified PDW/replay count/IRQ");
   write_word(32'h304,1,0);
   for(integer w=15;w>=0;w=w-1)begin read_word(32'h340+w*4);if(value!==pdw_snapshot[128+w*32+:32])$fatal(1,"unified PDW differs from real RAW-derived PDW");end
-  write_word(32'h308,1,0);repeat(6)@(negedge ctrl_clk);if(irq)$fatal(1,"unified IRQ not cleared");
+  write_word(32'h308,1,0);repeat(6)@(negedge ctrl_clk);if(!irq)$fatal(1,"replay events missing after PDW POP");
+  begin : replay_events
+   reg [511:0] identity_record,retirement;
+   write_word(32'h304,1,0);for(integer w=0;w<16;w=w+1)begin read_word(32'h340+w*4);identity_record[w*32+:32]=value;end
+   if(identity_record[31:0]!=32'h60001||identity_record[63:32]!=0||identity_record[64+:64]!=1||identity_record[128+:64]!=64'hfedcba9876543210)$fatal(1,"replay full identity/token");
+   if(identity_record[192+:64]!=snapshot[2367:2304]||identity_record[256+:64]!=snapshot[127:64]||identity_record[320+:64]!=snapshot[319:256])$fatal(1,"replay RAW ownership identity");
+   if(identity_record[384+:32]!=7||identity_record[416+:32]!=12||identity_record[448+:32]!=13||identity_record[480+:32]!=1)$fatal(1,"replay config/source/bank");
+   write_word(32'h308,1,0);write_word(32'h304,1,0);
+   for(integer w=0;w<16;w=w+1)begin read_word(32'h340+w*4);retirement[w*32+:32]=value;end
+   if(retirement[31:0]!=32'h50001||retirement[32+:32]!=3||retirement[64+:32]!=3||retirement[96+:32]!=0||retirement[128+:32]!=0||retirement[160+:32]!=7||retirement[192+:64]!=1)$fatal(1,"actual replay retirement fields");
+   if(retirement[256+:64]>retirement[320+:64]||retirement[320+:64]>retirement[384+:64]||retirement[448+:64]!=0)$fatal(1,"actual replay times/reserved");
+   write_word(32'h308,1,0);repeat(6)@(negedge ctrl_clk);if(irq||tx_sink_protocol_error)$fatal(1,"unified IRQ/protocol after final replay POP");
+  end
+  $display("PASS REPLAY_LIFECYCLE_CORE actual RAW FD Target TX tail full64 identity and retirement survive reset");
   read_word(32'h408);if(value!=0)$fatal(1,"unexpected unified drop");
   $display("PASS UNIFIED_EVENT actual PDW legacy independence soft reset IRQ");
   $fclose(frame_file);$fclose(sample_file);

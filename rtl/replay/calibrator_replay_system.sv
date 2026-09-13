@@ -1,6 +1,6 @@
 // Actual RAW dispatcher and FULL_A RXCAL/FD63/target processing.
 module calibrator_replay_system #(parameter integer QUEUE_DEPTH=4)(
- input wire clk,rst,submit_valid,input wire [1535:0] submit_task,
+ input wire clk,rst,submit_valid,lifecycle_ready,input wire [1535:0] submit_task,
  output wire submit_accepted,submit_rejected,output wire [7:0] submit_reason,
  output wire lookup_valid,output wire [1535:0] lookup_task,input wire lookup_ready,
  input wire [63:0] gsc,current_owner_epoch,current_generation,
@@ -30,7 +30,7 @@ module calibrator_replay_system #(parameter integer QUEUE_DEPTH=4)(
  import replay_control_layout_pkg::*;
  wire reader_active,dispatcher_idle,dsp_profile_ready,dsp_profile_rejected;
  reg local_profile_rejected,profile_loaded;
- wire processing_ready=source_ready&&!dsp_busy&&!profile_commit;
+ wire processing_ready=lifecycle_ready&&source_ready&&!dsp_busy&&!profile_commit;
  wire epoch_cancel=(reader_active||dsp_busy)&&active_task[OWNER_EPOCH_BIT+:64]!=current_owner_epoch;
  wire processing_fault=hard_fault||abort_request||!rf_safe||!binding_valid||!time_valid||!clock_ok||epoch_cancel||(token_valid&&token_status!=0);
  assign profile_ready=dsp_profile_ready&&!reader_active&&!task_started;

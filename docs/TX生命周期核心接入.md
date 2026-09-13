@@ -1,31 +1,39 @@
-# DDS/AWG 发送生命周期的仪器核心接入
+# 发送生命周期的仪器核心接入
 
-本批次接入 DDS/AWG。REPLAY 的完整任务身份和退休事件尚未接入；常量中的 REPLAY=3 不能视为已实现。原 SOURCE_EVENT 查询记录描述源完成，统一 EVENT 中的 TX_DIGITAL_RETIRE 描述数字尾部及可选接收端确认，两者不可互换。
+DDS、AWG、REPLAY 共用 tx_task_lifecycle 和64位生命周期令牌，输出接入原统一 EVENT。旧 SOURCE_EVENT 仍只描述 DDS/AWG 源完成；它与完整数字尾部完成、接收端确认含义不同。
 
-## 数据和准入
+## 实际信号与所有权
 
-实际 dds_accepted / awg_play_accepted 捕获源类型、命令序号、已生效配置 ID 和 GSC。实际 done、sources_drained、TX tail_empty 三项共同限定数字排空。新 DDS/AWG 任务以及非静音模式切换同时受 lifecycle_ready 限制；未确认或待发事件占用时拒绝准入，不以丢失完成记录换取连续发送。STOP、MUTE 和硬故障静音仍立即生效。
+DDS/AWG 使用真实 accepted/done/sources_drained。REPLAY 使用 frozen_replay_reader 的实际 task_started，提交成功仅表示入队；读口归还从真实 bank token valid/ready 产生，随后观察 RXCAL/FD63/Target 是否排空，最后等待共用 TX FIR tail_empty。
 
-TX 记录先与 PDW 仲裁，再进入原 RF_FAULT 优先通道。RF_FAULT 在新记录准入时优先于 TX，TX 优先于 PDW，已呈现记录保持稳定而不被抢占。长期故障或软件不取 EVENT 可能阻塞 TX 完成记录并限制后续发送；普通 PDW 仍采用有限队列及丢弃计数，ADC/RAW 不因此背压。
+bank 读取引用在真实读取结束后归还，不因等待 FIR 或接收端确认而延长。首样点前取消没有正常 DSP done 也可完成排空；欠载或 DSP 取消保留 REPLAY_ABORT=4，STOP/安全等已有原因仍按首个非零原因保留。
 
-## 接收端逻辑适配接口
+新 DDS/AWG、非静音模式切换和 REPLAY 实际派发使用共同生命周期容量。回放容量限制加在 processing_ready，不关闭合法性评估；过期或上下文不匹配仍拒绝，不能移动目标 GSC。紧急静音不等待这些准入条件。
 
-以下信号均属 rf_clk 域，实际板级适配器必须负责跨域和物理消费证据，不能直接接异步 GPIO。
+## 事件顺序与软件关联
+
+DDS/AWG 输出一个 TX_DIGITAL_RETIRE。REPLAY 先输出 REPLAY_IDENTITY(tag0x60001)，再输出同token的 TX_DIGITAL_RETIRE(source3、command_sequence0)。身份事件保留64位task_id、pulse_id、owner_epoch、generation，以及config/fir/source epoch和bank位置；不得用32位command_sequence代替回放任务号。
+
+身份不等于完成。软件在同一协调复位域内按token关联两种记录。RF_FAULT 可插入两者之间；共享发布器保证身份先进入通道，已呈现记录不被抢占。统一读取器分别提供 CAL_UE_REPLAY_IDENTITY 与 CAL_UE_TX，显式POP，未知/坏格式保留原始数据。
+
+TX记录先于新的PDW准入，外层RF_FAULT仍最高准入优先级。长时间故障或PS不取EVENT会限制后续发送；ADC/RAW不因此背压，普通PDW满缓冲仍按既有策略计数丢弃。
+
+## 逻辑接收适配接口
+
+所有信号属于rf_clk域，板级适配器负责实际跨域及消费证据，不能直接接异步GPIO。
 
 |信号|约定|
 |---|---|
-|tx_sink_binding_valid|在任务接受时采样，决定本任务是否必须取得接收端确认；无绑定时置0|
-|tx_sink_fence_valid / token|数字尾部排空后提供本次唯一64位令牌，保持直到 ready 握手|
-|tx_sink_fence_ready|适配器接受该令牌的握手，并非消费完成本身|
-|tx_sink_ack_valid / token|仅在接受令牌之后或同周期，以相同令牌确认本任务此前数据已经消费|
-|tx_sink_protocol_error|错误、过早或当前无待确认任务的 ACK 产生一个 RF 周期错误脉冲，需板级适配器观测|
+|tx_sink_binding_valid|任务接受时采样；无绑定置0，只报告数字排空|
+|tx_sink_fence_valid/token|源与数字尾部排空后提供任务令牌，保持至ready握手|
+|tx_sink_fence_ready|适配器接受请求，不等于消费完成|
+|tx_sink_ack_valid/token|请求接受后或同周期，以相同token确认此前数据已消费|
+|tx_sink_protocol_error|错误/过早ACK或内部生命周期准入、身份、读取归还协议错误脉冲|
 
-无绑定时仅产生 DIGITAL_DRAINED，SINK_CONFIRMED=0。需要确认但没有合法 ACK 时持续等待，不超时伪造成功。硬复位清除状态并重启令牌，适配器必须同复位清除所有旧确认；软复位不丢弃已跟踪任务和待发记录。接收端绑定有效不等于 RF 安全绑定有效，两者职责独立。
+没有合法ACK时持续等待，不伪造超时成功。硬复位清空全部状态并重新开始token；接收适配器必须同复位丢弃旧ACK。软复位保留已跟踪任务和待发记录。接收绑定与RF安全绑定分别定义，不得互相替代。
 
-## 软件
+## 验证和边界
 
-沿用 EVENT_COUNT/LATCH/WORD/POP 以及 IRQ bit4，64字节格式来自 contracts/tx_lifecycle_event.json。cal_unified_event_fetch 将该格式解码为 CAL_UE_TX，显式 POP 才移除。命令完成 IRQ 不等于发送退休，旧 SOURCE_EVENT 也不能替代 TX 退休记录。
+实际仪器TB核验RAW所有权、全64位任务号、数字退休和软复位保留；另一独立测试通过真实STOP在首样点前取消，要求零回放样点、bank归还和中止记录。绑定回放测试延迟13拍接受fence，并在等待期间核验bank读取引用已经释放，最后核对精确token确认记录。DDS/AWG保留七任务、错误ACK、延迟接收及40次故障聚合测试。
 
-## 验证范围
-
-仪器 TB 使用明确标注的仿真接收端：首任务延迟接受令牌，注入过早错误 ACK，检查等待期间不能准入新任务，随后正确确认。七个实际 DDS/AWG 任务逐字段检查类型、原因、命令/配置身份、令牌、时间顺序和保留位；40次真实故障边沿仍被统一通道计数保留。该验证不证明实际 RFDC、DAC 或射频前端消费完成。
+这些都是数字逻辑证据。真实RFDC/DAC消费适配器、模拟RF输出和整机布局布线验收仍待板级证据。

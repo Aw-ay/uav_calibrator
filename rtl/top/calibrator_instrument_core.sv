@@ -156,7 +156,7 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
  wire  d_r_actual_finish;
  wire [63:0] d_r_actual_start_gsc;
  wire [63:0] d_r_actual_finish_gsc;
- wire  d_r_token_valid;
+ wire  d_r_token_valid;wire d_r_reader_retired;
  wire [63:0] d_r_token_owner_epoch;
  wire [63:0] d_r_token_generation;
  wire [31:0] d_r_token_group;
@@ -270,11 +270,12 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
   ((!rf_arm||!rf_request||reset_request)?SOURCE_REASON_STOP:
    ((action_valid&&action_opcode==instrument_control_pkg::CMD_MODE&&action_payload[31:0]==0)?SOURCE_REASON_MUTE:
     ((!d_t_rf_permit||!d_t_pipeline_ready)?SOURCE_REASON_SAFETY:SOURCE_REASON_NORMAL)));
- tx_lifecycle_tracker tx_lifecycle(.clk(rf_clk),.rst(rst),
-  .start_valid(d_t_dds_accepted||d_t_awg_play_accepted),.start_ready(tx_lifecycle_ready),.start_rejected(),.busy(),
-  .source(d_t_dds_accepted?tx_lifecycle_event_pkg::TX_LIFECYCLE_SOURCE_DDS:tx_lifecycle_event_pkg::TX_LIFECYCLE_SOURCE_AWG),
-  .command_sequence(cmd_sequence),.config_id(d_t_active_config_id),.cancel_reason(source_cancel_reason),
-  .source_done(d_t_dds_done||d_t_awg_done),.source_drained(d_t_sources_drained),.tail_empty(d_t_tail_empty),
+ tx_task_lifecycle tx_lifecycle(.clk(rf_clk),.rst(rst),
+  .dds_started(d_t_dds_accepted),.awg_started(d_t_awg_play_accepted),.replay_started(d_r_task_started),
+  .admission_ready(tx_lifecycle_ready),.dds_done(d_t_dds_done),.awg_done(d_t_awg_done),.generated_drained(d_t_sources_drained),
+  .replay_reader_retired(d_r_reader_retired),.replay_reader_status(d_r_token_status),
+  .replay_dsp_busy(d_r_dsp_busy),.replay_out_valid(d_r_out_valid),.replay_cancelled(d_r_dsp_cancelled),.replay_context(d_r_active_task),
+  .command_sequence(cmd_sequence),.config_id(d_t_active_config_id),.cancel_reason(source_cancel_reason),.tail_empty(d_t_tail_empty),
   .time_valid(time_valid),.gsc(gsc),.require_sink_ack(tx_sink_binding_valid),
   .sink_fence_valid(tx_sink_fence_valid),.sink_fence_token(tx_sink_fence_token),.sink_fence_ready(tx_sink_fence_ready),
   .sink_ack_valid(tx_sink_ack_valid),.sink_ack_token(tx_sink_ack_token),.protocol_error(tx_sink_protocol_error),
@@ -409,7 +410,7 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
   .r_actual_finish(d_r_actual_finish),
   .r_actual_start_gsc(d_r_actual_start_gsc),
   .r_actual_finish_gsc(d_r_actual_finish_gsc),
-  .r_token_valid(d_r_token_valid),
+  .r_token_valid(d_r_token_valid),.r_reader_retired(d_r_reader_retired),
   .r_token_owner_epoch(d_r_token_owner_epoch),
   .r_token_generation(d_r_token_generation),
   .r_token_group(d_r_token_group),

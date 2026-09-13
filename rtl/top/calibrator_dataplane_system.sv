@@ -121,6 +121,7 @@ module calibrator_dataplane_system #(
  output wire [63:0] r_actual_start_gsc,
  output wire [63:0] r_actual_finish_gsc,
  output wire  r_token_valid,
+ output wire r_reader_retired,
  output wire [63:0] r_token_owner_epoch,
  output wire [63:0] r_token_generation,
  output wire [31:0] r_token_group,
@@ -262,6 +263,7 @@ module calibrator_dataplane_system #(
  wire rf_rst=!rst_n;
  wire [63:0] current_generation,ram_data;
  wire bank_frozen,data_ready,bank_qualified,lease_pinned,ram_response_valid,token_ready;
+ assign r_reader_retired=r_token_valid&&token_ready;
  wire child_submit_rejected;wire [7:0] child_submit_reason;
  reg blocked_submit;
  assign r_submit_rejected=blocked_submit||child_submit_rejected;
@@ -385,6 +387,7 @@ module calibrator_dataplane_system #(
   .fifo_occupancy(fifo_occupancy)
  );
  calibrator_replay_system  replay(
+  .lifecycle_ready(t_lifecycle_ready&&t_tail_empty),
   .clk(clk_rf),
   .rst(rf_rst),
   .submit_valid(r_submit_valid&&!block_new_work),

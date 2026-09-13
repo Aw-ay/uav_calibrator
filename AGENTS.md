@@ -86,3 +86,5 @@
 第十九阶段回放身份EVENT（保留完整64位任务/脉冲/epoch/generation）及PS解码完成：5/5相关回归、1/1 XSim、A53十三源通过；模块WNS +6.704ns/WHS +0.072ns，失败端点0。尚待与共用TX生命周期组合并接入核心。见 reports/stage19_replay_identity.md。
 
 第二十阶段共享tx_task_lifecycle组合模块完成：DDS/AWG/REPLAY同一令牌域，身份先于完成，读取/DSP/尾部/接收确认分离；8/8相关回归、2/2 XSim、A53十三源通过，模块WNS +6.206ns/WHS +0.071ns，失败端点0。尚待替换仪器核心接线，接入后再完整核心综合。见 reports/stage20_tx_task_lifecycle.md。
+
+第二十一阶段REPLAY身份/退休接入实际仪器核心完成：85/85全量回归、2/2 XSim、A53十三源、整核心提前停止与延迟接收确认变体通过。完整核心综合WNS +0.318ns/WHS +0.037ns/WPWS +1.958ns，失败端点0；141136 LUT/198452 FF/530.5 BRAM/2612 DSP。CDC 0 Critical/15355 Warning/15 Info，新增1024条仅为原邮箱高64位到16槽的数据保持路径，未豁免。原工程更新重开通过。第十八至二十阶段未接入描述现为历史记录；AUX/FIR生命周期、平台与板级验收仍待完成。详见 reports/stage21_replay_lifecycle_integration.md；继续授权不变。

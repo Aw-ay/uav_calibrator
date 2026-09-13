@@ -6,7 +6,7 @@ reg [63:0] shadow_dc=0;reg [143:0] shadow_matrix=0;
 import replay_control_layout_pkg::*;
 reg clk=0;always #4 clk=~clk;
 reg rst=1;reg[63:0] gsc=0;always @(posedge clk)if(rst)gsc<=0;else gsc<=gsc+4;
-reg drop_response=0;
+reg drop_response=0,lifecycle_ready=0;
 reg submit_valid=0,lookup_ready=1,processing_ready=0,reject_ready=0,token_ready=0,hard_fault=0,abort_request=0,binding_valid=1;
 reg[1535:0] submit_task=0;wire[1535:0] lookup_task,active_task,rejected_task;
 reg[63:0] current_owner_epoch=5,current_generation=7;
@@ -19,7 +19,7 @@ always @*begin read_en=0;read_addr=0;read_slot=(ram_group-1)*4+ram_bank;if(ram_e
 capture_bank_array mem(.clk_rf(clk),.clk_mem(clk),.quiesce_rf(1'b0),.quiesce_mem(1'b0),.group_data(group_data),.write_enable(writes),.write_address(write_addr),.frozen_rf(writes?16'd0:16'hffff),.frozen_mem(16'd0),.replay_enable(read_en),.replay_address(read_addr),.replay_data(read_data),.replay_valid(read_valid),.record_enable(16'd0),.record_address(208'd0),.record_data(),.record_valid());
 wire ram_response_valid=(ram_group>=1&&ram_group<=4&&ram_bank<4)?(read_valid[read_slot]&&!drop_response):1'b0;
 wire[63:0] ram_data=(ram_group>=1&&ram_group<=4&&ram_bank<4)?read_data[read_slot*64+:64]:64'd0;
-calibrator_replay_system dut(.profile_commit(profile_commit),.shadow_cal_valid(2'b11),.shadow_dc(shadow_dc),.shadow_gain({18'd0,18'd65536,18'd0,18'd65536}),.shadow_matrix(shadow_matrix),.shadow_fd_phase(8'd0),.shadow_fd_version(32'h9d1dc12a),.shadow_rx_cal_id(32'd101),.shadow_target_matrix_id(32'd102),.shadow_doppler_phase_id(32'd103),.phase_valid(1'b1),.phase_i(18'sd65536),.phase_q(18'sd0),.profile_ready(profile_ready),.profile_accepted(profile_accepted),.profile_rejected(profile_rejected),.source_ready(source_ready),.dsp_busy(dsp_busy),.dsp_done(dsp_done),.dsp_cancelled(dsp_cancelled),.out_valid(out_valid),.out_hv(out_hv),.out_qualified(out_qualified),.arithmetic_saturated(arithmetic_saturated),.table_version(table_version),.clk(clk),.rst(rst),.submit_valid(submit_valid),.submit_task(submit_task),.submit_accepted(submit_accepted),.submit_rejected(submit_rejected),.submit_reason(submit_reason),
+calibrator_replay_system dut(.lifecycle_ready(lifecycle_ready),.profile_commit(profile_commit),.shadow_cal_valid(2'b11),.shadow_dc(shadow_dc),.shadow_gain({18'd0,18'd65536,18'd0,18'd65536}),.shadow_matrix(shadow_matrix),.shadow_fd_phase(8'd0),.shadow_fd_version(32'h9d1dc12a),.shadow_rx_cal_id(32'd101),.shadow_target_matrix_id(32'd102),.shadow_doppler_phase_id(32'd103),.phase_valid(1'b1),.phase_i(18'sd65536),.phase_q(18'sd0),.profile_ready(profile_ready),.profile_accepted(profile_accepted),.profile_rejected(profile_rejected),.source_ready(source_ready),.dsp_busy(dsp_busy),.dsp_done(dsp_done),.dsp_cancelled(dsp_cancelled),.out_valid(out_valid),.out_hv(out_hv),.out_qualified(out_qualified),.arithmetic_saturated(arithmetic_saturated),.table_version(table_version),.clk(clk),.rst(rst),.submit_valid(submit_valid),.submit_task(submit_task),.submit_accepted(submit_accepted),.submit_rejected(submit_rejected),.submit_reason(submit_reason),
 .lookup_valid(lookup_valid),.lookup_task(lookup_task),.lookup_ready(lookup_ready),.gsc(gsc),.current_owner_epoch(current_owner_epoch),.current_generation(current_generation),.current_config_id(32'd11),.current_fir_id(32'd12),.current_source_epoch(32'd13),
 .bank_frozen(1'b1),.data_ready(1'b1),.qualified(1'b1),.lease_pinned(1'b1),.source_stable(1'b1),.allow_aux_replay(1'b0),.task_profiles_valid(1'b1),.guard_clear(1'b1),.planned_slot_clear(1'b1),.rf_safe(1'b1),.binding_valid(binding_valid),.resources_ready(1'b1),.time_valid(1'b1),.clock_ok(1'b1),.latency_validated(1'b1),.fractional_supported(1'b0),.downstream_latency_ticks(64'd168),.hard_fault(hard_fault),.abort_request(abort_request),
 .rejected_valid(rejected_valid),.rejected_task(rejected_task),.reject_reason(reject_reason),.reject_ready(reject_ready),.task_started(task_started),.active_task(active_task),.raw_valid(raw_valid),.raw_data(raw_data),.raw_last(raw_last),.ram_en(ram_en),.ram_addr(ram_addr),.ram_group(ram_group),.ram_bank(ram_bank),.ram_response_valid(ram_response_valid),.ram_data(ram_data),
@@ -43,7 +43,12 @@ initial begin
  tick();rst=0;writes=16'hffff;
  for(integer a=0;a<16;a=a+1)begin write_addr=a;for(integer g=0;g<4;g=g+1)group_data[g*64+:64]=64'h1000+g*256+a;tick();end writes=0;
  profile_commit=1;tick();profile_commit=0;#1;ck(profile_accepted&&source_ready,"explicit immutable profile loaded");
- enqueue(0,1,4,gsc+240);while(!task_started)tick();
+ // Rejection evaluation remains live while dispatch capacity is unavailable.
+ submit_task=make_task(1,99,4,gsc+240);submit_task[RX_CAL_ID_BIT+:32]=999;submit_valid=1;tick();submit_valid=0;
+ while(!rejected_valid)tick();ck(reject_reason==4&&!task_started&&!ram_en,"bad task rejected while lifecycle blocked");reject_ready=1;tick();reject_ready=0;
+ enqueue(0,98,4,gsc+200);while(!rejected_valid)tick();
+ ck(reject_reason==9&&!task_started&&!ram_en,"waiting task expires without moving target GSC");reject_ready=1;tick();reject_ready=0;
+ enqueue(0,1,4,gsc+240);repeat(6)begin tick();ck(!task_started&&!ram_en,"lifecycle capacity blocks actual dispatch");end lifecycle_ready=1;while(!task_started)tick();
  shadow_dc=64'h100;profile_commit=1;tick();profile_commit=0;#1;ck(profile_rejected,"profile cannot change while reader waits for target");shadow_dc=0;
  while(!token_valid)tick();ck(token_status==0&&dsp_busy,"RAW completion precedes FD tail completion");token_ready=1;tick();token_ready=0;ck(!idle&&dsp_busy,"RAW token does not release DSP processing ownership");
  while(!dsp_done)tick();ck(received==66&&!dsp_busy,"4 actual samples plus62 zero flush and full register drain");checking=0;
