@@ -16,6 +16,8 @@
 
 统一EVENT通道批次正在开发。第九阶段独立 `fault_event_retainer` 已完成：相关回归4/4、XSim1/1，125MHz模块综合WNS +6.854ns / WHS +0.071ns、失败端点0，资源447 LUT/585 FF，无BRAM/DSP，见reports/stage9_fault_retainer.md。实现为不可变待发送头记录加一个首快照/饱和计数聚合槽。只验证模块和相关组件，尚未接入数字核心。第十阶段独立event_priority_arbiter及其与retainer的组合验证已完成：相关回归5/5、XSim2/2，125MHz模块综合WNS +7.278ns / WHS +0.124ns，失败端点0、779 LUT/519 FF，无BRAM/DSP。见reports/stage10_event_priority.md。严格故障准入优先，不抢占已呈现普通记录，持续故障可阻塞普通流。第十一阶段故障聚合512bit编码、C解码与跨时钟邮箱组件验证已完成：相关回归6/6、XSim2/2、A53十个C源文件构建通过；局部综合WNS +1.676ns/WHS +0.057ns、失败端点0，CDC 0 Critical/8192 Warning/2 Info（握手邮箱数据位，未豁免）。见reports/stage11_fault_transport.md；后续仍需PS/CSR及真实生产端接线；这些关联模块集成完成后再运行完整核心综合。既有故障历史队列行为尚未改变，不能宣称系统高优先级fault保障已经完成。
 
+第十二阶段统一 EVENT 软件读取器完成：相关回归4/4、A53十一个C源文件构建通过。新增显式 fetch/pop、未知格式原始记录保留及 POP 不确定状态保护；未修改RTL，未重复综合。见 reports/stage12_unified_reader.md。
+
 ## 当前阶段授权
 
 用户已要求按阶段恢复，全部在当前任务操作，不使用子窗口或子任务。第一阶段定位并修复采集子系统时序/CDC问题，验证后汇报并停在阶段边界。
