@@ -12,6 +12,7 @@ module tx_processing_chain(
  output reg config_accepted,config_rejected,output reg [31:0] active_config_id,
  output wire [127:0] calibrated_i,calibrated_q,
  output wire [7:0] calibrated_valid,calibration_saturated,tx_saturated,native_dac_valid,
+ output wire tail_empty,
  output wire [1023:0] native_dac_data
 );
  reg [127:0] dc_i_hold,dc_q_hold;reg [143:0] gain_i_hold,gain_q_hold;
@@ -28,13 +29,18 @@ module tx_processing_chain(
  wire load_config=config_commit&&config_allowed;
  wire [63:0] selected_data;wire selected_valid;
  wire [255:0] routed;wire [7:0] routed_valid;
+ // Conservative digital history-empty indication, not source completion or
+ // physical RFDC consumption. Include the pending router beat so that an
+ // empty counter cannot report idle at the first input admission edge.
+ wire router_input_active=selected_valid&&(active_mode!=0)&&pipeline_ready;
+ assign tail_empty=!rst&&!router_input_active&&!(|routed_valid)&&tail_count==0;
  wire [511:0] interpolated_i,interpolated_q;wire [7:0] interpolated_valid;
  tx_source_mux sources(.clk(clk_rf),.rst(rst),.request(mode_request&&mode_admissible),.requested_mode(requested_mode),
   .safe_boundary((safe_boundary&&!config_commit)||(mode_request&&requested_mode==0)),.rf_permit(pipeline_ready),.single_antenna_ota(single_antenna_ota),
   .live_data(live_data),.drfm_data(drfm_data),.dds_data(dds_data),.awg_data(awg_data),
   .live_valid(live_valid),.drfm_valid(drfm_valid),.dds_valid(dds_valid),.awg_valid(awg_valid),
   .active_mode(active_mode),.accepted(mode_accepted),.rejected(mux_mode_rejected),.out_data(selected_data),.out_valid(selected_valid));
- tx_channel_router router(.clk(clk_rf),.rst(rst),.in_valid(selected_valid&&(active_mode!=0)&&pipeline_ready),
+ tx_channel_router router(.clk(clk_rf),.rst(rst),.in_valid(router_input_active),
   .route_commit(load_config),.safe_boundary(config_allowed),.shadow_select(route_select),.shadow_enable(route_enable),
   .in_hv(selected_data),.out_valid(),.commit_ack(),.commit_rejected(),.lane_valid(routed_valid),.out_lanes(routed));
  always @(posedge clk_rf)begin

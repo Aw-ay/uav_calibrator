@@ -22,6 +22,8 @@
 
 第十四阶段 PDW/RF_FAULT 统一 EVENT 已接入 calibrator_instrument_core 实际生产端、现有命令网关 EVENT 寄存器及 IRQ bit4，旧查询队列独立。75/75全量回归、XSim2/2、A53十一源文件通过；完整核心综合 WNS +0.337ns/WHS +0.037ns/WPWS +1.958ns，失败端点0；CDC 0 Critical/14075 Warning/15 Info，未豁免。原工程已更新并重开核验。见 reports/stage14_instrument_events.md。前述第九至十三阶段未接入状态为历史记录；后续 TX/DAC、AUX、FIR 生命周期和板级工作仍未完成。
 
+第十五阶段 TX 数字 tail_empty 状态完成，实际校准/FIR尾部、零值有效拍、重触发、静音与复位验证通过；相关回归5/5、最终XSim1/1，TX链模块综合WNS +3.515ns/WHS +0.066ns、失败端点0。未重跑完整核心；该状态尚未接入任务完成事件，不能代表DAC消费完成。见 reports/stage15_tx_tail_status.md。
+
 ## 当前阶段授权
 
 用户已要求按阶段恢复，全部在当前任务操作，不使用子窗口或子任务。第一阶段定位并修复采集子系统时序/CDC问题，验证后汇报并停在阶段边界。

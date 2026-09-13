@@ -8,7 +8,7 @@ module tb_tx_processing_chain;
  reg [63:0] live_data=0,drfm_data=0,dds_data={16'd400,16'd300,16'd200,16'd100},awg_data=0;
  reg live_valid=1,drfm_valid=1,dds_valid=1,awg_valid=1;
  wire [2:0] active_mode;wire mode_accepted,mode_rejected,config_accepted,config_rejected;
- wire pipeline_ready;
+ wire pipeline_ready,tail_empty;
  wire [31:0] active_config_id;wire [127:0] calibrated_i,calibrated_q;
  wire [7:0] calibrated_valid,calibration_saturated,tx_saturated,native_dac_valid;
  wire [1023:0] native_dac_data;
