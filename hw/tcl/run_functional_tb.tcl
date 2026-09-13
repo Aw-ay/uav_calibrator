@@ -58,6 +58,7 @@ dict set sources tb_fault_event_path {rtl/control/fault_event_retainer.sv rtl/co
 dict set sources tb_fault_event_retainer {rtl/control/fault_event_retainer.sv tb/unit/tb_fault_event_retainer.sv}
 dict set sources tb_rf_fault_queue {rtl/generated/instrument_control_pkg.sv rtl/control/rf_fault_queue.sv tb/unit/tb_rf_fault_queue.sv}
 dict set sources tb_source_event_queue {rtl/generated/instrument_control_pkg.sv rtl/control/source_event_queue.sv tb/unit/tb_source_event_queue.sv}
+dict set sources tb_unified_event_axi [concat [lrange [dict get $sources tb_fault_event_transport] 0 end-1] {rtl/generated/calibrator_contract_pkg.sv rtl/time/gsc_timebase.sv rtl/control/csr_control_axi.sv tb/system/tb_unified_event_axi.sv}]
 if {![dict exists $sources $top]} {error "Unsupported top: $top"}
 create_project -force functional_$top [file join $root build functional_tb $top] -part xczu27dr-fsve1156-2-i
 foreach rel [dict get $sources $top] {add_files -fileset sim_1 -norecurse [file join $root $rel]}

@@ -12,6 +12,7 @@ wire [31:0] active_mode,active_config_id,active_pre,active_post,active_max_pulse
 wire armed,tx_enable,irq; wire [63:0] gsc;
 reg rf_event_valid=0;reg [511:0] rf_event_data=0;
 wire rf_event_ready;wire [31:0] rf_event_dropped;
+wire rf_fault_valid=1'b0;wire [255:0] rf_fault_snapshot=256'b0;
 csr_control_axi dut(.*);
 task aw(input [31:0] a); begin @(negedge ctrl_clk);s_axi_awaddr=a;s_axi_awvalid=1; do @(posedge ctrl_clk);while(!s_axi_awready);@(negedge ctrl_clk);s_axi_awvalid=0;end endtask
 task wd(input [31:0] d,input [3:0] st);begin @(negedge ctrl_clk);s_axi_wdata=d;s_axi_wstrb=st;s_axi_wvalid=1;do @(posedge ctrl_clk);while(!s_axi_wready);@(negedge ctrl_clk);s_axi_wvalid=0;end endtask

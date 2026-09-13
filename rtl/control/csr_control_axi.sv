@@ -1,5 +1,6 @@
 module csr_control_axi #(
- parameter [31:0] BUILD_ID=0
+ parameter [31:0] BUILD_ID=0,
+ parameter integer UNIFIED_EVENTS=0,EVENT_ADDR_W=4
 )(input wire ctrl_clk,rf_clk,rst_n,
  input wire [31:0] s_axi_awaddr,input wire s_axi_awvalid,output wire s_axi_awready,
  input wire [31:0] s_axi_wdata,input wire [3:0] s_axi_wstrb,input wire s_axi_wvalid,output wire s_axi_wready,
@@ -7,7 +8,10 @@ module csr_control_axi #(
  input wire [31:0] s_axi_araddr,input wire s_axi_arvalid,output wire s_axi_arready,
  output reg [31:0] s_axi_rdata,output reg [1:0] s_axi_rresp,output reg s_axi_rvalid,input wire s_axi_rready,
  input wire rf_safe_boundary,calibration_valid,input wire [31:0] fault_set,
+ // Legacy mode: event attempt pulses. Unified mode: hold normal valid/data until ready.
  input wire rf_event_valid,input wire [511:0] rf_event_data,
+ // RF-domain fault observation pulse and logical snapshot; ignored in legacy mode.
+ input wire rf_fault_valid,input wire [255:0] rf_fault_snapshot,
  output wire rf_event_ready,output wire [31:0] rf_event_dropped,
  output reg [31:0] active_mode,active_config_id,active_pre,active_post,active_max_pulse,active_eop_hold,active_detector_latency,
  output reg armed,output wire tx_enable,irq,output wire [63:0] gsc);
@@ -28,10 +32,20 @@ module csr_control_axi #(
  wire event_latched;
  wire event_latch=execute&&awaddr==REG_EVENT_LATCH&&action==1&&event_count!=0;
  wire event_pop=execute&&awaddr==REG_EVENT_POP&&action==1&&event_latched;
- event_mailbox events(.src_clk(rf_clk),.ctrl_clk(ctrl_clk),.rst_n(rst_n),
+ generate if(UNIFIED_EVENTS)begin : unified_events
+ fault_event_transport #(.ADDR_W(EVENT_ADDR_W)) events(
+  .rf_clk(rf_clk),.ctrl_clk(ctrl_clk),.rst_n(rst_n),
+  .fault_valid(rf_fault_valid),.fault_snapshot(rf_fault_snapshot),
+  .normal_valid(rf_event_valid),.normal_event(rf_event_data),.normal_ready(rf_event_ready),
+  .dropped_events(rf_event_dropped),.latch_head(event_latch),.pop(event_pop),
+  .word_index(s_axi_araddr[5:2]),.word_data(event_word),.event_count(event_count),
+  .latched_valid(event_latched),.command_rejected());
+ end else begin : legacy_events
+ event_mailbox #(.ADDR_W(EVENT_ADDR_W)) events(.src_clk(rf_clk),.ctrl_clk(ctrl_clk),.rst_n(rst_n),
   .event_valid(rf_event_valid),.event_data(rf_event_data),.event_ready(rf_event_ready),.dropped_events(rf_event_dropped),
   .latch_head(event_latch),.pop(event_pop),.word_index(s_axi_araddr[5:2]),.word_data(event_word),
   .event_count(event_count),.latched_valid(event_latched),.command_rejected());
+ end endgenerate
  wire [31:0] clear_faults=(execute&&awaddr==REG_FAULT_STATUS)?action:0;
  assign s_axi_awready=!aw_full&&!s_axi_bvalid;
  assign s_axi_wready=!w_full&&!s_axi_bvalid;

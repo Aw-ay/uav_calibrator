@@ -18,6 +18,8 @@
 
 第十二阶段统一 EVENT 软件读取器完成：相关回归4/4、A53十一个C源文件构建通过。新增显式 fetch/pop、未知格式原始记录保留及 POP 不确定状态保护；未修改RTL，未重复综合。见 reports/stage12_unified_reader.md。
 
+第十三阶段统一 EVENT 可选接入 AXI CSR 完成：相关回归5/5、XSim1/1；局部综合 WNS +1.676ns/WHS +0.045ns、失败端点0，3826 LUT/11791 FF，CDC 0 Critical/8478 Warning/6 Info，未豁免。UNIFIED_EVENTS 默认0保留旧模式，主顶层尚未启用新通道。见 reports/stage13_unified_event_axi.md。
+
 ## 当前阶段授权
 
 用户已要求按阶段恢复，全部在当前任务操作，不使用子窗口或子任务。第一阶段定位并修复采集子系统时序/CDC问题，验证后汇报并停在阶段边界。
