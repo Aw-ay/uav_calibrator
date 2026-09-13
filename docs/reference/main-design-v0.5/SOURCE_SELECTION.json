@@ -1,0 +1,287 @@
+{
+  "source_archive": "Vivado_PLPS_主设计包_v0.5.zip",
+  "source_sha256": "15735c9c9cf5fd825f16c0b789ae581e836edafaaf1f0da9d0363f99eece2608",
+  "excluded": [
+    "reports/",
+    "provenance/original_packages/",
+    "SHA256SUMS.json (describes original full archive)"
+  ],
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "55c44ade9ba4def21eebd7800be5e1d69b93686d5557f68350e4c2884eabe604"
+    },
+    {
+      "path": "README.md",
+      "sha256": "f45adf31514edb49ef763d2b689355781084c276fc62477b2f454669364bd753"
+    },
+    {
+      "path": "codex/AGENTS.md",
+      "sha256": "55c44ade9ba4def21eebd7800be5e1d69b93686d5557f68350e4c2884eabe604"
+    },
+    {
+      "path": "codex/任务顺序.md",
+      "sha256": "b8197fa79c64e512ee9085588a73e2d07a9746d18655218052643026714e486d"
+    },
+    {
+      "path": "contracts/address_map.json",
+      "sha256": "b0962a1882a469a0c9d35787b52c6b754fae10ffe483a22a8f3f389cb702cdc8"
+    },
+    {
+      "path": "contracts/amd_ip_targets.json",
+      "sha256": "d1b2ef467d324d28620bed4bb287f952033e6c2293cd6b30b6aead0f8bbdfe4a"
+    },
+    {
+      "path": "contracts/bank_contract.json",
+      "sha256": "3fb16dfb36c54be1798919d4ee25b3ee99ecdb9df1063a87d149f95a24daeb0f"
+    },
+    {
+      "path": "contracts/bd_connections.json",
+      "sha256": "5f43df658ebd21ec85424349be88db26e59769fc171efba6ee29b20cf6824ef6"
+    },
+    {
+      "path": "contracts/channel_roles.json",
+      "sha256": "8467362c1aab514345fe0aabb7ba6b55d7f5764f40ebacdcc21870c81d3251a7"
+    },
+    {
+      "path": "contracts/fir_plan.json",
+      "sha256": "36f2f014c4312a0343b6b2a934c12899037dc5ee18cb76964b0b4606cd9f57ef"
+    },
+    {
+      "path": "contracts/frame_format.json",
+      "sha256": "8105f6ce28d08e729dd7e7f2307101f8b2d21fe7598466d6db3992464c436e50"
+    },
+    {
+      "path": "contracts/latency_contract.json",
+      "sha256": "28a8a2fb2e016fa2162280d30730a7cdd86721ac9e33497af6633c8940f06bd0"
+    },
+    {
+      "path": "contracts/module_catalog.json",
+      "sha256": "945dc8b2446514074f079da52db3fa36f098e90046024e86955b124558abde49"
+    },
+    {
+      "path": "contracts/range_selection.json",
+      "sha256": "4a338fbff88f87eda71b251a112eb83507cf88718424548e144a6a9b1816ce21"
+    },
+    {
+      "path": "contracts/record_policy.json",
+      "sha256": "38f02dc8a37f8eb3e7ddc74820d9b03e94288bb24791b13a0e074f328096a3e1"
+    },
+    {
+      "path": "contracts/register_map.json",
+      "sha256": "20fab998b8886f90d1a3b44c0a402387f2feba028ab69ed5457c8ea47a0d0db6"
+    },
+    {
+      "path": "contracts/replay_contract.json",
+      "sha256": "3a521b51d7261c1724de9260e79e73f5652491b8260ab997afcff34d4cca7e74"
+    },
+    {
+      "path": "contracts/resource_budget.json",
+      "sha256": "b4ccf291ded40d5a2f6a47ebbb823573c55be86941642b2cae0af29f0550c44a"
+    },
+    {
+      "path": "contracts/system_contract.json",
+      "sha256": "a826d33c1cb4aa1e411d16889e9a5b989a6e315517634d662d9a9e501ec9d5e2"
+    },
+    {
+      "path": "contracts/verification_matrix.json",
+      "sha256": "4fe0f4aa5365d3d8a206b064a5bd84cf7462f5b7387e070b20acb04567f14297"
+    },
+    {
+      "path": "filters/RX_STAGE1.coe",
+      "sha256": "3f93b09545f2a54cac4aef674bff483c5a49d731519834daa3a633d67a366221"
+    },
+    {
+      "path": "filters/RX_STAGE1.csv",
+      "sha256": "02fbc6e8928a82a72550eaf5c5454c4cbc1033f56c6d1094c319cf19afc6ef9d"
+    },
+    {
+      "path": "filters/RX_STAGE1_metadata.json",
+      "sha256": "87d3697002665da65bee104e1e0b602d4f2e956f9bccbf1177f0b9c280b15f31"
+    },
+    {
+      "path": "filters/RX_STAGE2.coe",
+      "sha256": "1e0572249ab3ccd15a45362bdefbf8ec3d658433ae37df58d3a7c366f296479b"
+    },
+    {
+      "path": "filters/RX_STAGE2.csv",
+      "sha256": "e759062e6e9168c7935b15934a6ceb7b21672da6a440096befaa8a40aab94844"
+    },
+    {
+      "path": "filters/RX_STAGE2_metadata.json",
+      "sha256": "db722daef8af580efa39fd46ae508993d913bb8ac11600ceddc4ccb9bbb5a19b"
+    },
+    {
+      "path": "filters/TX_STAGE1.coe",
+      "sha256": "1e0572249ab3ccd15a45362bdefbf8ec3d658433ae37df58d3a7c366f296479b"
+    },
+    {
+      "path": "filters/TX_STAGE1.csv",
+      "sha256": "e759062e6e9168c7935b15934a6ceb7b21672da6a440096befaa8a40aab94844"
+    },
+    {
+      "path": "filters/TX_STAGE1_metadata.json",
+      "sha256": "f3905c79a7298104201d2d8154b98e44d79d81d5ee0b4ba9ebf030413987b15f"
+    },
+    {
+      "path": "filters/TX_STAGE2.coe",
+      "sha256": "3f93b09545f2a54cac4aef674bff483c5a49d731519834daa3a633d67a366221"
+    },
+    {
+      "path": "filters/TX_STAGE2.csv",
+      "sha256": "02fbc6e8928a82a72550eaf5c5454c4cbc1033f56c6d1094c319cf19afc6ef9d"
+    },
+    {
+      "path": "filters/TX_STAGE2_metadata.json",
+      "sha256": "4bc39d6a8d9039e30cdad0261e40ecd93bdba7396aa22ef5aed083190ec9764c"
+    },
+    {
+      "path": "generated/calib_contract.h",
+      "sha256": "9b6ed49e7d8fc266aa6c3c78898425211d4d2f1c0eab67f8220d707f1bee9237"
+    },
+    {
+      "path": "generated/calib_contract_pkg.sv",
+      "sha256": "c95f44b59c26f5414bf8410ebd62bd49d4c137e1f98e865329fc50c5827a1ef9"
+    },
+    {
+      "path": "generated/constants.json",
+      "sha256": "7dda8be858ddf8824f588c2d0127fb9e3a11290a07c1043fa5f481a4a9e512bf"
+    },
+    {
+      "path": "models/__init__.py",
+      "sha256": "4bbc6f4a784b912818c1e7932db7b05731f1992a0611e4d51c49f5a9f684f9e1"
+    },
+    {
+      "path": "models/numeric_model.py",
+      "sha256": "32288a9f4aa8ee149f4454381626882fd7099af762ae9185d22909a1bfbd322a"
+    },
+    {
+      "path": "models/ring_model.py",
+      "sha256": "490c8d7af7c4ce7028f1b590d0053da84740dc4bd92d073d6d1fc53ac0827abc"
+    },
+    {
+      "path": "plans/合并执行计划.md",
+      "sha256": "6fa11053df0454467fe7552c48ea183db94d61a74d1a9b8046ca23455496213c"
+    },
+    {
+      "path": "provenance/README.md",
+      "sha256": "678363c9d8a930bde274517d593d6f2022bc008deb5fe9d860324dd6bf94434a"
+    },
+    {
+      "path": "provenance/input_manifest.json",
+      "sha256": "cea13a5a16617e6f99ee6ec211857bf870d1eb6d9c44c311eb570442d0f8407f"
+    },
+    {
+      "path": "requirements.txt",
+      "sha256": "794e78e97975a317667c64e1975884140754ff26feb267649b3d4e0249549522"
+    },
+    {
+      "path": "specs/00_总体设计.md",
+      "sha256": "61a0c6a3ffd380de51208ab21b4602b6856d90c6d8cd57f1aaeb904fdbbec0f2"
+    },
+    {
+      "path": "specs/01_模块清单.md",
+      "sha256": "39da230422e0166b578d1d5be44dbee0f1572b155c97422620ce16f6674589f3"
+    },
+    {
+      "path": "specs/02_AMD_IP配置.md",
+      "sha256": "c3b4435e335d23b84b64b96b7a204cee531fc1b0a1be27be0244bab4a2d46abb"
+    },
+    {
+      "path": "specs/03_时钟缓存与数据契约.md",
+      "sha256": "a6bbf5cd8011ee3ef5475eee27e8b3de42f1da88189bed3c86b3559aa744c947"
+    },
+    {
+      "path": "specs/04_BlockDesign方法.md",
+      "sha256": "c82b54b7ac037b3d6ffd2f500bef673dff708c44e66407d67a422d3bf665c07c"
+    },
+    {
+      "path": "specs/05_PS软件.md",
+      "sha256": "d2225b1553edbd21c338233bbc00bbff4ef615308b11041353a67c99140809dd"
+    },
+    {
+      "path": "specs/06_验证计划.md",
+      "sha256": "598b61c9d98f00f79d85e48ae3fd0f20a38de971da10541caff501b4f388b621"
+    },
+    {
+      "path": "specs/07_八通道独立采样与AUX_MID.md",
+      "sha256": "818bc1c5222dfa69ffcb1faaf74612554356fb654a8d6ab5f18e1f6693810b0c"
+    },
+    {
+      "path": "specs/08_FIR资源核算与滤波器设计.md",
+      "sha256": "768ca7eaff13353a7693c83a6cd9fc0428e645fa33d4836aff0f12c5814c09a8"
+    },
+    {
+      "path": "specs/09_来源与待确认项.md",
+      "sha256": "0ba013f350b0302ced96e389bf71f48630effdafa91a52984a9768d048475f97"
+    },
+    {
+      "path": "specs/10_RingBuffer设计.md",
+      "sha256": "66eeb8f6dc7f72f158d3841b5d99b99de2f876a019cf3cca569245fada2b59a1"
+    },
+    {
+      "path": "specs/11_ADC到RingBuffer.md",
+      "sha256": "0a1694517d19b9a46cbb0176baa495fa8893f760b36ac814acb7982594feef9c"
+    },
+    {
+      "path": "specs/12_RingBuffer到DMA.md",
+      "sha256": "9dd6f0d07da8ffef9e16f300bb1ebc930ce4be1739a53f45e4cf5edca4b14b57"
+    },
+    {
+      "path": "specs/13_RingBuffer到DAC与DRFM.md",
+      "sha256": "3ee3ee7a2b1f4cdb101e53a167c195e29568999e82ccc38c790161565ff3501f"
+    },
+    {
+      "path": "specs/14_合并决策与兼容性.md",
+      "sha256": "9f02f9f0f448d4368d9bd01ba915d8cd739ec3bddb37f908070d363cd4650123"
+    },
+    {
+      "path": "tests/test_generated.py",
+      "sha256": "5da7175b0d808f90ced966f76102007703684db354bb55cd01c2dadfb4b4f96d"
+    },
+    {
+      "path": "tests/test_merge_contract.py",
+      "sha256": "4541703656a26efb7dec86adda053c2f5fbf565c76f1e6c119df210d96648349"
+    },
+    {
+      "path": "tests/test_new_boundaries.py",
+      "sha256": "f0a23e9caa84fc63fce8b8c2187492a4cf624b4ebf0589fe30ec29b33d583c8b"
+    },
+    {
+      "path": "tests/test_numeric_model.py",
+      "sha256": "9ca0be2b63be129e0c40a983144f364d8d4114d162b8a3564f5ca56c4eb5fa65"
+    },
+    {
+      "path": "tests/test_ring_model.py",
+      "sha256": "977137024fde7e4064912f5826dd8efe5a896dfa4f7f8e2c4fcf884ad18b06a5"
+    },
+    {
+      "path": "tests/test_source_role_mapping.py",
+      "sha256": "3c3f5081c1292159e3ddd9d1b07615c69ad30de7b4736e5fe81c6e95e928f583"
+    },
+    {
+      "path": "tools/check_integrity.py",
+      "sha256": "0e160722da2ee25c04d5475286dcaffa8a47f7cbe7eb3c6a3dc0a84dde8ad7ff"
+    },
+    {
+      "path": "tools/generate_contracts.py",
+      "sha256": "39dafce0094c565f5576ec02f2e155ce714ebf53402c3f8713878f23d030f327"
+    },
+    {
+      "path": "tools/verify_all.py",
+      "sha256": "a843b96d2a1188136e78a06b12a40274b14eea128fdb781712ac8a512ddf3b9d"
+    },
+    {
+      "path": "verify.cmd",
+      "sha256": "e43e5db8e9b41a561e0c4348e026fcad762570616a80528643f33c74d8ceaeb7"
+    },
+    {
+      "path": "verify.sh",
+      "sha256": "36255a46614b892863821599233fba18407fe9f71b1b3b8f02865c7c4480afe5"
+    },
+    {
+      "path": "修改说明.md",
+      "sha256": "2e5d3f9b7170b3eef55e51ec4e6f2430473e6b459384b09a93e604f3c7fea354"
+    }
+  ]
+}

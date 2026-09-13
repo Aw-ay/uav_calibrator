@@ -1,0 +1,17 @@
+{
+  "original_branch_heads": {
+    "refs/heads/feature/complete-new-modules": "a18e30451663cd2b1ab1fcfaa16e33990d2a7e60",
+    "refs/heads/feature/module-first-validation": "9e27227687bbde41f7b51042ea2b1c6d47632bc6",
+    "refs/heads/main": "78fd4a0c57a7be8a3cda865ab39521cb022143d0"
+  },
+  "filtered_branch_heads_before_directory_organization": {
+    "refs/heads/feature/complete-new-modules": "e50181c505fe006e7852791b65ecf12df5d40d14",
+    "refs/heads/feature/module-first-validation": "12ab3dacd8fbed5ed2bce00cc2ec83ad85a45fc0",
+    "refs/heads/main": "9edbe4aa57b56d2d05a34ea453a7f4b7e1572a1a"
+  },
+  "history_filter": "reports/ removed from all three branches in isolated clone; original repository unchanged",
+  "source_comparison": "Current RTL text matches original workspace; Git may normalize line endings",
+  "working_tree_source_included": "rtl/arithmetic/complex_cal_core.sv",
+  "working_tree_source_sha256": "61e143700d89bbe98c4ebc753ec6da62e14a82fa45a95408dccef81136d6e36f",
+  "scope": "Sources, documentation and configuration only; no synthesis reports, checkpoints or output archives"
+}

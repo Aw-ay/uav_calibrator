@@ -1,0 +1,68 @@
+{
+  "merge_version": "0.5",
+  "input_count": 7,
+  "inputs": [
+    {
+      "filename": "Vivado_PLPS_八通道独立采样与FIR设计包_v0.3.zip",
+      "archive_path": "provenance/original_packages/Vivado_PLPS_八通道独立采样与FIR设计包_v0.3.zip",
+      "bytes": 102278,
+      "sha256": "ab862a10abf9b476b87195b6f9b55e87188bebf399b8516b3301ff0abaff5d53",
+      "role": "ORIGINAL_MASTER_OLD_ACTIVE_VALUES_SUPERSEDED",
+      "active_configuration": false
+    },
+    {
+      "filename": "RFDC_FIR75_Study_v0.4.zip",
+      "archive_path": "provenance/original_packages/RFDC_FIR75_Study_v0.4.zip",
+      "bytes": 17155366,
+      "sha256": "df0c89a68fc1c8d4356d0385ec9036762f725b71eee70e21bbc28f1f07736ef3",
+      "role": "COEFFICIENT_AND_NUMERIC_MODEL_SOURCE_OLD_250MHZ_IMPLEMENTATION_SUPERSEDED",
+      "active_configuration": false
+    },
+    {
+      "filename": "RingBuffer_125MSps_设计与验证包.zip",
+      "archive_path": "provenance/original_packages/RingBuffer_125MSps_设计与验证包.zip",
+      "bytes": 38019,
+      "sha256": "a075c67c9e17ebb6c879a0426eacd63b4630c12100d1a1bc2737bb1e099d5307",
+      "role": "BANK_BEHAVIOR_MODEL_AND_DESIGN_SOURCE",
+      "active_configuration": false
+    },
+    {
+      "filename": "ZU27DR_DSP_FIR125M_DMA200M_核算包.zip",
+      "archive_path": "provenance/original_packages/ZU27DR_DSP_FIR125M_DMA200M_核算包.zip",
+      "bytes": 22611,
+      "sha256": "857f97d4ebe89b93e1f67debfed14b6de5beeaaf1a52324e36c0d2b88fc2a3a0",
+      "role": "RESOURCE_ARITHMETIC_SOURCE_NOT_SYNTHESIS",
+      "active_configuration": false
+    },
+    {
+      "filename": "PLPS_设计包一致性核对_20260911.zip",
+      "archive_path": "provenance/original_packages/PLPS_设计包一致性核对_20260911.zip",
+      "bytes": 55976,
+      "sha256": "b552ea8a18a5c67e56749c7403a6beb797e2e9cc14a42f73fa36d69a8a869690",
+      "role": "HISTORICAL_CONSISTENCY_AUDIT",
+      "active_configuration": false
+    },
+    {
+      "filename": "ADC到RingBuffer_链路核对资料.zip",
+      "archive_path": "provenance/original_packages/ADC到RingBuffer_链路核对资料.zip",
+      "bytes": 49255,
+      "sha256": "a846199c4b80b983fa4c819b72fa6357ae51f4fa630fa618cfc5f674cb3614e8",
+      "role": "HISTORICAL_RX_CHAIN_AUDIT",
+      "active_configuration": false
+    },
+    {
+      "filename": "RingBuffer到DAC_链路核对资料.zip",
+      "archive_path": "provenance/original_packages/RingBuffer到DAC_链路核对资料.zip",
+      "bytes": 21439,
+      "sha256": "aab8f8d12d0461fc77575e83f41a5b007cd6336e6962bb8ec2211e810dd6a9d7",
+      "role": "HISTORICAL_REPLAY_CHAIN_AUDIT",
+      "active_configuration": false
+    }
+  ],
+  "conversation_overrides": [
+    "FIR/core same125MHz",
+    "DMA remains200MHz",
+    "all banks interchangeable broadcast-prefill; no bank-to-bank waveform copy"
+  ],
+  "repo_retrieved_this_merge": false
+}

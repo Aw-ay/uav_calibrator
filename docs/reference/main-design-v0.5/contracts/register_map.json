@@ -1,0 +1,777 @@
+{
+  "status": "MERGED_DESIGN_BASELINE_NOT_IMPLEMENTED",
+  "note": "This freezes global control semantics; per-DSP parameter arrays and descriptor schema must be completed together with selected numeric model before code generation. Unimplemented capabilities remain0.",
+  "registers": [
+    {
+      "name": "IP_ID",
+      "offset_hex": "0x0000",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 1128352817,
+      "meaning": "instrument identifier"
+    },
+    {
+      "name": "ABI_VERSION",
+      "offset_hex": "0x0004",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 5,
+      "meaning": "v0.5 design ABI; firmware must reject unknown version"
+    },
+    {
+      "name": "BUILD_ID",
+      "offset_hex": "0x0008",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "source build manifest lookup"
+    },
+    {
+      "name": "CAPABILITIES",
+      "offset_hex": "0x000C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "actual compiled capabilities, not desired capabilities"
+    },
+    {
+      "name": "REQUEST",
+      "offset_hex": "0x0010",
+      "width_bits": 32,
+      "access": "WO",
+      "reset": 0,
+      "meaning": "arm/stop/time_snapshot; default does not enable TX"
+    },
+    {
+      "name": "STATE",
+      "offset_hex": "0x0014",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "safe/ready/capturing/tx"
+    },
+    {
+      "name": "FAULT_STATUS",
+      "offset_hex": "0x0018",
+      "width_bits": 32,
+      "access": "W1C",
+      "reset": 0,
+      "meaning": "new fault has priority over concurrent clear"
+    },
+    {
+      "name": "IRQ_ENABLE",
+      "offset_hex": "0x001C",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "mask only, cannot bypass safety"
+    },
+    {
+      "name": "IRQ_STATUS",
+      "offset_hex": "0x0020",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "level fault/watermark conditions"
+    },
+    {
+      "name": "SHADOW_MODE",
+      "offset_hex": "0x0100",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "0mute,1measure,2DRFM,3DDS,4AWG,5LIVE"
+    },
+    {
+      "name": "SHADOW_CONFIG_ID",
+      "offset_hex": "0x0104",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "proposed config id"
+    },
+    {
+      "name": "COMMIT",
+      "offset_hex": "0x0108",
+      "width_bits": 32,
+      "access": "WO",
+      "reset": 0,
+      "meaning": "submit inactive configuration atomically"
+    },
+    {
+      "name": "ACTIVE_CONFIG_ID",
+      "offset_hex": "0x010C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "acknowledged config"
+    },
+    {
+      "name": "COMMIT_STATUS",
+      "offset_hex": "0x0110",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "busy/rejected/reason"
+    },
+    {
+      "name": "GSC_SNAPSHOT_LO",
+      "offset_hex": "0x0200",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "latched snapshot low, not free-running bus"
+    },
+    {
+      "name": "GSC_SNAPSHOT_HI",
+      "offset_hex": "0x0204",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "same snapshot high"
+    },
+    {
+      "name": "EPOCH_ID",
+      "offset_hex": "0x0208",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "timebase generation"
+    },
+    {
+      "name": "TIME_QUALITY",
+      "offset_hex": "0x020C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "PPS/mapping valid and uncertainty class"
+    },
+    {
+      "name": "EVENT_COUNT",
+      "offset_hex": "0x0300",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "number of complete512bit records"
+    },
+    {
+      "name": "EVENT_LATCH",
+      "offset_hex": "0x0304",
+      "width_bits": 32,
+      "access": "WO",
+      "reset": 0,
+      "meaning": "latch head without removal"
+    },
+    {
+      "name": "EVENT_POP",
+      "offset_hex": "0x0308",
+      "width_bits": 32,
+      "access": "WO",
+      "reset": 0,
+      "meaning": "explicit removal after all words consumed"
+    },
+    {
+      "name": "DROP_CAPTURE",
+      "offset_hex": "0x0400",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "counter snapshot"
+    },
+    {
+      "name": "DROP_IQ",
+      "offset_hex": "0x0404",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "counter snapshot"
+    },
+    {
+      "name": "DROP_EVENT",
+      "offset_hex": "0x0408",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "counter snapshot"
+    },
+    {
+      "name": "REPLAY_REJECTED",
+      "offset_hex": "0x040C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "counter snapshot"
+    },
+    {
+      "name": "BANK_HIGHWATER",
+      "offset_hex": "0x0410",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "max concurrently owned banks"
+    },
+    {
+      "name": "EVENT_WORD_0",
+      "offset_hex": "0x0340",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_1",
+      "offset_hex": "0x0344",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_2",
+      "offset_hex": "0x0348",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_3",
+      "offset_hex": "0x034C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_4",
+      "offset_hex": "0x0350",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_5",
+      "offset_hex": "0x0354",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_6",
+      "offset_hex": "0x0358",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_7",
+      "offset_hex": "0x035C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_8",
+      "offset_hex": "0x0360",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_9",
+      "offset_hex": "0x0364",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_10",
+      "offset_hex": "0x0368",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_11",
+      "offset_hex": "0x036C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_12",
+      "offset_hex": "0x0370",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_13",
+      "offset_hex": "0x0374",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_14",
+      "offset_hex": "0x0378",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "EVENT_WORD_15",
+      "offset_hex": "0x037C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "stable latched event word"
+    },
+    {
+      "name": "ADC_PRESENT_MASK",
+      "offset_hex": "0x2000",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 255,
+      "meaning": "compiled ADC present mask; full product0xFF"
+    },
+    {
+      "name": "ADC_STREAM_VALID_MASK",
+      "offset_hex": "0x2004",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "sample continuity including all eight"
+    },
+    {
+      "name": "AUX_SOURCE_SHADOW",
+      "offset_hex": "0x2008",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "0safe,1external redundantMID,2protectedRFloopback"
+    },
+    {
+      "name": "AUX_SOURCE_COMMIT",
+      "offset_hex": "0x200C",
+      "width_bits": 32,
+      "access": "WO",
+      "reset": 0,
+      "meaning": "request paired switch; refuse unsafe switching; never pause primary"
+    },
+    {
+      "name": "AUX_SOURCE_ACTIVE",
+      "offset_hex": "0x2010",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "acknowledged physical/source state"
+    },
+    {
+      "name": "AUX_SOURCE_STATUS",
+      "offset_hex": "0x2014",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "busy/settling/valid/rejected"
+    },
+    {
+      "name": "AUX_SOURCE_EPOCH",
+      "offset_hex": "0x2018",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "increment on auxiliary source transition"
+    },
+    {
+      "name": "AUX_DROP_COUNT",
+      "offset_hex": "0x201C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "auxiliary retained-record loss; acquisition continues"
+    },
+    {
+      "name": "RX_FILTER_PROFILE_ID",
+      "offset_hex": "0x2020",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "actual compiled/loaded filter profile;0notvalidated"
+    },
+    {
+      "name": "TX_CHANNEL_ENABLE_SHADOW",
+      "offset_hex": "0x2024",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "DAC lane masks; applied only with existing approved TX task/interlock"
+    },
+    {
+      "name": "AUX_CAL_ID",
+      "offset_hex": "0x2028",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "independent MID/calibrationreference"
+    },
+    {
+      "name": "AUX_CAPTURE_REQUEST",
+      "offset_hex": "0x202C",
+      "width_bits": 32,
+      "access": "WO",
+      "reset": 0,
+      "meaning": "independent diagnostic window; actualTX trigger also supported"
+    },
+    {
+      "name": "CORE_SAMPLE_HZ",
+      "offset_hex": "0x0420",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 125000000,
+      "meaning": "compiled capability target; actual build must report its real value"
+    },
+    {
+      "name": "RFDC_COMPLEX_HZ",
+      "offset_hex": "0x0424",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 500000000,
+      "meaning": "compiled capability target; actual build must report its real value"
+    },
+    {
+      "name": "FIR_CLOCK_HZ",
+      "offset_hex": "0x0428",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 125000000,
+      "meaning": "compiled capability target; actual build must report its real value"
+    },
+    {
+      "name": "DMA_CLOCK_HZ",
+      "offset_hex": "0x042C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 200000000,
+      "meaning": "compiled capability target; actual build must report its real value"
+    },
+    {
+      "name": "CAPTURE_DEPTH",
+      "offset_hex": "0x0430",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 16384,
+      "meaning": "compiled capability target; actual build must report its real value"
+    },
+    {
+      "name": "BANKS_PER_GROUP",
+      "offset_hex": "0x0434",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 4,
+      "meaning": "compiled capability target; actual build must report its real value"
+    },
+    {
+      "name": "DMA_SLOT_BYTES",
+      "offset_hex": "0x0438",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 262144,
+      "meaning": "compiled capability target; actual build must report its real value"
+    },
+    {
+      "name": "GSC_STRIDE",
+      "offset_hex": "0x043C",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 4,
+      "meaning": "compiled capability target; actual build must report its real value"
+    },
+    {
+      "name": "BANK_SNAPSHOT_REQUEST",
+      "offset_hex": "0x0440",
+      "width_bits": 32,
+      "access": "WO",
+      "reset": 0,
+      "meaning": "latch all perbank rows in one owner-domain snapshot; no torn live reads"
+    },
+    {
+      "name": "BANK_SNAPSHOT_ID",
+      "offset_hex": "0x0444",
+      "width_bits": 32,
+      "access": "RO",
+      "reset": 0,
+      "meaning": "increments on complete snapshot"
+    },
+    {
+      "name": "PRE_SAMPLES_SHADOW",
+      "offset_hex": "0x0800",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 250,
+      "meaning": "history before true onset; uses existing atomic COMMIT"
+    },
+    {
+      "name": "POST_SAMPLES_SHADOW",
+      "offset_hex": "0x0804",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 250,
+      "meaning": "samples after end-exclusive pulse; uses existing atomic COMMIT"
+    },
+    {
+      "name": "MAX_PULSE_SAMPLES_SHADOW",
+      "offset_hex": "0x0808",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 15000,
+      "meaning": "maximum pulse body samples; uses existing atomic COMMIT"
+    },
+    {
+      "name": "EOP_HOLD_SAMPLES_SHADOW",
+      "offset_hex": "0x080C",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 125,
+      "meaning": "detector hold, not automatically payload; uses existing atomic COMMIT"
+    },
+    {
+      "name": "DETECTOR_LATENCY_BOUND_SHADOW",
+      "offset_hex": "0x0810",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "0unknown preventsARM; measured upper bound required; uses existing atomic COMMIT"
+    },
+    {
+      "name": "RECORD_MODE_SHADOW",
+      "offset_hex": "0x0814",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "0selectedHV,1primarydiagnostic,2all8snapshot,3aux; uses existing atomic COMMIT"
+    },
+    {
+      "name": "QUALIFICATION_ENABLE_SHADOW",
+      "offset_hex": "0x0818",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "0disabled until calibrated thresholds/ranking; uses existing atomic COMMIT"
+    },
+    {
+      "name": "GAIN_ORDER_SHADOW",
+      "offset_hex": "0x081C",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "0unconfigured; three8bit range IDs highest actual gain first; permutation1,2,3 required; uses existing atomic COMMIT"
+    },
+    {
+      "name": "AUX_RECORD_ENABLE_SHADOW",
+      "offset_hex": "0x0820",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "budgeted independent AUX record flag; uses existing atomic COMMIT"
+    },
+    {
+      "name": "RANGE1_NATIVE_NEARCLIP_CODES",
+      "offset_hex": "0x0840",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "nativeI/Q magnitude threshold; zero unconfigured; shadow commit"
+    },
+    {
+      "name": "RANGE1_POST_FILTER_LIMIT_CODES",
+      "offset_hex": "0x0844",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "recordscale amplitude guard; zero unconfigured; shadow commit"
+    },
+    {
+      "name": "RANGE1_MIN_SNR_Q8_DB",
+      "offset_hex": "0x0848",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "minimumSNR signedQ8dB with validity gating; shadow commit"
+    },
+    {
+      "name": "RANGE1_LINEARITY_TOL_Q16",
+      "offset_hex": "0x084C",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "calibrated ratio tolerance; zero unconfigured; shadow commit"
+    },
+    {
+      "name": "RANGE1_CAL_ID",
+      "offset_hex": "0x0850",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "valid calibration key; shadow commit"
+    },
+    {
+      "name": "RANGE2_NATIVE_NEARCLIP_CODES",
+      "offset_hex": "0x0860",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "nativeI/Q magnitude threshold; zero unconfigured; shadow commit"
+    },
+    {
+      "name": "RANGE2_POST_FILTER_LIMIT_CODES",
+      "offset_hex": "0x0864",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "recordscale amplitude guard; zero unconfigured; shadow commit"
+    },
+    {
+      "name": "RANGE2_MIN_SNR_Q8_DB",
+      "offset_hex": "0x0868",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "minimumSNR signedQ8dB with validity gating; shadow commit"
+    },
+    {
+      "name": "RANGE2_LINEARITY_TOL_Q16",
+      "offset_hex": "0x086C",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "calibrated ratio tolerance; zero unconfigured; shadow commit"
+    },
+    {
+      "name": "RANGE2_CAL_ID",
+      "offset_hex": "0x0870",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "valid calibration key; shadow commit"
+    },
+    {
+      "name": "RANGE3_NATIVE_NEARCLIP_CODES",
+      "offset_hex": "0x0880",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "nativeI/Q magnitude threshold; zero unconfigured; shadow commit"
+    },
+    {
+      "name": "RANGE3_POST_FILTER_LIMIT_CODES",
+      "offset_hex": "0x0884",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "recordscale amplitude guard; zero unconfigured; shadow commit"
+    },
+    {
+      "name": "RANGE3_MIN_SNR_Q8_DB",
+      "offset_hex": "0x0888",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "minimumSNR signedQ8dB with validity gating; shadow commit"
+    },
+    {
+      "name": "RANGE3_LINEARITY_TOL_Q16",
+      "offset_hex": "0x088C",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "calibrated ratio tolerance; zero unconfigured; shadow commit"
+    },
+    {
+      "name": "RANGE3_CAL_ID",
+      "offset_hex": "0x0890",
+      "width_bits": 32,
+      "access": "RW",
+      "reset": 0,
+      "meaning": "valid calibration key; shadow commit"
+    }
+  ],
+  "reserved_groups": {
+    "0x0500-0x07FF": "read-only per-range measured stats/latencies not covered by bank snapshot",
+    "0x0824-0x083F": "detector shadow extension",
+    "0x08A0-0x0FFF": "future qualifier fields after explicit ABI revision",
+    "0x1000-0x17FF": "task mailbox; replay_contract layout authoritative",
+    "0x1800-0x1FFF": "coefficient validation/pin",
+    "0x2030-0x2FFF": "perchannel health",
+    "0x3400-0xFFFF": "unallocated"
+  },
+  "abi_version": 5,
+  "bank_snapshot_table": {
+    "base_hex": "0x3000",
+    "stride_bytes": 64,
+    "rows": 16,
+    "index": "(stream_group_id-1)*4+bank_id",
+    "fields": [
+      {
+        "offset": 0,
+        "name": "STATE"
+      },
+      {
+        "offset": 4,
+        "name": "REF_MASK"
+      },
+      {
+        "offset": 8,
+        "name": "GEN_LO"
+      },
+      {
+        "offset": 12,
+        "name": "GEN_HI"
+      },
+      {
+        "offset": 16,
+        "name": "OWNER_EPOCH_LO"
+      },
+      {
+        "offset": 20,
+        "name": "OWNER_EPOCH_HI"
+      },
+      {
+        "offset": 24,
+        "name": "START_PTR"
+      },
+      {
+        "offset": 28,
+        "name": "SAMPLE_COUNT"
+      },
+      {
+        "offset": 32,
+        "name": "HISTORY_COUNT"
+      },
+      {
+        "offset": 36,
+        "name": "QUALITY"
+      },
+      {
+        "offset": 40,
+        "name": "PULSE_LO"
+      },
+      {
+        "offset": 44,
+        "name": "PULSE_HI"
+      }
+    ],
+    "access": "RO atomic snapshot; remaining bytes0"
+  }
+}

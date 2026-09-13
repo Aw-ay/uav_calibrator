@@ -1,0 +1,171 @@
+{
+  "schema_version": "0.5-fir125-dma200",
+  "status": "MERGED_DESIGN_BASELINE_NOT_IMPLEMENTED",
+  "implementation_authorized": false,
+  "matlab_reference": {
+    "repo": "Aw-ay/calibrator-matlab-sim",
+    "ref": "4gps",
+    "commit": "3065469792e47b500aeb8a9f8ace1fd513948fd9"
+  },
+  "board": {
+    "selected": null,
+    "documented_candidate": null,
+    "candidate_silicon_label": null,
+    "vivado_part_string": null,
+    "board_revision": null,
+    "vendor_bsp": null,
+    "design_target_silicon": "ZU27DR",
+    "target_generation": 1,
+    "design_target_status": "RESOURCE_AND_RATE_REFERENCE_BOARD_UNCONFIRMED",
+    "previous_board_candidate_archive": "provenance/original_packages/Vivado_PLPS_八通道独立采样与FIR设计包_v0.3.zip"
+  },
+  "toolchain": {
+    "vivado": null,
+    "vitis": null,
+    "linux_bsp": null,
+    "ip_versions_locked": false
+  },
+  "rates": {
+    "rf_center_hz": 2800000000,
+    "adc_real_sample_hz": 4000000000,
+    "rfdc_decimation": 8,
+    "rfdc_complex_hz": 500000000,
+    "canonical_input_complex_spc": 4,
+    "clk_rf_hz": 125000000,
+    "pl_decimation": 4,
+    "core_complex_hz": 125000000,
+    "core_spc": 1,
+    "usable_total_bandwidth_hz": 100000000,
+    "gsc_hz": 500000000,
+    "gsc_increment_per_rf_clock": 4,
+    "analog_rate_status": "4GS/s ADC is a Gen1 rate target; PLL, RF Nyquist zone and native Tile/stream mapping not validated"
+  },
+  "clock_targets": {
+    "control_hz": 100000000,
+    "memory_hz": 200000000,
+    "sample_clock_source": "one coherent external-reference-derived clk_rf at125MHz; unrelated125MHz clocks are not equivalent",
+    "ctrl_clock_source": "PS FCLK candidate",
+    "mem_clock_source": "PS FCLK candidate",
+    "fir_compute_hz": 125000000,
+    "fir_clock_is_same_net_as_clk_rf": true
+  },
+  "capture": {
+    "range_count": 3,
+    "polarization_count": 2,
+    "iq_component_bits": 16,
+    "sample_bytes_per_range": 8,
+    "samples_per_bank": 16384,
+    "initial_bank_count": 4,
+    "allow_build_bank_counts": [
+      2,
+      4
+    ],
+    "pre_s": 2e-06,
+    "post_s": 2e-06,
+    "max_pulse_s": 0.00012,
+    "eop_hold_s": 1e-06,
+    "unbounded_continuous_capture_claim": false,
+    "stream_group_count": 4,
+    "stream_groups": [
+      "HIGH_HV",
+      "MID_HV",
+      "LOW_HV",
+      "AUX_MID_HV"
+    ],
+    "continuous_filtered_bytes_per_second": 4000000000,
+    "canonical_native_bytes_per_second": 16000000000,
+    "raw_bytes_initial": 2097152,
+    "continuous_sampling_does_not_imply_unbounded_recording": true,
+    "auxiliary_capture_independent": true,
+    "bank_count_change_gate": "Any nondefault bank count needs hold-time, memory/ports and rearming validation; 8 per group is NOT prequalified on ZU27DR",
+    "pre_samples": 250,
+    "post_samples": 250,
+    "max_pulse_samples": 15000,
+    "eop_hold_samples": 125,
+    "nominal_record_samples": 15500,
+    "bank_contract": "contracts/bank_contract.json",
+    "eop_hold_interpretation": "EOP event carries true end-exclusive index; hold125 is detection latency, not automatically extra payload. Capacity protection covers delayed arrival.",
+    "max_retained_window_ns": 131072,
+    "quality_storage_policy": "window-level summary required; optional per-sample8bit sidecar budget256KiB, not included in2MiB RAW"
+  },
+  "tx_profile": {
+    "active": "TX_GEN1_4GS_RATE_TARGET",
+    "resource_budget_complex_channels": 8,
+    "physical_dac_count_target": 8,
+    "source_streams_existing_baseline": 2,
+    "independent_eight_source_generator_implemented": false,
+    "fir_bank_target_complex_channels": 8,
+    "source_routing_note": "Eight TX FIR lanes budgeted; legacy H/V source may fan out. Eight arbitrary independent sources require additional source/AWG/memory design, not claimed implemented.",
+    "status": "DESIGN_RATE_TARGET_NOT_GENERATED",
+    "core_complex_hz": 125000000,
+    "pl_interpolation": 4,
+    "rfdc_iq_input_hz": 500000000,
+    "rfdc_interpolation": 8,
+    "dac_real_sample_hz": 4000000000,
+    "imr_enabled": false,
+    "native_iq_words_per_beat_target": 8,
+    "native_bits_per_dac_stream_target": 128,
+    "gen1_rule": "No Gen3 interpolation16 or8GS/s active target. ADC12bit and DAC14bit hardware do not become16bit because IQ words are16bit.",
+    "simultaneous_drfm_hv_engines": 1,
+    "forbidden_assumptions": [
+      "eight independent arbitrary waveform sources already implemented",
+      "8GS/s DAC on ZU27DR",
+      "PL routing proves analog signal chain"
+    ]
+  },
+  "ownership": {
+    "real_time": "PL",
+    "control_and_data": "PS",
+    "unknown_reference_multipath": "HOST_STAGE_C",
+    "fastsel": false,
+    "shared_hv_range": true,
+    "live_ota_single_antenna_allowed": false,
+    "loopback_capture_auto_replay_allowed": false
+  },
+  "optional_features_require_approval": [
+    "PL_DDR",
+    "MM2S_PRELOAD",
+    "10G_OR_100G_LINK",
+    "MULTITARGET",
+    "SIC_FULL_DUPLEX",
+    "CLOSED_LOOP_HOST_MULTIPATH_FEEDBACK",
+    "HIGH_ORDER_OR_WIDEBAND_CALIBRATION",
+    "OTHER_DEVICE_GEN3_8GS_PROFILE",
+    "FIR_250MHZ_REINTRODUCTION",
+    "EIGHT_INDEPENDENT_DRFM_ENGINES",
+    "CAPTURE_BANK_COUNT_BEYOND_VALIDATED_BUDGET"
+  ],
+  "revision_date": "2026-09-11",
+  "rx_channels": {
+    "physical_count": 8,
+    "measurement_count": 6,
+    "auxiliary_count": 2,
+    "continuous_enable_mask": 255,
+    "primary_measurement_mask": 119,
+    "auxiliary_mask": 136,
+    "reuse_primary_mid": false,
+    "auxiliary_analog_range": "MID",
+    "acquisition_required": "all eight after successful startup/synchronization",
+    "primary_capture_during_aux_loopback": true
+  },
+  "fir_design": {
+    "profile_id": "HB19_FIR75_D4_L4_CLK125",
+    "active_design": "HB19_FIR75_D4_L4_CLK125",
+    "rtl_implementation_selected": null,
+    "coefficient_status": "quantized supplied coefficients revalidated by package checks",
+    "hardware_status": "NOT_SYNTHESIZED",
+    "contract": "contracts/fir_plan.json"
+  },
+  "authorization_scope": "Merge design/specification/reference-model package only; no claim of RTL or board implementation",
+  "profile_id": "BASE_8ADC_125M_FIR125_DMA200",
+  "frame_abi_version": 5,
+  "baseline_gates": [
+    "actual board/part/BSP and clocks",
+    "RFDC native sample-word mapping",
+    "FIR SSR OOC resource/timing/latency",
+    "analog gain order and qualifier calibration",
+    "fractional-delay architecture and error limits",
+    "hold-time/PRF/AXI DDR storage service envelope",
+    "reset/CDC and physicalRF safety"
+  ]
+}

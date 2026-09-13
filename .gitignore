@@ -18,3 +18,12 @@ __pycache__/
 /reports/*.json
 /reports/*.txt
 /.worktrees/
+/reports/
+/vivado/*
+!/vivado/*.xpr
+*.rpt
+*.elf
+*.pyc
+*.zip
+*.bundle
+*.str
