@@ -7,6 +7,7 @@ module calibrator_transmit_system #(parameter integer AWG_DEPTH=16384)(
  input wire [31:0] protect_cycles,switch_cycles,pa_cycles,recovery_cycles,transition_timeout_cycles,watchdog_cycles,
  output wire pa_enable_req,tr_tx_req,rx_protect_req,rf_dac_mute,rf_fault,unbound,rf_permit,
  output wire [2:0] rf_state,
+ input wire lifecycle_ready,
  input wire stop_request,safe_boundary,mode_request,config_commit,single_antenna_ota,
  input wire [2:0] requested_mode,input wire [7:0] route_select,route_enable,cal_valid,
  input wire [127:0] dc_i,dc_q,input wire [143:0] gain_i,gain_q,input wire [31:0] config_id,
@@ -21,6 +22,7 @@ module calibrator_transmit_system #(parameter integer AWG_DEPTH=16384)(
  output wire [1:0] awg_ctrl_done_op,input wire awg_play,
  output wire awg_play_accepted,awg_play_rejected,awg_busy,awg_done,awg_done_cancelled,
  output wire [2:0] active_mode,output wire mode_accepted,mode_rejected,config_accepted,config_rejected,
+ output wire tail_empty,
  output wire pipeline_ready,start_ready,sources_drained,output wire [31:0] active_config_id,
  output wire [127:0] calibrated_i,calibrated_q,
  output wire [7:0] calibrated_valid,calibration_saturated,tx_saturated,native_dac_valid,
@@ -38,13 +40,13 @@ module calibrator_transmit_system #(parameter integer AWG_DEPTH=16384)(
  wire mute_now=mode_request&&(requested_mode==0);
  wire force_mute=(stop_request||!rf_permit||rf_fault||hard_fault)&&(active_mode!=0);
  wire path_ready=rf_permit&&pipeline_ready&&config_seen&&!stop_request&&!mute_now;
- wire nonzero_mode_allowed=path_ready&&safe_boundary&&sources_drained&&!force_mute;
+ wire nonzero_mode_allowed=lifecycle_ready&&tail_empty&&path_ready&&safe_boundary&&sources_drained&&!force_mute;
  wire user_mode_forward=mode_request&&((requested_mode==0)||nonzero_mode_allowed);
  wire chain_mode_request=force_mute||user_mode_forward;
  wire [2:0] chain_requested_mode=force_mute?3'd0:requested_mode;
  wire chain_boundary=safe_boundary&&sources_drained;
  assign rf_permit=rst_n&&binding_valid&&timing_valid&&!rf_dac_mute&&!rf_fault;
- assign start_ready=path_ready&&(&ready_guard)&&sources_drained&&((active_mode==3)||((active_mode==4)&&awg_active_sync));
+ assign start_ready=lifecycle_ready&&tail_empty&&path_ready&&(&ready_guard)&&sources_drained&&((active_mode==3)||((active_mode==4)&&awg_active_sync));
  assign dds_rejected=local_dds_rejected||source_dds_rejected;
  assign awg_play_rejected=local_awg_rejected||source_awg_rejected;
  assign mode_accepted=chain_mode_accepted&&user_mode_forward_q;
@@ -87,7 +89,7 @@ module calibrator_transmit_system #(parameter integer AWG_DEPTH=16384)(
   .config_accepted(config_accepted),.config_rejected(config_rejected),.active_config_id(active_config_id),
   .calibrated_i(calibrated_i),.calibrated_q(calibrated_q),.calibrated_valid(calibrated_valid),
   .calibration_saturated(calibration_saturated),.tx_saturated(tx_saturated),
-  .native_dac_valid(chain_dac_valid),.native_dac_data(chain_dac_data));
+  .native_dac_valid(chain_dac_valid),.native_dac_data(chain_dac_data),.tail_empty(tail_empty));
  always @(posedge clk_rf)begin
   if(!rst_n)begin config_seen<=0;ready_guard<=0;local_mode_rejected<=0;user_mode_forward_q<=0;local_dds_rejected<=0;local_awg_rejected<=0;end
   else begin

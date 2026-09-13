@@ -20,6 +20,30 @@ module tb_instrument_waveform_commands;
  reg [31:0] protect_cycles,switch_cycles,pa_cycles,recovery_cycles,transition_timeout_cycles,watchdog_cycles;
  wire pa_enable_req,tr_tx_req,rx_protect_req,rf_dac_mute,rf_fault,unbound;
  wire run_enable,config_loaded;wire [63:0] gsc;
+ reg tx_sink_binding_valid=1,tx_sink_fence_ready=0,tx_sink_ack_valid=0;
+ reg [63:0] tx_sink_ack_token=0;wire tx_sink_fence_valid,tx_sink_protocol_error;wire [63:0] tx_sink_fence_token;
+ // Simulation-only logical fence consumer; not RF hardware feedback.
+ integer fence_wait=0,protocol_errors=0;
+ always @(posedge rf_clk)begin
+  if(!rst_n)begin tx_sink_ack_valid<=0;tx_sink_ack_token<=0;tx_sink_fence_ready<=0;fence_wait<=0;protocol_errors<=0;end
+  else begin
+   if(tx_sink_protocol_error)protocol_errors<=protocol_errors+1;
+   tx_sink_ack_valid<=0;
+   if(tx_sink_fence_token==1&&tx_sink_fence_valid&&!tx_sink_fence_ready)begin
+    fence_wait<=fence_wait+1;
+    if(dut.tx_lifecycle_valid||dut.tx_lifecycle_ready||dut.d_t_start_ready)
+     $fatal(1,"missing sink acceptance must hold lifecycle/admission");
+    if(fence_wait==3)begin tx_sink_ack_valid<=1;tx_sink_ack_token<=99;end
+    if(fence_wait==12)begin
+     if(protocol_errors!=1)$fatal(1,"early wrong ACK not rejected through core");
+     tx_sink_fence_ready<=1;
+    end
+   end else begin
+    tx_sink_ack_valid<=tx_sink_fence_valid&&tx_sink_fence_ready;
+    tx_sink_ack_token<=tx_sink_fence_token;
+   end
+  end
+ end
  calibrator_instrument_core #(.PRE_SAMPLES(3),.FIFO_ADDR_W(2),.AWG_DEPTH(2048)) dut(.*);
  initial begin ctrl_clk=0;forever #5 ctrl_clk=~ctrl_clk;end
  initial begin rf_clk=0;#0.7;forever #4 rf_clk=~rf_clk;end
@@ -229,6 +253,7 @@ module tb_instrument_waveform_commands;
   command(20,0,0);read_word(GW_RESULT);if(value!==0||!rf_fault)$fatal(1,"POP must not clear safety latch");
   @(negedge rf_clk);hard_fault=0;payload=4;command(CMD_RF_REQUEST,1,0);repeat(8)@(negedge rf_clk);
   if(rf_fault)$fatal(1,"final fault clear");
+  read_word(32'h300);if(value<9)$fatal(1,"TX lifecycle records not integrated");
   // Fill unified queue, overflow legacy fault history, then verify retained counts.
   for(integer n=2;n<40;n=n+1)begin
    @(negedge rf_clk);hard_fault=1;repeat(8)@(negedge rf_clk);if(!rf_fault)$fatal(1,"actual fault edge missing");
@@ -238,19 +263,43 @@ module tb_instrument_waveform_commands;
   if(dut.rf_fault_dropped==0)$fatal(1,"legacy queue did not overflow");
   command(CMD_RESET,0,0);write_word(GW_IRQ_ENABLE,16,0);
   begin : drain_unified
-   integer total,rows;total=0;rows=0;
-   while(total<40)begin
+   integer total,rows,tx_rows;total=0;rows=0;tx_rows=0;
+   while(total<40||tx_rows<7)begin
     read_word(32'h300);
     if(value!=0)begin
      if(!irq)$fatal(1,"unified fault IRQ");
-     write_word(32'h304,1,0);read_word(32'h340);if(value!=32'h40001)$fatal(1,"unified fault tag");
+     write_word(32'h304,1,0);read_word(32'h340);
+     if(value==32'h50001)begin
+      read_word(32'h344);if(value!=7)$fatal(1,"TX lifecycle flags");
+      read_word(32'h348);if(value!=expected_event_source[tx_rows])$fatal(1,"TX lifecycle source");
+      read_word(32'h34c);if(value!=((tx_rows<4)?0:((tx_rows==6)?2:1)))$fatal(1,"TX lifecycle cancellation");
+      read_word(32'h350);if(value!=expected_event_seq[tx_rows])$fatal(1,"TX lifecycle command identity");
+      read_word(32'h354);if(value!=7)$fatal(1,"TX lifecycle config");
+      read_word(32'h358);if(value!=tx_rows+1)$fatal(1,"TX lifecycle token");
+      read_word(32'h35c);if(value!=0)$fatal(1,"TX lifecycle token high");
+      begin : check_times
+       reg [63:0] accepted,drained,retired;
+       read_word(32'h360);accepted[31:0]=value;read_word(32'h364);accepted[63:32]=value;
+       read_word(32'h368);drained[31:0]=value;read_word(32'h36c);drained[63:32]=value;
+       read_word(32'h370);retired[31:0]=value;read_word(32'h374);retired[63:32]=value;
+       if(accepted==0||accepted>drained||drained>retired)$fatal(1,"TX timestamps order");
+       if(tx_rows==0&&retired-drained<12)$fatal(1,"sink wait absent from retirement timestamp");
+      end
+      read_word(32'h378);if(value!=0)$fatal(1,"TX reserved word14");
+      read_word(32'h37c);if(value!=0)$fatal(1,"TX reserved word15");
+      tx_rows=tx_rows+1;
+     end else begin
+     if(value!=32'h40001)$fatal(1,"unified fault tag");
      read_word(32'h344);if(value!=0)$fatal(1,"unexpected saturation");
      read_word(32'h348);if(value==0)$fatal(1,"zero occurrence");total=total+value;
      read_word(32'h350);if(value!=32'h30001)$fatal(1,"snapshot tag");
      read_word(32'h354);if(value!=((rows==0)?1:3))$fatal(1,"snapshot validity");
-     write_word(32'h308,1,0);rows=rows+1;
+     rows=rows+1;end
+     write_word(32'h308,1,0);
     end
    end
+   if(tx_rows!=7||tx_sink_protocol_error||protocol_errors!=1||fence_wait!=13)$fatal(1,"TX lifecycle count/protocol");
+   $display("PASS TX_LIFECYCLE_CORE seven actual DDS/AWG tasks identity cancellation digital tail sink fence EVENT");
    if(total!=40)$fatal(1,"fault count duplication");
    repeat(30)@(negedge ctrl_clk);read_word(32'h300);if(value!=0||irq)$fatal(1,"unified fault drain");
    $display("PASS UNIFIED_EVENT actual 40 fault edges retained despite legacy overflow rows=%0d soft reset IRQ",rows);

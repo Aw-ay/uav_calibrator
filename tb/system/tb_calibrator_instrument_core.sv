@@ -20,6 +20,8 @@ module tb_calibrator_instrument_core;
  reg [31:0] protect_cycles,switch_cycles,pa_cycles,recovery_cycles,transition_timeout_cycles,watchdog_cycles;
  wire pa_enable_req,tr_tx_req,rx_protect_req,rf_dac_mute,rf_fault,unbound;
  wire run_enable,config_loaded;wire [63:0] gsc;
+ reg tx_sink_binding_valid=0,tx_sink_fence_ready=0,tx_sink_ack_valid=0;
+ reg [63:0] tx_sink_ack_token=0;wire tx_sink_fence_valid,tx_sink_protocol_error;wire [63:0] tx_sink_fence_token;
  calibrator_instrument_core #(.PRE_SAMPLES(3),.FIFO_ADDR_W(2),.AWG_DEPTH(16)) dut(.*);
  initial begin ctrl_clk=0;forever #5 ctrl_clk=~ctrl_clk;end
  initial begin rf_clk=0;#0.7;forever #4 rf_clk=~rf_clk;end

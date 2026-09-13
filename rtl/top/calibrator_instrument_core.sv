@@ -3,6 +3,9 @@
 // remain outside this reusable core. All board evidence inputs are RF-domain.
 module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_W=12,AWG_DEPTH=16384)(
  input wire ctrl_clk,rf_clk,mem_clk,rst_n,
+ // Trusted RF-domain logical sink adapter. Unbound=0 never claims consumption.
+ input wire tx_sink_binding_valid,tx_sink_fence_ready,tx_sink_ack_valid,input wire [63:0] tx_sink_ack_token,
+ output wire tx_sink_fence_valid,tx_sink_protocol_error,output wire [63:0] tx_sink_fence_token,
  input wire [31:0] s_axi_awaddr,input wire s_axi_awvalid,output wire s_axi_awready,
  input wire [31:0] s_axi_wdata,input wire [3:0] s_axi_wstrb,input wire s_axi_wvalid,output wire s_axi_wready,
  output wire [1:0] s_axi_bresp,output wire s_axi_bvalid,input wire s_axi_bready,
@@ -59,10 +62,18 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
   .post_samples(config_image[CFG_POST_SAMPLES_BIT+:CFG_POST_SAMPLES_WIDTH]),
   .pop_valid(unified_normal_ready&&unified_normal_count!=0),.pop_token(unified_normal_token),
   .count(unified_normal_count),.dropped(unified_normal_dropped),.head_token(unified_normal_token),.head_data(unified_normal_data),.pop_ok());
+ wire tx_lifecycle_ready,tx_lifecycle_valid,tx_lifecycle_event_ready;wire [511:0] tx_lifecycle_data;
+ wire unified_merged_valid,unified_merged_ready;wire [511:0] unified_merged_data;
+ // Ordinary traffic: preserve a TX retirement before admitting more PDWs;
+ // the outer arbiter still gives actual RF faults first admission priority.
+ event_priority_arbiter normal_events(.clk(rf_clk),.rst(rst),
+  .fault_valid(tx_lifecycle_valid),.fault_data(tx_lifecycle_data),.fault_ready(tx_lifecycle_event_ready),
+  .normal_valid(unified_normal_count!=0),.normal_data(unified_normal_data),.normal_ready(unified_normal_ready),
+  .out_valid(unified_merged_valid),.out_data(unified_merged_data),.out_ready(unified_merged_ready),.out_is_fault());
  wire unified_fault_valid;wire [255:0] unified_fault_snapshot;
  fault_event_transport unified_events(.rf_clk(rf_clk),.ctrl_clk(ctrl_clk),.rst_n(rst_n),
   .fault_valid(unified_fault_valid),.fault_snapshot(unified_fault_snapshot),
-  .normal_valid(unified_normal_count!=0),.normal_event(unified_normal_data),.normal_ready(unified_normal_ready),
+  .normal_valid(unified_merged_valid),.normal_event(unified_merged_data),.normal_ready(unified_merged_ready),
   .latch_head(unified_event_latch),.pop(unified_event_pop),.word_index(unified_event_word_index),
   .word_data(unified_event_word),.event_count(unified_event_count),.latched_valid(unified_event_latched),.command_rejected(),.dropped_events());
  // Monotonic saturation counter is sampled coherently, not bitwise synchronized.
@@ -201,6 +212,7 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
  wire  d_t_config_rejected;
  wire  d_t_pipeline_ready;
  wire  d_t_start_ready;
+ wire d_t_tail_empty;
  wire  d_t_sources_drained;
  wire [31:0] d_t_active_config_id;
  wire [127:0] d_t_calibrated_i;
@@ -258,6 +270,15 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
   ((!rf_arm||!rf_request||reset_request)?SOURCE_REASON_STOP:
    ((action_valid&&action_opcode==instrument_control_pkg::CMD_MODE&&action_payload[31:0]==0)?SOURCE_REASON_MUTE:
     ((!d_t_rf_permit||!d_t_pipeline_ready)?SOURCE_REASON_SAFETY:SOURCE_REASON_NORMAL)));
+ tx_lifecycle_tracker tx_lifecycle(.clk(rf_clk),.rst(rst),
+  .start_valid(d_t_dds_accepted||d_t_awg_play_accepted),.start_ready(tx_lifecycle_ready),.start_rejected(),.busy(),
+  .source(d_t_dds_accepted?tx_lifecycle_event_pkg::TX_LIFECYCLE_SOURCE_DDS:tx_lifecycle_event_pkg::TX_LIFECYCLE_SOURCE_AWG),
+  .command_sequence(cmd_sequence),.config_id(d_t_active_config_id),.cancel_reason(source_cancel_reason),
+  .source_done(d_t_dds_done||d_t_awg_done),.source_drained(d_t_sources_drained),.tail_empty(d_t_tail_empty),
+  .time_valid(time_valid),.gsc(gsc),.require_sink_ack(tx_sink_binding_valid),
+  .sink_fence_valid(tx_sink_fence_valid),.sink_fence_token(tx_sink_fence_token),.sink_fence_ready(tx_sink_fence_ready),
+  .sink_ack_valid(tx_sink_ack_valid),.sink_ack_token(tx_sink_ack_token),.protocol_error(tx_sink_protocol_error),
+  .event_valid(tx_lifecycle_valid),.event_data(tx_lifecycle_data),.event_ready(tx_lifecycle_event_ready));
  source_event_queue #(.ADDR_W($clog2(SOURCE_EVENT_DEPTH))) source_events(
   .clk(rf_clk),.rst(rst),.accept_valid(d_t_dds_accepted||d_t_awg_play_accepted),
   .accept_source(d_t_dds_accepted?instrument_control_pkg::SOURCE_DDS:instrument_control_pkg::SOURCE_AWG),.command_sequence(cmd_sequence),.config_id(d_t_active_config_id),
@@ -501,7 +522,7 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
   .t_config_rejected(d_t_config_rejected),
   .t_pipeline_ready(d_t_pipeline_ready),
   .t_start_ready(d_t_start_ready),
-  .t_sources_drained(d_t_sources_drained),
+  .t_sources_drained(d_t_sources_drained),.t_tail_empty(d_t_tail_empty),.t_lifecycle_ready(tx_lifecycle_ready),
   .t_active_config_id(d_t_active_config_id),
   .t_calibrated_i(d_t_calibrated_i),
   .t_calibrated_q(d_t_calibrated_q),

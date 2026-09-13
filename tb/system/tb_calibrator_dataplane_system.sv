@@ -289,7 +289,7 @@ module tb_calibrator_dataplane_system #(parameter CANCEL_ONLY=0);
  .t_config_rejected(),
  .t_pipeline_ready(pipe_ready),
  .t_start_ready(),
- .t_sources_drained(),
+ .t_sources_drained(),.t_lifecycle_ready(1'b1),.t_tail_empty(),
  .t_active_config_id(),
  .t_calibrated_i(),
  .t_calibrated_q(),

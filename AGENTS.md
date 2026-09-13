@@ -78,3 +78,5 @@
 ## 分工
 
 先做平台壳、ADC/FIR/capture/DMA与DDS五模式闭环，再加三档完整资格、RX/TX校准、分数延迟和监测。B只增加观测/参数层，C复杂盲多径继续留上位机。需要PL DDR、MM2S、高速网络、多目标、SIC、实时host反馈等，先提出变更，不自动实现。
+
+第十七阶段 DDS/AWG 数字尾部、可选接收确认及统一 EVENT 接入完成。78/78全量回归、2/2 XSim、A53十二源通过；完整核心综合 WNS +0.321ns/WHS +0.037ns、失败端点0，CDC 0 Critical/14331 Warning/15 Info。原工程已更新重开。新增256条仅为原握手邮箱数据位，未豁免。见 reports/stage17_tx_lifecycle_integration.md；按连续授权推进回放生命周期，仍非板级验收。

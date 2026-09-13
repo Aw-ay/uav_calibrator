@@ -18,6 +18,7 @@ reg awg_ctrl_valid=0;reg [1:0] awg_ctrl_op=0;reg [31:0] awg_ctrl_length=128,awg_
 reg awg_play=0;wire awg_play_accepted,awg_play_rejected,awg_busy,awg_done,awg_done_cancelled;
 wire [2:0] active_mode;wire mode_accepted,mode_rejected,config_accepted,config_rejected,pipeline_ready,start_ready,sources_drained;wire [31:0] active_config_id;
 wire [127:0] calibrated_i,calibrated_q;wire [7:0] calibrated_valid,calibration_saturated,tx_saturated,native_dac_valid;wire [1023:0] native_dac_data;
+reg lifecycle_ready=1'b1;wire tail_empty;
 calibrator_transmit_system #(.AWG_DEPTH(128)) dut(.*);
 task tick;begin @(posedge clk_rf);#1;end endtask
 task mode(input [2:0] m);begin @(negedge clk_rf);requested_mode=m;mode_request=1;tick;@(negedge clk_rf);mode_request=0;end endtask
@@ -59,7 +60,10 @@ initial begin
  @(negedge clk_rf);dds_start_gsc=gsc+16;dds_cmd_valid=1;check_dds=1;tick;if(!dds_accepted)$fatal(1,"DDS accepted after permit");@(negedge clk_rf);dds_cmd_valid=0;
  repeat(160)tick;if(count_dds!=128||seen_dac!=255)$fatal(1,"DDS full pulse / eight DAC count%0d mask%h",count_dds,seen_dac);check_dds=0;
  mode(0);#1;if(native_dac_data!=0)$fatal(1,"MUTE zero");mode(4);if(!mode_rejected)$fatal(1,"restart before TX drain");
- repeat(65)tick;mode(4);repeat(4)tick;if(start_ready)$fatal(1,"AWG ready without active table");
+ @(negedge clk_rf);lifecycle_ready=0;
+ repeat(65)tick;mode(4);if(!mode_rejected)$fatal(1,"pending lifecycle allowed another mode");
+ @(negedge clk_rf);lifecycle_ready=1;
+ mode(4);repeat(4)tick;if(start_ready)$fatal(1,"AWG ready without active table");
  @(negedge clk_rf);awg_play=1;tick;if(!awg_play_rejected)$fatal(1,"empty AWG play admitted");@(negedge clk_rf);awg_play=0;mode(0);repeat(3)tick;
  crc=32'hffffffff;for(i=0;i<128;i=i+1)crc=cw(crc,{16'd0,16'd2000,16'd0,16'd1000});awg_ctrl_crc32c=~crc;
  send(0,0);for(i=0;i<128;i=i+1)send(1,{16'd0,16'd2000,16'd0,16'd1000});send(2,0);
