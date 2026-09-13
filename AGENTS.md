@@ -80,3 +80,5 @@
 先做平台壳、ADC/FIR/capture/DMA与DDS五模式闭环，再加三档完整资格、RX/TX校准、分数延迟和监测。B只增加观测/参数层，C复杂盲多径继续留上位机。需要PL DDR、MM2S、高速网络、多目标、SIC、实时host反馈等，先提出变更，不自动实现。
 
 第十七阶段 DDS/AWG 数字尾部、可选接收确认及统一 EVENT 接入完成。78/78全量回归、2/2 XSim、A53十二源通过；完整核心综合 WNS +0.321ns/WHS +0.037ns、失败端点0，CDC 0 Critical/14331 Warning/15 Info。原工程已更新重开。新增256条仅为原握手邮箱数据位，未豁免。见 reports/stage17_tx_lifecycle_integration.md；按连续授权推进回放生命周期，仍非板级验收。
+
+第十八阶段独立 replay_drain_observer 完成：4/4相关回归、2/2 XSim，125MHz模块综合WNS +7.058ns/WHS +0.088ns、失败端点0，14 LUT/1551 FF、无BRAM/DSP。实际RAM/FD63/Target覆盖正常、欠载、epoch及首样点前取消。完整描述符保留和源排空观察已验证，尚未接入仪器REPLAY EVENT或派发准入，未再跑全核心。两项新测试已注册到后续全量回归；最近一次实际全量为第十七阶段78项。见 reports/stage18_replay_drain.md。
