@@ -28,6 +28,9 @@ cal_unified_event_status cal_unified_event_fetch(const cal_event_io *io,cal_unif
  }else if(tag==TX_LIFECYCLE_TAG){
   next.kind=CAL_UE_TX;next.decode_status=cal_tx_lifecycle_decode(next.raw,sizeof next.raw,&next.decoded.tx);
   if(next.decode_status!=CAL_TX_OK)result=CAL_UE_INVALID_RECORD;
+ }else if(tag==REPLAY_IDENTITY_TAG){
+  next.kind=CAL_UE_REPLAY_IDENTITY;next.decode_status=cal_replay_identity_decode(next.raw,sizeof next.raw,&next.decoded.replay_identity);
+  if(next.decode_status!=CAL_RI_OK)result=CAL_UE_INVALID_RECORD;
  }else result=CAL_UE_UNSUPPORTED;
  *r=next;return result;
 }

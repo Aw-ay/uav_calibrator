@@ -1,0 +1,17 @@
+// Generated from contracts/replay_identity_event.json
+package replay_identity_event_pkg;
+ localparam [31:0] REPLAY_IDENTITY_BYTES=32'd64;
+ localparam [31:0] REPLAY_IDENTITY_TAG=32'd393217;
+ localparam [31:0] REPLAY_IDENTITY_TAG_OFFSET=32'd0;
+ localparam [31:0] REPLAY_IDENTITY_RESERVED_OFFSET=32'd4;
+ localparam [31:0] REPLAY_IDENTITY_TOKEN_OFFSET=32'd8;
+ localparam [31:0] REPLAY_IDENTITY_TASK_ID_OFFSET=32'd16;
+ localparam [31:0] REPLAY_IDENTITY_PULSE_ID_OFFSET=32'd24;
+ localparam [31:0] REPLAY_IDENTITY_OWNER_EPOCH_OFFSET=32'd32;
+ localparam [31:0] REPLAY_IDENTITY_GENERATION_OFFSET=32'd40;
+ localparam [31:0] REPLAY_IDENTITY_CONFIG_ID_OFFSET=32'd48;
+ localparam [31:0] REPLAY_IDENTITY_FIR_ID_OFFSET=32'd52;
+ localparam [31:0] REPLAY_IDENTITY_SOURCE_EPOCH_OFFSET=32'd56;
+ localparam [31:0] REPLAY_IDENTITY_GROUP_OFFSET=32'd60;
+ localparam [31:0] REPLAY_IDENTITY_BANK_OFFSET=32'd62;
+endpackage
