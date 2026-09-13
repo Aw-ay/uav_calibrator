@@ -23,4 +23,5 @@ package tx_lifecycle_event_pkg;
  localparam [31:0] TX_LIFECYCLE_REASON_STOP=32'd1;
  localparam [31:0] TX_LIFECYCLE_REASON_SAFETY=32'd2;
  localparam [31:0] TX_LIFECYCLE_REASON_MUTE=32'd3;
+ localparam [31:0] TX_LIFECYCLE_REASON_REPLAY_ABORT=32'd4;
 endpackage

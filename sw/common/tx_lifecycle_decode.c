@@ -13,7 +13,7 @@ cal_tx_lifecycle_status cal_tx_lifecycle_decode(const void *bytes,size_t size,ca
  e.command_sequence=get32(p+TX_LIFECYCLE_COMMAND_SEQUENCE_OFFSET);e.config_id=get32(p+TX_LIFECYCLE_CONFIG_ID_OFFSET);
  e.token=get64(p+TX_LIFECYCLE_TOKEN_OFFSET);e.accept_gsc=get64(p+TX_LIFECYCLE_ACCEPT_GSC_OFFSET);
  e.drain_gsc=get64(p+TX_LIFECYCLE_DRAIN_GSC_OFFSET);e.retire_gsc=get64(p+TX_LIFECYCLE_RETIRE_GSC_OFFSET);
- if(!(e.flags&TX_LIFECYCLE_DIGITAL_DRAINED)||!e.token||e.source<TX_LIFECYCLE_SOURCE_DDS||e.source>TX_LIFECYCLE_SOURCE_REPLAY||e.reason>TX_LIFECYCLE_REASON_MUTE)return CAL_TX_VALUE;
+ if(!(e.flags&TX_LIFECYCLE_DIGITAL_DRAINED)||!e.token||e.source<TX_LIFECYCLE_SOURCE_DDS||e.source>TX_LIFECYCLE_SOURCE_REPLAY||e.reason>TX_LIFECYCLE_REASON_REPLAY_ABORT||(e.reason==TX_LIFECYCLE_REASON_REPLAY_ABORT&&e.source!=TX_LIFECYCLE_SOURCE_REPLAY))return CAL_TX_VALUE;
  if(e.flags&TX_LIFECYCLE_TIME_VALID){if(e.accept_gsc>e.drain_gsc||e.drain_gsc>e.retire_gsc)return CAL_TX_VALUE;}
  else if(e.accept_gsc||e.drain_gsc||e.retire_gsc)return CAL_TX_VALUE;
  *out=e;return CAL_TX_OK;

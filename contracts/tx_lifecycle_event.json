@@ -75,7 +75,8 @@
     "NORMAL": 0,
     "STOP": 1,
     "SAFETY": 2,
-    "MUTE": 3
+    "MUTE": 3,
+    "REPLAY_ABORT": 4
   },
-  "policy": "One active task plus immutable pending record. Source completion and digital tail-empty are both required. Optional bound sink fence/ack with exact token is required only when requested at start; absent binding never sets sink_confirmed. First nonzero cancellation reason is retained; invalid time clears all timestamps. Hard reset discards state; no soft reset input. No RF output completion claim."
+  "policy": "One active task plus immutable pending record. Source completion and digital tail-empty are both required. Optional bound sink fence/ack with exact token is required only when requested at start; absent binding never sets sink_confirmed. First nonzero cancellation reason is retained; invalid time clears all timestamps. Hard reset discards state; no soft reset input. No RF output completion claim. REPLAY_ABORT=4 is valid only for source REPLAY and indicates a reader or DSP cancellation; it is not RF consumption evidence."
 }
