@@ -5,14 +5,14 @@ module rf_fault_queue #(parameter integer ADDR_W=4)(
  input wire [9:0] normalized_inputs,input wire [5:0] logical_outputs,
  input wire [63:0] gsc,pop_token,
  output wire [31:0] count,output reg [31:0] dropped,
- output wire [63:0] head_token,output wire [255:0] head_data,output wire pop_ok
+ output wire [63:0] head_token,output wire [255:0] head_data,output wire pop_ok,output wire event_valid,output wire [255:0] record_data
 );
  import instrument_control_pkg::*;
  localparam integer DEPTH=1<<ADDR_W;
  reg previous_fault;
- wire event_valid=fault_latched&&!previous_fault;
+ assign event_valid=fault_latched&&!previous_fault;
  wire [31:0] flags=(time_valid?RF_FAULT_TIME_VALID:32'd0)|(config_valid?RF_FAULT_CONFIG_VALID:32'd0);
- wire [255:0] record_data={time_valid?gsc:64'd0,{26'd0,logical_outputs},{22'd0,normalized_inputs},
+ assign record_data={time_valid?gsc:64'd0,{26'd0,logical_outputs},{22'd0,normalized_inputs},
   {29'd0,rf_state},config_valid?config_id:32'd0,flags,RF_FAULT_TAG};
  reg [255:0] data_mem[0:DEPTH-1];reg [63:0] token_mem[0:DEPTH-1];
  reg [ADDR_W-1:0] rd,wr;reg [ADDR_W:0] occupancy;reg [63:0] next_token;reg exhausted;

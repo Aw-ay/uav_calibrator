@@ -41,6 +41,8 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
   if(!rst_n)begin pdw_available_rf<=0;source_event_available_rf<=0;rf_fault_available_rf<=0;end
   else begin pdw_available_rf<=pdw_count!=0;source_event_available_rf<=source_event_count!=0;rf_fault_available_rf<=rf_fault_count!=0;end
  end
+ wire [31:0] unified_event_count,unified_event_word;reg [31:0] unified_event_dropped;
+ wire unified_event_latched,unified_event_latch,unified_event_pop;wire [3:0] unified_event_word_index;
  command_gateway_axi gateway(.*);
  wire pdw_valid;wire [255:0] pdw_key;wire [1023:0] pdw_header;wire [511:0] pdw_stats;wire [191:0] pdw_peaks;
  wire [31:0] pdw_count,pdw_dropped;wire [63:0] pdw_token;wire [511:0] pdw_data;wire pdw_pop_ok;
@@ -49,6 +51,28 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
   .post_samples(config_image[CFG_POST_SAMPLES_BIT+:CFG_POST_SAMPLES_WIDTH]),
   .pop_valid(action_valid&&action_opcode==instrument_control_pkg::CMD_PDW_POP),.pop_token(action_payload[63:0]),
   .count(pdw_count),.dropped(pdw_dropped),.head_token(pdw_token),.head_data(pdw_data),.pop_ok(pdw_pop_ok));
+ // Independent normal EVENT buffer: legacy PEEK/POP does not consume it.
+ wire [31:0] unified_normal_count,unified_normal_dropped;
+ wire [63:0] unified_normal_token;wire [511:0] unified_normal_data;wire unified_normal_ready;
+ qualified_pdw_queue #(.PRE_SAMPLES(PRE_SAMPLES),.ADDR_W($clog2(PDW_QUEUE_DEPTH))) unified_pdw_queue(
+  .clk(rf_clk),.rst(rst),.in_valid(pdw_valid),.event_key(pdw_key),.event_header(pdw_header),.event_stats(pdw_stats),.event_peaks(pdw_peaks),
+  .post_samples(config_image[CFG_POST_SAMPLES_BIT+:CFG_POST_SAMPLES_WIDTH]),
+  .pop_valid(unified_normal_ready&&unified_normal_count!=0),.pop_token(unified_normal_token),
+  .count(unified_normal_count),.dropped(unified_normal_dropped),.head_token(unified_normal_token),.head_data(unified_normal_data),.pop_ok());
+ wire unified_fault_valid;wire [255:0] unified_fault_snapshot;
+ fault_event_transport unified_events(.rf_clk(rf_clk),.ctrl_clk(ctrl_clk),.rst_n(rst_n),
+  .fault_valid(unified_fault_valid),.fault_snapshot(unified_fault_snapshot),
+  .normal_valid(unified_normal_count!=0),.normal_event(unified_normal_data),.normal_ready(unified_normal_ready),
+  .latch_head(unified_event_latch),.pop(unified_event_pop),.word_index(unified_event_word_index),
+  .word_data(unified_event_word),.event_count(unified_event_count),.latched_valid(unified_event_latched),.command_rejected(),.dropped_events());
+ // Monotonic saturation counter is sampled coherently, not bitwise synchronized.
+ wire event_drop_busy,event_drop_valid;wire [31:0] event_drop_data;
+ always @(posedge ctrl_clk or negedge rst_n)begin
+  if(!rst_n)unified_event_dropped<=0;else if(event_drop_valid)unified_event_dropped<=event_drop_data;
+ end
+ cdc_mailbox #(.WIDTH(32)) event_drop_snapshot(.src_clk(rf_clk),.dst_clk(ctrl_clk),.rst_n(rst_n),
+  .src_send(!event_drop_busy),.src_data(unified_normal_dropped),.src_busy(event_drop_busy),.src_done(),
+  .dst_valid(event_drop_valid),.dst_data(event_drop_data),.dst_take(1'b1));
  wire [15:0] d_replay_leased;
  wire  d_onset_ready;
  wire  d_onset_accepted;
@@ -229,7 +253,7 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
   .normalized_inputs({rf_request,rf_arm,rx_protected_fb,tr_tx_fb,pa_on_fb,heartbeat,pll_locked,hard_fault,timing_valid,binding_valid}),
   .logical_outputs({d_t_unbound,d_t_rf_permit,rf_dac_mute,rx_protect_req,tr_tx_req,pa_enable_req}),.gsc(gsc),
   .pop_valid(action_valid&&action_opcode==instrument_control_pkg::CMD_RF_FAULT_POP),.pop_token(action_payload[63:0]),
-  .count(rf_fault_count),.dropped(rf_fault_dropped),.head_token(rf_fault_token),.head_data(rf_fault_data),.pop_ok(rf_fault_pop_ok));
+  .count(rf_fault_count),.dropped(rf_fault_dropped),.head_token(rf_fault_token),.head_data(rf_fault_data),.pop_ok(rf_fault_pop_ok),.event_valid(unified_fault_valid),.record_data(unified_fault_snapshot));
  wire [31:0] source_cancel_reason=(hard_fault||!binding_valid||!timing_valid||d_t_rf_fault)?SOURCE_REASON_SAFETY:
   ((!rf_arm||!rf_request||reset_request)?SOURCE_REASON_STOP:
    ((action_valid&&action_opcode==instrument_control_pkg::CMD_MODE&&action_payload[31:0]==0)?SOURCE_REASON_MUTE:

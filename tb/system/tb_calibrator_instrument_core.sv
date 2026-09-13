@@ -156,6 +156,13 @@ module tb_calibrator_instrument_core;
   payload=0;payload[63:0]=pdw_token;command(17,2,0);command(17,2,4);
   command(16,0,0);read_word(GW_RESULT);if(value!=0)$fatal(1,"PDW not popped");
   repeat(6)@(negedge ctrl_clk);if(irq)$fatal(1,"PDW IRQ remains after final POP with DONE masked");
+  // Unified event is independent of legacy POP and survives capture RESET.
+  write_word(GW_IRQ_ENABLE,16,0);read_word(32'h300);if(value!=1||!irq)$fatal(1,"unified PDW count/IRQ");
+  write_word(32'h304,1,0);
+  for(integer w=15;w>=0;w=w-1)begin read_word(32'h340+w*4);if(value!==pdw_snapshot[128+w*32+:32])$fatal(1,"unified PDW differs from real RAW-derived PDW");end
+  write_word(32'h308,1,0);repeat(6)@(negedge ctrl_clk);if(irq)$fatal(1,"unified IRQ not cleared");
+  read_word(32'h408);if(value!=0)$fatal(1,"unexpected unified drop");
+  $display("PASS UNIFIED_EVENT actual PDW legacy independence soft reset IRQ");
   $fclose(frame_file);$fclose(sample_file);
   $display("PASS instrument core PS configuration ARM native ADC FIR detector capture RAW replay TX profiles UNBOUND STOP RESET PDW_IRQ bytes=%0d",bytes_seen);$finish;
  end

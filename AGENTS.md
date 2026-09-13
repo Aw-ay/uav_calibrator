@@ -20,6 +20,8 @@
 
 第十三阶段统一 EVENT 可选接入 AXI CSR 完成：相关回归5/5、XSim1/1；局部综合 WNS +1.676ns/WHS +0.045ns、失败端点0，3826 LUT/11791 FF，CDC 0 Critical/8478 Warning/6 Info，未豁免。UNIFIED_EVENTS 默认0保留旧模式，主顶层尚未启用新通道。见 reports/stage13_unified_event_axi.md。
 
+第十四阶段 PDW/RF_FAULT 统一 EVENT 已接入 calibrator_instrument_core 实际生产端、现有命令网关 EVENT 寄存器及 IRQ bit4，旧查询队列独立。75/75全量回归、XSim2/2、A53十一源文件通过；完整核心综合 WNS +0.337ns/WHS +0.037ns/WPWS +1.958ns，失败端点0；CDC 0 Critical/14075 Warning/15 Info，未豁免。原工程已更新并重开核验。见 reports/stage14_instrument_events.md。前述第九至十三阶段未接入状态为历史记录；后续 TX/DAC、AUX、FIR 生命周期和板级工作仍未完成。
+
 ## 当前阶段授权
 
 用户已要求按阶段恢复，全部在当前任务操作，不使用子窗口或子任务。第一阶段定位并修复采集子系统时序/CDC问题，验证后汇报并停在阶段边界。

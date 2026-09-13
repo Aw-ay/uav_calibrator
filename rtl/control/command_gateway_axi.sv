@@ -2,6 +2,9 @@
 // not request CDC capture. One in flight, stable response until next completion.
 module command_gateway_axi(
  input wire ctrl_clk,rf_clk,rst_n,input wire pdw_available_rf,source_event_available_rf,rf_fault_available_rf,
+ input wire [31:0] unified_event_count,unified_event_word,unified_event_dropped,
+ input wire unified_event_latched,
+ output wire unified_event_latch,unified_event_pop,output wire [3:0] unified_event_word_index,
  input wire [31:0] s_axi_awaddr,input wire s_axi_awvalid,output wire s_axi_awready,
  input wire [31:0] s_axi_wdata,input wire [3:0] s_axi_wstrb,input wire s_axi_wvalid,output wire s_axi_wready,
  output reg [1:0] s_axi_bresp,output reg s_axi_bvalid,input wire s_axi_bready,
@@ -13,6 +16,7 @@ module command_gateway_axi(
  input wire [15:0] result_words,input wire [8191:0] result_payload,output wire irq
 );
  import command_gateway_pkg::*;
+ import calibrator_contract_pkg::*;
  reg aw_full,w_full;reg [31:0] awaddr,wdata;reg [3:0] wstrb;
  reg [8191:0] shadow,frozen_payload,response_payload;
  reg [31:0] header,sequence_reg,expected_crc,frozen_header,frozen_sequence,frozen_crc,crc;
@@ -24,6 +28,9 @@ module command_gateway_axi(
  wire [31:0] mask={{8{wstrb[3]}},{8{wstrb[2]}},{8{wstrb[1]}},{8{wstrb[0]}}};
  wire [31:0] action=wdata&mask;
  wire execute=aw_full&&w_full&&!s_axi_bvalid;
+ assign unified_event_latch=execute&&awaddr==REG_EVENT_LATCH&&action==1&&unified_event_count!=0;
+ assign unified_event_pop=execute&&awaddr==REG_EVENT_POP&&action==1&&unified_event_latched;
+ assign unified_event_word_index=s_axi_araddr[5:2];
  function automatic [31:0] crc_word(input [31:0] initial_crc,word_value);
   reg [31:0] c;integer k;begin c=initial_crc;for(k=0;k<32;k=k+1)c=(c>>1)^((c[0]^word_value[k])?32'h82f63b78:32'd0);crc_word=c;end
  endfunction
@@ -35,7 +42,7 @@ module command_gateway_axi(
  (* ASYNC_REG="TRUE" *) reg source_event_meta,source_event_sync;
  (* ASYNC_REG="TRUE" *) reg rf_fault_meta,rf_fault_sync;
  reg [31:0] irq_enable;
- wire [31:0] irq_status=(done?GW_IRQ_COMMAND_DONE:0)|(pdw_sync?GW_IRQ_PDW_AVAILABLE:0)|(source_event_sync?GW_IRQ_SOURCE_EVENT_AVAILABLE:0)|(rf_fault_sync?GW_IRQ_RF_FAULT_AVAILABLE:0);
+ wire [31:0] irq_status=(done?GW_IRQ_COMMAND_DONE:0)|(pdw_sync?GW_IRQ_PDW_AVAILABLE:0)|(source_event_sync?GW_IRQ_SOURCE_EVENT_AVAILABLE:0)|(rf_fault_sync?GW_IRQ_RF_FAULT_AVAILABLE:0)|(unified_event_count!=0?GW_IRQ_UNIFIED_EVENT_AVAILABLE:0);
  wire [31:0] irq_enable_next=(irq_enable&~mask)|action;
  assign irq=rst_n&&|(irq_status&irq_enable);
  always @(posedge ctrl_clk or negedge rst_n)begin
@@ -89,7 +96,9 @@ module command_gateway_axi(
     else if(awaddr>=GW_PAYLOAD&&awaddr<GW_PAYLOAD+GW_WORDS*4)
      shadow[((awaddr-GW_PAYLOAD)>>2)*32+:32]<=(shadow[((awaddr-GW_PAYLOAD)>>2)*32+:32]&~mask)|action;
     else case(awaddr)
-     GW_IRQ_ENABLE:if((irq_enable_next&~(GW_IRQ_COMMAND_DONE|GW_IRQ_PDW_AVAILABLE|GW_IRQ_SOURCE_EVENT_AVAILABLE|GW_IRQ_RF_FAULT_AVAILABLE))!=0)s_axi_bresp<=2;else irq_enable<=irq_enable_next;
+     REG_EVENT_LATCH:if(action!=1||unified_event_count==0)s_axi_bresp<=2;
+     REG_EVENT_POP:if(action!=1||!unified_event_latched)s_axi_bresp<=2;
+     GW_IRQ_ENABLE:if((irq_enable_next&~(GW_IRQ_COMMAND_DONE|GW_IRQ_PDW_AVAILABLE|GW_IRQ_SOURCE_EVENT_AVAILABLE|GW_IRQ_RF_FAULT_AVAILABLE|GW_IRQ_UNIFIED_EVENT_AVAILABLE))!=0)s_axi_bresp<=2;else irq_enable<=irq_enable_next;
      GW_OP_LENGTH:header<=(header&~mask)|action;
      GW_SEQUENCE:sequence_reg<=(sequence_reg&~mask)|action;
      GW_CRC32C:expected_crc<=(expected_crc&~mask)|action;
@@ -107,7 +116,12 @@ module command_gateway_axi(
     if(s_axi_araddr[1:0]!=0)s_axi_rresp<=2;
     else if(s_axi_araddr>=GW_PAYLOAD&&s_axi_araddr<GW_PAYLOAD+GW_WORDS*4)s_axi_rdata<=shadow[((s_axi_araddr-GW_PAYLOAD)>>2)*32+:32];
     else if(s_axi_araddr>=GW_RESULT&&s_axi_araddr<GW_RESULT+GW_WORDS*4)s_axi_rdata<=response_payload[((s_axi_araddr-GW_RESULT)>>2)*32+:32];
+    else if(s_axi_araddr>=REG_EVENT_WORD_0&&s_axi_araddr<=REG_EVENT_WORD_15)begin
+     if(unified_event_latched)s_axi_rdata<=unified_event_word;else s_axi_rresp<=2;
+    end
     else case(s_axi_araddr)
+     REG_EVENT_COUNT:s_axi_rdata<=unified_event_count;
+     REG_DROP_EVENT:s_axi_rdata<=unified_event_dropped;
      GW_ID:s_axi_rdata<=GW_ID_VALUE;
      GW_IRQ_ENABLE:s_axi_rdata<=irq_enable;
      GW_IRQ_STATUS:s_axi_rdata<=irq_status;

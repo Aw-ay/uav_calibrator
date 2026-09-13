@@ -8,6 +8,8 @@ module tb_command_gateway;
  reg pdw_available_rf=0,source_event_available_rf=0,rf_fault_available_rf=0;
  wire cmd_valid,irq,result_ready;reg cmd_ready=0,result_valid=0;wire [15:0] cmd_opcode,cmd_words;wire [31:0] cmd_sequence;wire [8191:0] cmd_payload;
  reg [7:0] result_code=0;reg [15:0] result_words=1;reg [8191:0] result_payload=0;
+ reg [31:0] unified_event_count=0,unified_event_word=0,unified_event_dropped=0;
+ reg unified_event_latched=0;wire unified_event_latch,unified_event_pop;wire [3:0] unified_event_word_index;
  command_gateway_axi dut(.*);
  task write_word(input [31:0] a,v,input [1:0] expected);begin
   @(negedge ctrl_clk);s_axi_awaddr=a;s_axi_awvalid=1;
@@ -30,7 +32,7 @@ module tb_command_gateway;
   read_word(32'h4024);if(value!=2||irq)$fatal(1,"raw PDW masked by default");
   write_word(32'h4020,2,0);if(!irq)$fatal(1,"enable existing PDW level");
   write_word(GW_STATUS,2,0);if(!irq)$fatal(1,"DONE clear lost PDW level");
-  write_word(32'h4024,2,2);write_word(32'h4020,16,2);
+  write_word(32'h4024,2,2);write_word(32'h4020,32,2);
   s_axi_wstrb=2;write_word(32'h4020,0,0);s_axi_wstrb=15;
   read_word(32'h4020);if(value!=2)$fatal(1,"byte mask corrupted IRQ enable");
   write_word(32'h4020,0,0);if(irq)$fatal(1,"mask PDW");

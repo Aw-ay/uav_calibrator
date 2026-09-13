@@ -33,8 +33,9 @@
     "COMMAND_DONE": 1,
     "PDW_AVAILABLE": 2,
     "SOURCE_EVENT_AVAILABLE": 4,
-    "RF_FAULT_AVAILABLE": 8
+    "RF_FAULT_AVAILABLE": 8,
+    "UNIFIED_EVENT_AVAILABLE": 16
   },
   "irq_reset_enable": 1,
-  "irq_policy": "IRQ_STATUS raw read-only bits; IRQ line OR of enabled raw sources. IRQ_ENABLE honors byte strobes and rejects set reserved bits. Reset enable=COMMAND_DONE for compatibility. STATUS=2 clears command DONE only; PDW_AVAILABLE is synchronized registered queue-nonempty level, deasserted after queue drains; PEEK/submission/soft capture reset do not clear it. PDW short levels already consumed may not reach PS; not an event counter or RF/DMA completion proof. SOURCE_EVENT_AVAILABLE bit2 is an independent synchronized registered source-event queue nonempty level; same masking/reset semantics as PDW."
+  "irq_policy": "IRQ_STATUS raw read-only bits; IRQ line OR of enabled raw sources. IRQ_ENABLE honors byte strobes and rejects set reserved bits. Reset enable=COMMAND_DONE for compatibility. STATUS=2 clears command DONE only; PDW_AVAILABLE is synchronized registered queue-nonempty level, deasserted after queue drains; PEEK/submission/soft capture reset do not clear it. PDW short levels already consumed may not reach PS; not an event counter or RF/DMA completion proof. SOURCE_EVENT_AVAILABLE bit2 is an independent synchronized registered source-event queue nonempty level; same masking/reset semantics as PDW. UNIFIED_EVENT_AVAILABLE bit4 is ctrl-domain unified EVENT queue nonempty; explicit EVENT_POP drains it, legacy POP/DONE clear/soft capture reset do not. Register-map EVENT_COUNT/LATCH/POP/WORD and DROP_EVENT are also decoded by the instrument gateway. DROP_EVENT is a coherent delayed snapshot of normal EVENT overflow count; fault aggregation has its own saturation flag."
 }

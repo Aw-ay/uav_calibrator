@@ -229,9 +229,35 @@ module tb_instrument_waveform_commands;
   command(20,0,0);read_word(GW_RESULT);if(value!==0||!rf_fault)$fatal(1,"POP must not clear safety latch");
   @(negedge rf_clk);hard_fault=0;payload=4;command(CMD_RF_REQUEST,1,0);repeat(8)@(negedge rf_clk);
   if(rf_fault)$fatal(1,"final fault clear");
+  // Fill unified queue, overflow legacy fault history, then verify retained counts.
+  for(integer n=2;n<40;n=n+1)begin
+   @(negedge rf_clk);hard_fault=1;repeat(8)@(negedge rf_clk);if(!rf_fault)$fatal(1,"actual fault edge missing");
+   @(negedge rf_clk);hard_fault=0;payload=4;command(CMD_RF_REQUEST,1,0);repeat(8)@(negedge rf_clk);
+   if(rf_fault)$fatal(1,"fault clear between observations");
+  end
+  if(dut.rf_fault_dropped==0)$fatal(1,"legacy queue did not overflow");
+  command(CMD_RESET,0,0);write_word(GW_IRQ_ENABLE,16,0);
+  begin : drain_unified
+   integer total,rows;total=0;rows=0;
+   while(total<40)begin
+    read_word(32'h300);
+    if(value!=0)begin
+     if(!irq)$fatal(1,"unified fault IRQ");
+     write_word(32'h304,1,0);read_word(32'h340);if(value!=32'h40001)$fatal(1,"unified fault tag");
+     read_word(32'h344);if(value!=0)$fatal(1,"unexpected saturation");
+     read_word(32'h348);if(value==0)$fatal(1,"zero occurrence");total=total+value;
+     read_word(32'h350);if(value!=32'h30001)$fatal(1,"snapshot tag");
+     read_word(32'h354);if(value!=((rows==0)?1:3))$fatal(1,"snapshot validity");
+     write_word(32'h308,1,0);rows=rows+1;
+    end
+   end
+   if(total!=40)$fatal(1,"fault count duplication");
+   repeat(30)@(negedge ctrl_clk);read_word(32'h300);if(value!=0||irq)$fatal(1,"unified fault drain");
+   $display("PASS UNIFIED_EVENT actual 40 fault edges retained despite legacy overflow rows=%0d soft reset IRQ",rows);
+  end
   $display("PASS RF_FAULT_HISTORY actual idle latch clear reassert snapshot retained IRQ POP");
   $display("PASS SOURCE_EVENTS actual waveform identity completion cancellation IRQ");
   $display("PASS instrument waveform commands DDS exact chirp/GSC AWG CRC lifecycle STOP UNBOUND DAC");$finish;
  end
- initial begin #200000;$fatal(1,"waveform timeout");end
+ initial begin #500000;$fatal(1,"waveform timeout");end
 endmodule

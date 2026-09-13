@@ -4,6 +4,7 @@ module tb_rf_fault_queue;
  reg [63:0] gsc=100,pop_token=0;reg [31:0] config_id=7;reg [2:0] rf_state=3;
  reg [9:0] normalized_inputs=10'h3ab;reg [5:0] logical_outputs=6'h28;
  wire [31:0] count,dropped;wire [63:0] head_token;wire [255:0] head_data;wire pop_ok;
+ wire event_valid;wire [255:0] record_data;
  rf_fault_queue #(.ADDR_W(1)) dut(.*);
  always #4 clk=~clk;
  task tick;begin @(posedge clk);#1;@(negedge clk);end endtask
