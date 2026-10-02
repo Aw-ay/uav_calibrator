@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "module": "aux_window_tracker",
+  "clock": "RF 125 MHz",
+  "scope": "Standalone immediate window tracker; not the final record or PS command ABI",
+  "request": {
+    "protocol": "one-cycle strobe with registered accepted/rejected; ready indicates capacity, not argument validity",
+    "onset": "must equal the current sample_seq",
+    "source_roles": [2, 3],
+    "history": "PRE_SAMPLES contiguous qualified previous samples with identical source/calibration/config/FIR context",
+    "count": "PRE_SAMPLES+3 through min(2**ADDR_W,16384), inclusive",
+    "start": "onset-PRE_SAMPLES; start_gsc=current_gsc-4*PRE_SAMPLES",
+    "identity": "independent 64-bit capture counter, starts at 1 and stops accepting after UINT64_MAX",
+    "tx_token": "opaque 64-bit association; zero permitted for unassociated captures"
+  },
+  "status_bits": {"0": "SOURCE_CHANGED", "1": "BAD_SAMPLE", "2": "CANCELED", "3": "OWNER_LOST_OR_ADMISSION_FAILED", "4": "TRUNCATED_OR_WINDOW_MISMATCH"},
+  "ownership": "Bind exactly one changed bank generation plus capture_id and owner_epoch. Result waits for PENDING or ownership failure. result_ready only releases tracker context, never RAW storage. Consumer must revalidate owner_epoch/generation before acting on a held result.",
+  "cancel": "Marks active window invalid; waits for finite requested window to stop. Does not free storage.",
+  "limits": "One outstanding context. Descriptor metadata frozen at acceptance. ADC sample_seq and GSC must describe the same 125 MHz tick. Parameters require 1<=ADDR_W<=14 and 1<=PRE_SAMPLES<=2**ADDR_W-3. No replay pin is produced."
+}

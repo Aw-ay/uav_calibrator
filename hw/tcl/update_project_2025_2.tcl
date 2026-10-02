@@ -14,6 +14,10 @@ foreach f [sv_files [file join $root rtl]] {
  if {![llength [get_files -quiet $f]]} {add_files -norecurse $f}
  set_property file_type SystemVerilog [get_files $f]
 }
+# v0.6: legacy FD implementations stay available only to historical unit tests.
+foreach legacy {fractional_delay.sv fractional_delay_pipelined.sv fractional_delay_profile.sv fractional_delay_coeff_rom.sv frozen_record_reader.sv record_formatter.sv} {
+ foreach f [get_files -quiet */$legacy] {set_property USED_IN_SYNTHESIS false $f}
+}
 # These generated 2025.2 IPs are independently tested modules, not a complete BD.
 foreach name {capture_ram_probe dma_probe rfdc_probe} {
  set path [file join $root build ip_probe_2025_2 calibrator_ip_probe.srcs sources_1 ip $name $name.xci]

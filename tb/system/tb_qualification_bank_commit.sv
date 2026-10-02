@@ -9,6 +9,8 @@ module tb_qualification_bank_commit;
  wire [15:0] stats_valid,stats_good,publish,replay_pin,discard_pending;
  wire [1023:0] stats_generation;wire quiesce;
  capture_bank_manager #(.ADDR_W(3),.PRE_SAMPLES(1),.DETECTOR_LATENCY(1)) owner(
+ .analysis_pin(16'd0),.ack_analysis(1'b0),.ack_analysis_bank(4'd0),.ack_analysis_epoch(64'd0),.ack_analysis_generation(64'd0),.analysis_leased(),.record_leased(),
+
  .clk(clk),.rst(rst),.arm_enable(1'b1),.reset_request(reset_request),.readers_quiescent(1'b1),.quiesce(quiesce),
  .sample_valid(sample_valid),.sample_seq(sample_seq),.primary_trigger(trig),.primary_onset(onset),.primary_pulse_id(pulse),
  .aux_trigger(1'b0),.aux_onset(64'd0),.aux_pulse_id(64'd0),.eop_valid(eop_valid),.eop_stop(eop_stop),.eop_generation(eop_gen),

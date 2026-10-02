@@ -34,6 +34,10 @@ module tb_calibrator_capture_pipeline;
  wire [7:0] statistics_error;wire block_new_work,reset_busy,reset_done;
  wire bridge_idle=dut.bridge_idle;
  calibrator_capture_pipeline #(.PRE_SAMPLES(3),.DETECTOR_LATENCY(1),.FIFO_ADDR_W(2)) dut(
+ .fine_command_valid(1'b0),.fine_command_pop(1'b0),.fine_command_token(64'd0),.fine_command_ready(),.fine_response_valid(),.fine_response_ok(),.fine_available_rf(),.fine_response_data(),.online_tops(192'd0),
+
+ .online_valid(1'b0),.online_stats(512'd0),.online_peaks(192'd0),.online_error(8'd0),
+ .aux_request_valid(1'b0),.aux_qualified(1'b0),.aux_meta_pop(1'b0),.aux_request_count(32'd0),.aux_request_tx_token(64'd0),.aux_sample_gsc(64'd0),.aux_meta_pop_key(64'd0),.aux_context(128'd0),.aux_template_header(1024'd0),
  .clk_rf(rf),.clk_mem(mem),.rst_n(rst_n),.arm_enable(1'b1),.reset_request(reset_request),.producers_idle(producers_idle),.replay_quiescent(replay_quiescent),
  .sample_valid(sample_valid),.sample_seq(sample_seq),.group_data(group_data),.primary_trigger(primary_trigger),.primary_onset(primary_onset),.primary_pulse_id(64'd100),
  .eop_valid(eop_valid),.eop_stop(eop_stop),.eop_generation(eop_generation),

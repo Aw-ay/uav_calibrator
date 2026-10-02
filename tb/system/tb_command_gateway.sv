@@ -10,7 +10,9 @@ module tb_command_gateway;
  reg [7:0] result_code=0;reg [15:0] result_words=1;reg [8191:0] result_payload=0;
  reg [31:0] unified_event_count=0,unified_event_word=0,unified_event_dropped=0;
  reg unified_event_latched=0;wire unified_event_latch,unified_event_pop;wire [3:0] unified_event_word_index;
- command_gateway_axi dut(.*);
+ command_gateway_axi dut(
+ .fine_available_rf(1'b0),
+.*);
  task write_word(input [31:0] a,v,input [1:0] expected);begin
   @(negedge ctrl_clk);s_axi_awaddr=a;s_axi_awvalid=1;
   do begin @(posedge ctrl_clk);end while(!s_axi_awready);

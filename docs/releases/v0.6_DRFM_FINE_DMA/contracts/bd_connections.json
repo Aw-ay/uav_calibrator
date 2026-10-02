@@ -1,0 +1,282 @@
+{
+  "status": "V0_6_CHANGESET_PROPOSED_NOT_IMPLEMENTED",
+  "note": "v0.6 keeps external PS/RFDC/DMA BD topology but changes internal B-port Fine/DMA and DRFM processing semantics.",
+  "connections": [
+    {
+      "source": "ps_0/M_AXI_HPM0_FPD",
+      "destination": "axi_ctrl_0/S00_AXI",
+      "protocol": "AXI_MM",
+      "clock": "clk_ctrl",
+      "note": "100MHz candidate"
+    },
+    {
+      "source": "axi_ctrl_0/M00_AXI",
+      "destination": "rfdc_0/s_axi",
+      "protocol": "AXI_LITE",
+      "clock": "clk_ctrl",
+      "note": "native generated name may differ"
+    },
+    {
+      "source": "axi_ctrl_0/M01_AXI",
+      "destination": "axi_dma_iq/S_AXI_LITE",
+      "protocol": "AXI_LITE",
+      "clock": "clk_ctrl",
+      "note": "DMA reset synchronous to this domain"
+    },
+    {
+      "source": "axi_ctrl_0/M02_AXI",
+      "destination": "calib_pl_top/S_AXI_CTRL",
+      "protocol": "AXI_LITE",
+      "clock": "clk_ctrl",
+      "note": "custom CSR+event mailbox"
+    },
+    {
+      "source": "axi_ctrl_0/M03_AXI",
+      "destination": "awg_bram_ctrl/S_AXI",
+      "protocol": "AXI_MM",
+      "clock": "clk_ctrl",
+      "note": "inactive memory only"
+    },
+    {
+      "source": "axi_ctrl_0/M04_AXI",
+      "destination": "coeff_bram_ctrl/S_AXI",
+      "protocol": "AXI_MM",
+      "clock": "clk_ctrl",
+      "note": "inactive memory only"
+    },
+    {
+      "source": "calib_pl_top/M_AXIS_IQ",
+      "destination": "axis_iq_fifo/S_AXIS",
+      "protocol": "AXIS128",
+      "clock": "clk_mem",
+      "note": "TLAST/TKEEP and optionalCRC"
+    },
+    {
+      "source": "axis_iq_fifo/M_AXIS",
+      "destination": "axi_dma_iq/S_AXIS_S2MM",
+      "protocol": "AXIS128",
+      "clock": "clk_mem",
+      "note": "stable during backpressure"
+    },
+    {
+      "source": "axi_dma_iq/M_AXI_S2MM",
+      "destination": "axi_mem_0/S00_AXI",
+      "protocol": "AXI_MM128",
+      "clock": "clk_mem",
+      "note": "payload write path"
+    },
+    {
+      "source": "axi_dma_iq/M_AXI_SG",
+      "destination": "axi_mem_0/S01_AXI",
+      "protocol": "AXI_MM",
+      "clock": "clk_mem",
+      "note": "SG descriptors read/write path"
+    },
+    {
+      "source": "axi_mem_0/M00_AXI",
+      "destination": "ps_0/S_AXI_HP0_FPD",
+      "protocol": "AXI_MM128",
+      "clock": "clk_mem",
+      "note": "noncoherentDDR"
+    },
+    {
+      "source": "rfdc_0/ADC_NATIVE_STREAMS",
+      "destination": "calib_pl_top/ADC_NATIVE_STREAMS",
+      "protocol": "RFDC_NATIVE",
+      "clock": "clk_rf",
+      "note": "all eight physical ADC enabledcontinuously; native streams != ADCcount; converter_map required; canonical4complexSPC@125MHz, native mapping unresolved"
+    },
+    {
+      "source": "calib_pl_top/DAC_NATIVE_STREAMS",
+      "destination": "rfdc_0/DAC_NATIVE_STREAMS",
+      "protocol": "RFDC_NATIVE",
+      "clock": "clk_rf",
+      "note": "eight DAC lane interface target; unused lanes alwayszero; actual DACrateprofile not frozen; canonical4complexSPC@125MHz, native mapping unresolved"
+    },
+    {
+      "source": "calib_pl_top/IRQ_EVENT_FAULT",
+      "destination": "irq_concat",
+      "protocol": "LEVEL_IRQ",
+      "clock": "clk_ctrl",
+      "note": "latched/synchronized"
+    },
+    {
+      "source": "axi_dma_iq/s2mm_introut",
+      "destination": "irq_concat",
+      "protocol": "LEVEL_IRQ",
+      "clock": "clk_ctrl",
+      "note": "according to DMA interface clock mapping"
+    },
+    {
+      "source": "rfdc_0/irq",
+      "destination": "irq_concat",
+      "protocol": "LEVEL_IRQ",
+      "clock": "clk_ctrl",
+      "note": "check port domain in actual IP"
+    },
+    {
+      "source": "irq_concat/dout",
+      "destination": "ps_0/pl_ps_irq0",
+      "protocol": "IRQ_VECTOR",
+      "clock": "PS_GIC",
+      "note": "platform interrupt mapping"
+    }
+  ],
+  "internal_semantic_connections": [
+    {
+      "source": "rfadc_stream_adapter/ADC[0:7]",
+      "destination": "channel_epoch_aligner",
+      "clock": "clk_rf",
+      "note": "4complexSPC/channel/beat@125MHz",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "channel_epoch_aligner",
+      "destination": "native_overload_monitor + rx_decim4_wrapper",
+      "clock": "clk_rf",
+      "note": "native quality parallel tap, all4lanes; FIR always running",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "rx_decim4_wrapper/OUT[0:7]",
+      "destination": "fixed_round_sat",
+      "clock": "clk_rf",
+      "note": "1SPC at125MS/s; interstage width explicit",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "fixed_round_sat",
+      "destination": "pulse_detector + range_qualifier + capture_bank_manager",
+      "clock": "clk_rf",
+      "note": "parallel consumers; detector is not a data gate",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "capture_bank_manager",
+      "destination": "capture_bank_ram/A_WRITE",
+      "clock": "clk_rf",
+      "note": "64bit/group to all mutable banks, per-bank write enables",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "capture_bank_manager + range_qualifier",
+      "destination": "range_selector_eop + bank_freeze_commit",
+      "clock": "clk_rf",
+      "note": "online body statistics complete; three primary banks may be frozen with analysis_ref; selected range additionally gets upload/replay refs",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "range_selector_eop + record_policy",
+      "destination": "fine_job_cdc + record_descriptor_cdc + replay_descriptor_queue",
+      "clock": "clk_rf -> clk_mem",
+      "note": "Fine jobs for all primary ranges; RAW descriptor normally selected range only; replay selected/qualified only; refs pinned before visibility",
+      "protocol": "ASYNC_FIFO"
+    },
+    {
+      "source": "record_descriptor_cdc",
+      "destination": "b_port_access_fabric/DMA_request",
+      "clock": "clk_mem",
+      "note": "whole RAW record nonpreemptive once started; DMA request targets one frozen bank B port",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "capture_bank_ram/B_READ",
+      "destination": "b_port_access_fabric -> b_port_reader_128 (Fine or DMA)",
+      "clock": "clk_mem",
+      "note": "128-bit natural {odd,even} words; measured READ_LATENCY_B; mask odd logical start; same-bank single B owner",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "b_port_reader_128/DMA_stream",
+      "destination": "dma_payload_packer -> iq_frame_formatter + crc32c_stream",
+      "clock": "clk_mem",
+      "note": "DMA-only logical compaction; 128-bit payload path remains full width; payload_end not record TLAST",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "iq_frame_formatter",
+      "destination": "axis_iq_fifo",
+      "clock": "clk_mem",
+      "note": "128bit@200MHz TKEEP/TLAST",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "DMA_completion_token",
+      "destination": "bank_return_cdc/upload_ref",
+      "clock": "clk_mem -> clk_rf",
+      "note": "epoch/group/bank/generation upload token; does not clear analysis/replay refs",
+      "protocol": "ASYNC_FIFO"
+    },
+    {
+      "source": "replay_descriptor_queue",
+      "destination": "replay_legality_checker -> replay_reader_scheduler",
+      "clock": "clk_rf",
+      "note": "absolute GSC/output reference and deadlines",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "capture_bank_ram/A_READ",
+      "destination": "replay_reader_scheduler -> rx_cal_executor -> target_complex_operator",
+      "clock": "clk_rf",
+      "note": "64-bit HV deterministic A-port read; no Fine/DMA dependency and no fractional waveform-delay block",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "target_complex_operator + dds_nco_wrapper + awg_reader",
+      "destination": "tx_source_mux",
+      "clock": "clk_rf",
+      "note": "source boundary commit; LIVE single-antenna OTA forbidden",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "tx_source_mux",
+      "destination": "tx_channel_router -> tx_cal_executor",
+      "clock": "clk_rf",
+      "note": "all sources same per-DAC independent correction after routing",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "tx_cal_executor/TX[0:7]",
+      "destination": "tx_interp4_wrapper/IN[0:7]",
+      "clock": "clk_rf",
+      "note": "FIR75 L2 + HB19 L2; no250MHz computation domain",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "tx_interp4_wrapper/OUT[0:7]",
+      "destination": "rfdac_stream_adapter",
+      "clock": "clk_rf",
+      "note": "4complexSPC@125MHz, zeros idle; noTVALID mute",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "aux_source_controller/MUX_CMD",
+      "destination": "board_aux_analog_switch",
+      "clock": "board_io",
+      "note": "ADC3/7 only; analog pin/polarity to confirm",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "fine_job_cdc",
+      "destination": "b_port_access_fabric/FINE_request -> b_port_reader_128 -> fine_measurement_engine",
+      "clock": "clk_mem",
+      "note": "one shared Fine engine; HIGH/MID/LOW jobs; natural B words+mask; normal one RAM pass",
+      "protocol": "PIPELINE"
+    },
+    {
+      "source": "fine_measurement_engine",
+      "destination": "fine_result_queue -> command_gateway",
+      "clock": "clk_mem -> clk_ctrl",
+      "note": "immutable128-byte sidecar; queue overflow counted, never backpressure capture/replay",
+      "protocol": "ASYNC_FIFO"
+    },
+    {
+      "source": "Fine/DMA completion tokens",
+      "destination": "capture_bank_manager analysis_ref/upload_ref",
+      "clock": "clk_mem -> clk_rf",
+      "note": "independent refs; same-bank Fine/DMA mutually exclusive, different banks may run concurrently",
+      "protocol": "ASYNC_FIFO"
+    }
+  ],
+  "naming_note": "Internal functional junction labels may join multiple RTL modules. Only module_catalog entries are proposed files; this is NOT executable Tcl."
+}

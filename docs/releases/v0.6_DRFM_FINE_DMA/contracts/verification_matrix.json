@@ -1,0 +1,635 @@
+{
+  "status": "V0_6_CHANGESET_VERIFICATION_NOT_RUN",
+  "tests": [
+    {
+      "id": "V01",
+      "name": "RFDC native格式",
+      "acceptance": "不同I/Q计数序列验证所有端口/lane；真实8word和4complex不混淆",
+      "tool": "RTL+board",
+      "status": "NOT_RUN",
+      "legacy_id": "V01"
+    },
+    {
+      "id": "V02",
+      "name": "D4数据对应",
+      "acceptance": "所选滤波链的全定点golden逐样点一致；HB19+FIR75与整数系数一致；输入输出数、相位和时延一致",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V02"
+    },
+    {
+      "id": "V03",
+      "name": "FIR带宽",
+      "acceptance": "通带/阻带/ENBW及边沿误差，与量化模型和工具输出一致",
+      "tool": "MATLAB+xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V03"
+    },
+    {
+      "id": "V04",
+      "name": "前抽取过载",
+      "acceptance": "被抽掉的lane发生clip仍有quality事件",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V04"
+    },
+    {
+      "id": "V05",
+      "name": "多通道有效性",
+      "acceptance": "任一通道掉valid或slip，不产生伪相参整组数据",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V05"
+    },
+    {
+      "id": "V06",
+      "name": "GSC",
+      "acceptance": "DMA背压不停止计数；epoch/reset/PPS质量正确",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V06"
+    },
+    {
+      "id": "V07",
+      "name": "CSR协议",
+      "acceptance": "AW/W独立顺序、WSTRB、背压、非法地址和W1C",
+      "tool": "AXI VIP/xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V07"
+    },
+    {
+      "id": "V08",
+      "name": "原子commit",
+      "acceptance": "正在capture/replay不得半表或半参数更新",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V08"
+    },
+    {
+      "id": "V09",
+      "name": "全档INVALID",
+      "acceptance": "所有档饱和时拒收/不TX，不默认LOW有效",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V09"
+    },
+    {
+      "id": "V10",
+      "name": "后沿过载",
+      "acceptance": "最后native过载经latency对齐归入同pulse",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V10"
+    },
+    {
+      "id": "V11",
+      "name": "噪声/检测",
+      "acceptance": "纯噪声、低SNR、长脉冲、阶跃和hang状态",
+      "tool": "model+xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V11"
+    },
+    {
+      "id": "V12",
+      "name": "预触发",
+      "acceptance": "ARMING需预填；不能瞬间复制250样点假实现",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V12"
+    },
+    {
+      "id": "V13",
+      "name": "bank wrap / mask / DMA compact",
+      "acceptance": "任意even/odd start、odd/even count、跨16383→0；Fine自然word+mask逻辑序列正确，DMA compact逐byte正确",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V13"
+    },
+    {
+      "id": "V14",
+      "name": "bank引用",
+      "acceptance": "DMA/replay先后完成与stale generation ACK",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V14"
+    },
+    {
+      "id": "V15",
+      "name": "BMG真实读延迟与连续读",
+      "acceptance": "实际生成BMG测READ_LATENCY_A/B；B口连续地址返回{odd,even}，不假设一拍",
+      "tool": "BMG sim",
+      "status": "NOT_RUN",
+      "legacy_id": "V15"
+    },
+    {
+      "id": "V16",
+      "name": "缓存满",
+      "acceptance": "drop新帧有事件，不覆盖旧RAW",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V16"
+    },
+    {
+      "id": "V17",
+      "name": "零DMA服务与Replay隔离",
+      "acceptance": "DMA零服务/Fine忙不改变已接受replay时刻；可因bank全占拒绝后续capture",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V17"
+    },
+    {
+      "id": "V18",
+      "name": "128bit TLAST/TKEEP",
+      "acceptance": "自然word mask、DMA compact、奇数payload+CRC尾；TREADY低时TDATA/TKEEP/TLAST稳定",
+      "tool": "AXIS VIP/xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V18"
+    },
+    {
+      "id": "V19",
+      "name": "DMA长度",
+      "acceptance": "131200/131216byte大帧不受14/16bit长度截断",
+      "tool": "board+driver",
+      "status": "NOT_RUN",
+      "legacy_id": "V19"
+    },
+    {
+      "id": "V20",
+      "name": "SG连接",
+      "acceptance": "BD读写与S2MM均可达DDR、地址>4GB按实际mask",
+      "tool": "BD+driver",
+      "status": "NOT_RUN",
+      "legacy_id": "V20"
+    },
+    {
+      "id": "V21",
+      "name": "CRC/host解码",
+      "acceptance": "已知记录逐byte一致、故障注入可识别",
+      "tool": "xsim+C+MATLAB",
+      "status": "NOT_RUN",
+      "legacy_id": "V21"
+    },
+    {
+      "id": "V22",
+      "name": "命令因果",
+      "acceptance": "data_ready之后才可用，短目标延迟拒绝",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V22"
+    },
+    {
+      "id": "V23",
+      "name": "目标距离差",
+      "acceptance": "扣实际两程及固定pipeline，不能用2Rv/c直接延迟",
+      "tool": "model+xsim+RF",
+      "status": "NOT_RUN",
+      "legacy_id": "V23"
+    },
+    {
+      "id": "V24",
+      "name": "超PRI调度",
+      "acceptance": "可用slot接受、冲突拒绝，考虑周期/队列",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V24"
+    },
+    {
+      "id": "V25",
+      "name": "TX真实状态",
+      "acceptance": "planned不等actual；BLOCKED/INTERRUPTED/TRUNCATED正确",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V25"
+    },
+    {
+      "id": "V26",
+      "name": "分数波形延时禁用",
+      "acceptance": "fraction_q32=0合法；非0在RAM read前拒绝；active DRFM无FD63/profile/62点flush",
+      "tool": "xsim+integration",
+      "status": "NOT_RUN",
+      "legacy_id": "V26"
+    },
+    {
+      "id": "V27",
+      "name": "DDS",
+      "acceptance": "频率、相位、PW/PRI/count、LFM步进及包络延迟",
+      "tool": "xsim+RF",
+      "status": "NOT_RUN",
+      "legacy_id": "V27"
+    },
+    {
+      "id": "V28",
+      "name": "AWG",
+      "acceptance": "inactive装载、CRC、边界切换、不受PS写抖动",
+      "tool": "xsim+driver",
+      "status": "NOT_RUN",
+      "legacy_id": "V28"
+    },
+    {
+      "id": "V29",
+      "name": "源切换",
+      "acceptance": "只安全边界；所有源经过同一TXCAL",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V29"
+    },
+    {
+      "id": "V30",
+      "name": "TX插值",
+      "acceptance": "1入4出连续、DC/单音增益正确、图像抑制达标",
+      "tool": "model+xsim+RF",
+      "status": "NOT_RUN",
+      "legacy_id": "V30"
+    },
+    {
+      "id": "V31",
+      "name": "DAC静音",
+      "acceptance": "TVALID无效不被当mute；idle真实零码",
+      "tool": "xsim+ILA",
+      "status": "NOT_RUN",
+      "legacy_id": "V31"
+    },
+    {
+      "id": "V32",
+      "name": "RF interlock",
+      "acceptance": "PA/TR先后与tail/guard，故障无法被软件绕过",
+      "tool": "RTL+bench",
+      "status": "NOT_RUN",
+      "legacy_id": "V32"
+    },
+    {
+      "id": "V33",
+      "name": "断钟安全",
+      "acceptance": "停止采样clock时实际RF仍能关断或硬件默认安全",
+      "tool": "bench",
+      "status": "NOT_RUN",
+      "legacy_id": "V33"
+    },
+    {
+      "id": "V34",
+      "name": "多时钟reset",
+      "acceptance": "SmartConnect协调reset、FIFO busy、reset期间AXI事务",
+      "tool": "xsim+CDC",
+      "status": "NOT_RUN",
+      "legacy_id": "V34"
+    },
+    {
+      "id": "V35",
+      "name": "MTS",
+      "acceptance": "重复启动下规定ADC/DAC相对时延；记录target latency",
+      "tool": "board",
+      "status": "NOT_RUN",
+      "legacy_id": "V35"
+    },
+    {
+      "id": "V36",
+      "name": "RX/TX校准",
+      "acceptance": "不同档位scale、温度/频率适用域和不双补偿",
+      "tool": "model+bench",
+      "status": "NOT_RUN",
+      "legacy_id": "V36"
+    },
+    {
+      "id": "V37",
+      "name": "系数pin",
+      "acceptance": "延迟队列仍引用旧系数时不能覆盖，或显式drain",
+      "tool": "xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V37"
+    },
+    {
+      "id": "V38",
+      "name": "粗PDW与Fine PDW独立",
+      "acceptance": "现有CAPTURE_PDW语义不变；Fine 128B sidecar identity/PEEK/POP/overflow/CDC正确",
+      "tool": "xsim+driver",
+      "status": "NOT_RUN",
+      "legacy_id": "V38"
+    },
+    {
+      "id": "V39",
+      "name": "Linux缓存",
+      "acceptance": "kernel/user/DMA所有权正确，数据非陈旧cache",
+      "tool": "driver",
+      "status": "NOT_RUN",
+      "legacy_id": "V39"
+    },
+    {
+      "id": "V40",
+      "name": "Linux负载",
+      "acceptance": "并发存储/网络/CPU压力，报告有效吞吐和丢失",
+      "tool": "board",
+      "status": "NOT_RUN",
+      "legacy_id": "V40"
+    },
+    {
+      "id": "V41",
+      "name": "捕获不等上传",
+      "acceptance": "CAPTURED/READER_DONE/BD_DONE/HOST_VALIDATED严格区分",
+      "tool": "system",
+      "status": "NOT_RUN",
+      "legacy_id": "V41"
+    },
+    {
+      "id": "V42",
+      "name": "三档Fine与selected RAW",
+      "acceptance": "同pulse HIGH/MID/LOW均有Fine identity；默认只有共同选中的H/V RAW进入DMA，诊断模式除外",
+      "tool": "xsim+driver",
+      "status": "NOT_RUN",
+      "legacy_id": "V42"
+    },
+    {
+      "id": "V43",
+      "name": "时序与资源",
+      "acceptance": "真实WNS>=0、TNS=0、严重DRC/CDC=0，无隐匿例外",
+      "tool": "Vivado",
+      "status": "NOT_RUN",
+      "legacy_id": "V43"
+    },
+    {
+      "id": "V44",
+      "name": "版本复现",
+      "acceptance": "同合同/IP/BSP构建工件与日志可追溯；不能无声IP升级",
+      "tool": "build",
+      "status": "NOT_RUN",
+      "legacy_id": "V44"
+    },
+    {
+      "id": "V45",
+      "name": "B/C边界",
+      "acceptance": "host未知参考分析不访问真值，不直接改变当前PL任务",
+      "tool": "software",
+      "status": "NOT_RUN",
+      "legacy_id": "V45"
+    },
+    {
+      "id": "V46",
+      "name": "端到端MVP",
+      "acceptance": "输入发生器→ADC→DMA；DDS→DAC；cable loopback；LIVE；buffered replay",
+      "tool": "bench",
+      "status": "NOT_RUN",
+      "legacy_id": "V46"
+    },
+    {
+      "id": "V47",
+      "acceptance": "八路不同I/Q计数序列全速输入；主六路与AUX同时连续，无重复/丢失；ADC不背压",
+      "name": "八ADC持续采样",
+      "tool": "xsim+board",
+      "status": "NOT_RUN",
+      "legacy_id": "V46"
+    },
+    {
+      "id": "V48",
+      "acceptance": "只改变ADC3/7；ADC0/1/2/4/5/6连续；ADC/DDC/FIR不断流，AUX瞬态标invalid",
+      "name": "AUX独立输入切换",
+      "tool": "xsim+board",
+      "status": "NOT_RUN",
+      "legacy_id": "V47"
+    },
+    {
+      "id": "V49",
+      "acceptance": "主测量与TX耦合AUX记录同时进行；独立触发/存储；LOOPBACK禁止自动重放",
+      "name": "并行回环",
+      "tool": "xsim+board",
+      "status": "NOT_RUN",
+      "legacy_id": "V48"
+    },
+    {
+      "id": "V50",
+      "acceptance": "AUX外部MID输入有独立校准；脉冲边界提交替换；无共用前端故障全覆盖声明",
+      "name": "冗余资格",
+      "tool": "model+board",
+      "status": "NOT_RUN",
+      "legacy_id": "V49"
+    },
+    {
+      "id": "V51",
+      "acceptance": "HB19+FIR75 completeD4 and reverseL4; coefficientQ17RX/Q16TX; all aliases/images,ENBW,tails and fixedpoint",
+      "name": "FIR候选数值",
+      "tool": "python+matlab+xsim",
+      "status": "NOT_RUN",
+      "legacy_id": "V50"
+    },
+    {
+      "id": "V52",
+      "acceptance": "FIR125MHz,DDR/DMA200MHz; fourRX/TXstage types exactZU27DR OOC, checkSSR,symmetry,HBzeros,DSPcolumns,II,latency,WNS; full design resource/power",
+      "name": "DSP实证",
+      "tool": "Vivado",
+      "status": "NOT_RUN",
+      "legacy_id": "V51"
+    },
+    {
+      "id": "V53",
+      "acceptance": "4GB/s滤后总载荷与有限bank；主/AUX公平仲裁，丢失有记录；不得声称长期全量无损已实现",
+      "name": "四组数据吞吐",
+      "tool": "xsim+board",
+      "status": "NOT_RUN",
+      "legacy_id": "V52"
+    },
+    {
+      "id": "V54",
+      "acceptance": "同一八通道FIR预算；各路I/Q独立激励、静音、插值增益及sourceID正确；八源发生器另行实现",
+      "name": "八TXlane",
+      "tool": "xsim+board",
+      "status": "NOT_RUN",
+      "legacy_id": "V53"
+    },
+    {
+      "id": "V55",
+      "name": "bank角色轮换",
+      "acceptance": "0..3均能滚动预填、捕获、冻结、读出、释放；无bank2永久采集或bank间隐式复制",
+      "tool": "behavioral+xsim+integration",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V56",
+      "name": "满长计数",
+      "acceptance": "count=16384不回卷0；地址14bit,count>=15bit",
+      "tool": "behavioral+xsim+integration",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V57",
+      "name": "迟到触发与EOP",
+      "acceptance": "trueonset回溯并验证freshhistory；超窗停止写而非覆盖",
+      "tool": "behavioral+xsim+integration",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V58",
+      "name": "主三档原子准入",
+      "acceptance": "一组不足则三组都不占用；独立AUX不抢主MID",
+      "tool": "behavioral+xsim+integration",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V59",
+      "name": "FROZEN_PENDING",
+      "acceptance": "RAM停写先于统计完成；无早发有效descriptor",
+      "tool": "behavioral+xsim+integration",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V60",
+      "name": "发布和归还",
+      "acceptance": "发布前pin；owner_epoch+generation拒旧/重复ACK；同拍双ACK正确",
+      "tool": "behavioral+xsim+integration",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V61",
+      "name": "复位quiesce",
+      "acceptance": "epoch不能代替停止在途RAM/DMA读；FIFOresetbusy和两域协调",
+      "tool": "behavioral+xsim+integration",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V62",
+      "name": "普通SG所有权",
+      "acceptance": "cyclic默认关闭，用户未release槽不得重新给DMA",
+      "tool": "behavioral+xsim+integration",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V63",
+      "name": "正常TX尾",
+      "acceptance": "RAM读完后补零至少42样点用于PL两级尾；叠加其他pipeline/RFguard",
+      "tool": "behavioral+xsim+integration",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V64",
+      "name": "全125MHzFIR",
+      "acceptance": "同一个clk_rf，无clk_fir250；跨lane和复位抽取相位正确",
+      "tool": "behavioral+xsim+integration",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V65",
+      "name": "容量双重准入",
+      "acceptance": "捕获samples<=16384且frame<=slot；200us@125M拒绝",
+      "tool": "behavioral+xsim+integration",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V66",
+      "name": "每DAC校准",
+      "acceptance": "路由后独立校准，非两路校准替代八模拟链；loopback源不回灌",
+      "tool": "behavioral+xsim+integration",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V67",
+      "name": "B128满速reader",
+      "acceptance": "下游持续ready时pipeline填满后每clk_mem输出一个128bit B word；满bank/连续job无固定气泡",
+      "tool": "xsim+Vivado OOC",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V68",
+      "name": "B reader outstanding credit",
+      "acceptance": "随机stall下issued-returned不超credit；所有在途response进入prefetch或显式discard，无丢重乱",
+      "tool": "xsim",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V69",
+      "name": "自然word mask",
+      "acceptance": "start_ptr[0]/count/wrap生成首尾valid mask正确；masked lane绝不参与Fine统计",
+      "tool": "xsim+Python",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V70",
+      "name": "H/V半功率",
+      "acceptance": "H/V独立noise/raw peak/4点TOP/P50与golden一致；禁止H+V共同peak；legacy /4仅half-amplitude",
+      "tool": "Python+MATLAB+xsim",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V71",
+      "name": "Fine edge",
+      "acceptance": "理想/有限边沿/低SNR/ringing/多crossing/flat/缺fall/HV不同边沿；2点/8点/fused及质量与golden一致",
+      "tool": "Python+MATLAB+xsim",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V72",
+      "name": "Fine单遍RAM",
+      "acceptance": "每job B请求数=ceil((start_ptr[0]+count)/2)，完整Fine PDW生成期间不重新扫RAM；局部buffer不算二遍",
+      "tool": "xsim",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V73",
+      "name": "Fine频率chirp相位",
+      "acceptance": "CW正负零残余、上下chirp、已知HV相位；与离线unwrap/polyfit/correlation golden在预算内一致",
+      "tool": "Python+MATLAB+xsim",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V74",
+      "name": "Fine最大负载",
+      "acceptance": "16384点×HIGH/MID/LOW×3.3kHz持续压力；backlog有界、无提前bank释放、记录真实服务时间",
+      "tool": "xsim+performance",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V75",
+      "name": "Fine/DMA不同bank并发",
+      "acceptance": "Fine(bank X)与DMA(bank Y), X!=Y同时运行，双方数据及token正确",
+      "tool": "xsim",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V76",
+      "name": "A Replay与B Fine并发",
+      "acceptance": "同一冻结bank A-port replay和B-port Fine同时运行；Replay timing/data及Fine结果均golden一致",
+      "tool": "xsim",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V77",
+      "name": "三引用生命周期",
+      "acceptance": "Fine/DMA/Replay六种完成次序；refs全0且inflight清空前不得rearm；stale/duplicate token拒绝",
+      "tool": "xsim",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V78",
+      "name": "B reader reset drain",
+      "acceptance": "outstanding>0/FIFO非空时reset：stop issue→drain/discard→quiescent→epoch/rearm；旧response不泄漏",
+      "tool": "xsim+CDC",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V79",
+      "name": "DRFM FD bypass",
+      "acceptance": "RXCAL→Target fixed-point逐样点golden；无FD63实例/饱和/表依赖/62点flush；TX FIR尾仍在",
+      "tool": "xsim",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V80",
+      "name": "2ns GSC与8ns执行网格",
+      "acceptance": "exact feasible接受；mod-4 off-grid、too-early、late明确拒绝且不自动round",
+      "tool": "xsim",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V81",
+      "name": "Fine/DMA对Replay零影响",
+      "acceptance": "随机Fine任务、DMA stall和不同bank并发下，相同已接受task的actual_start_gsc和A样点序列bit-exact一致",
+      "tool": "xsim+system",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "V82",
+      "name": "v0.6时序资源",
+      "acceptance": "clk_mem200/clk_rf125 WNS>=0 TNS=0, Critical CDC=0；报告Fine与FD移除后的真实资源，无新无依据时序例外",
+      "tool": "Vivado",
+      "status": "NOT_RUN"
+    }
+  ],
+  "python_evidence": "设计包检查记录.json: previous_full_package_validation records historical evidence only; this edition does not include the Python models/tests and does not upgrade any RTL/board acceptance status.",
+  "v0_6_note": "V67-V82 are new design gates. Historical repository PASS/synthesis summaries are not evidence after this changeset."
+}

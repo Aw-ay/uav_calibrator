@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "status": "INTEGRATED_TWO_SAMPLE_ENGINE_VERIFIED",
+  "models": {
+    "cycle_cache": "tools/fine_stream.py:SampleCache",
+    "causal_schedule": "tools/fine_stream.py:FinePass"
+  },
+  "input": "Natural B128 reader words, low lane before high, 64-bit H_I/H_Q/V_I/V_Q per logical sample",
+  "cache": {
+    "logical_samples": 32,
+    "push": "one natural word,1 or2 valid lanes; same-edge retired lane credit in fine_sample_cache_2",
+    "pop": "one or two chronological logical samples per handshake; last lane_count=1 when only one remains",
+    "peek": "one registered indexed lookup; found=0 for unretained/future samples; response held until ready; reads pre-edge state",
+    "validation": "count 1..16384, exact natural masks/start parity/index/first/last; malformed input invalidates job",
+    "abort": "local cancellation is immediate; upstream reader MUST separately drain all issued responses before bank release",
+    "capacity_scope": "32 samples in Fine local cache; upstream B reader credit FIFO is additional transport buffering"
+  },
+  "schedule": {
+    "edge_support": "k-3..k+4, EOF clipping only after sample_count samples accepted",
+    "edge_service": "bounded RAW coarse neighborhoods +/-8, registered local peek and exact candidate solver with FAST_MATH=1",
+    "retire": "retire up to2 samples when processed-base>=29 or tail resolved; keep causality check, pause while resolving crossing candidates",
+    "accumulators": "provisional sums are discarded if final timing/source/prior quality is invalid",
+    "proof_scope": "Independent batch numerical comparison, every retired IQ sample, natural RAM address/count at latencies1/2/3, held results, cancellation drain, physical16-bank F7 and real instrument FIR/command tests"
+  },
+  "accumulator": {
+    "clock_hz": 200000000,
+    "input": "one or two chronological samples per accepted clock; lane-specific H/V masks and segment IDs",
+    "arithmetic": "32 signed16 multiplies for two-lane packet; same exact33-bit product/48-bit sum/46-bit energy formats",
+    "segments": 8,
+    "pairing": "adjacent retained logical samples within each polarization; dropped body membership breaks the previous-sample chain",
+    "hv": "H*conj(V) when both masks true; separate H/V energies",
+    "drain": "registered products, registered sum/difference, accumulator; result_valid only after last and both stages empty",
+    "ownership": "result held until release; no new job before release; index or last mismatch invalidates without publishing"
+  },
+  "pending": [],
+  "legacy_scope": "The original fine_sample_cache and fine_segment_accumulator remain one-sample standalone reference components. The active engine uses the _2 variants described below. FinePass is causal, not cycle-exact for this accelerated RTL.",
+  "delivery": "docs/v06_fine_integration.md"
+}

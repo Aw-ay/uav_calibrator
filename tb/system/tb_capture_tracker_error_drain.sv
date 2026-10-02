@@ -36,6 +36,10 @@ reg [239:0] malformed_counts;
  wire bridge_idle=dut.backend.bridge_idle;
  wire producer_error_valid;wire [7:0] producer_error_reason;wire onset_ready;
  calibrator_capture_system #(.PRE_SAMPLES(3),.DETECTOR_LATENCY(1),.FIFO_ADDR_W(2)) dut(
+ .fine_command_valid(1'b0),.fine_command_pop(1'b0),.fine_command_token(64'd0),.fine_command_ready(),.fine_response_valid(),.fine_response_ok(),.fine_available_rf(),.fine_response_data(),
+
+ .online_sample_good(6'h3f),.onset_eop_hold(14'd125),.body_end_valid(1'b0),.body_end_pulse_id(64'd0),.body_end_owner_epoch(64'd0),.body_end_seq(64'd0),
+ .aux_request_valid(1'b0),.aux_qualified(1'b0),.aux_meta_pop(1'b0),.aux_request_count(32'd0),.aux_request_tx_token(64'd0),.aux_sample_gsc(64'd0),.aux_meta_pop_key(64'd0),.aux_context(128'd0),.aux_template_header(1024'd0),
  .clk_rf(rf),.clk_mem(mem),.rst_n(rst_n),.arm_enable(1'b1),.reset_request(reset_request),.replay_quiescent(replay_quiescent),
  .sample_valid(sample_valid),.sample_seq(sample_seq),.group_data(group_data),.onset_valid(primary_trigger),.onset_ready(onset_ready),.onset_seq(primary_onset),.onset_gsc(64'd65536),.onset_pulse_id(64'd100),.config_version(64'd7),
  .onset_config(config_data),.onset_metadata(h[0]),.onset_noise(noise_data),.onset_bad_channels(6'd0),.onset_want_replay(1'b1),

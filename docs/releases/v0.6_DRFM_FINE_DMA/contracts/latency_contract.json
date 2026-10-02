@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.6",
+  "status": "V0_6_CHANGESET_PROPOSED_REMEASURE_REQUIRED",
+  "gsc_tick_ns": 2,
+  "core_sample_ticks": 4,
+  "sample_period_ns": 8,
+  "core_clock_hz": 125000000,
+  "sample_time_vs_available_time_separate": true,
+  "phase_origin": "lock cascaded decimation phase at startup; expose profile/phase ID",
+  "rx_pl_fir": {
+    "equivalent_taps": 167,
+    "group_delay_ns": 166,
+    "group_delay_ticks": 83,
+    "history_span_ns": 332,
+    "phase_in_input_samples": 0
+  },
+  "tx_pl_fir": {
+    "equivalent_taps_at500M": 167,
+    "group_delay_ns": 166,
+    "response_span_ns": 332,
+    "normal_zero_samples_min_at125M": 42
+  },
+  "measured_latency_cycles": {
+    "rfdc_rx": null,
+    "rx_fir_pipeline": null,
+    "ram_read_A": null,
+    "ram_read_B": "MEASURE_GENERATED_BMG_READ_LATENCY_B",
+    "rxcal": null,
+    "fractional_delay": "REMOVED_FROM_ACTIVE_PATH",
+    "target_operator": null,
+    "txcal": null,
+    "tx_fir_pipeline": null,
+    "rfdc_tx": null
+  },
+  "timing_gate": "A-port replay read_start = target output reference - measured causal pipeline - reference_index*4 ticks; too-early/late/off-grid reject; Fine/DMA do not gate accepted replay",
+  "aux_history_rule": "PL42 minimum plus analogsettling and RFDC/history/actual pipeline; keep source sequence during invalid interval",
+  "tail_rule": "FD63 62-sample flush removed. RXCAL/target/TXCAL/TX FIR/RFDC/analog tails remain and must be remeasured; PL TX minimum42 zero input samples remains.",
+  "events": [
+    "RAM_READ_DONE",
+    "TX_PIPELINE_DONE",
+    "RF_DONE",
+    "BLOCKED",
+    "INTERRUPTED",
+    "TRUNCATED"
+  ],
+  "2ns_note": "timestamp granularity only, not clock edge positioning or measured uncertainty",
+  "programmable_delay_step_ticks": 4,
+  "fractional_waveform_delay_supported": false,
+  "alignment_policy": "strict exact: target/reference/fixed latency must map to executable 4-tick core grid; off-grid rejected, never rounded later"
+}

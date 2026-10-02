@@ -20,9 +20,9 @@ class CaptureRecordSystemTests(unittest.TestCase):
    (temp/'headers.hex').write_text('\n'.join(frame[:128][::-1].hex() for frame in frames))
    expected=b''.join(frames)
    (temp/'expected.hex').write_text('\n'.join(f'{byte:02x}' for byte in expected))
-   sources=['rtl/generated/calibrator_contract_pkg.sv','rtl/control/cdc_mailbox.sv',
+   sources=['rtl/generated/calibrator_contract_pkg.sv','rtl/generated/crc32c_parallel_pkg.sv','rtl/control/cdc_mailbox.sv',
     'rtl/capture/capture_bank_manager.sv','rtl/capture/capture_ram.sv','rtl/capture/capture_bank_array.sv',
-    'rtl/capture/frozen_record_reader.sv','rtl/capture/record_formatter.sv','rtl/capture/record_dma_bridge.sv',
+    'rtl/capture/b_port_reader_128.sv','rtl/capture/dma_payload_packer.sv','rtl/capture/record_formatter_128.sv','rtl/capture/record_dma_bridge.sv',
     'rtl/data/axis_record_fifo.sv','rtl/data/record_upload_path.sv','rtl/data/record_descriptor_arbiter.sv',
     'rtl/data/record_upload_groups.sv','rtl/capture/capture_record_system.sv','tb/system/tb_capture_record_system.sv']
    run=subprocess.run(['C:/iverilog/bin/iverilog.exe','-g2012','-s','tb_capture_record_system','-o',str(temp/'sim'),

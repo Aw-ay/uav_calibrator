@@ -133,5 +133,6 @@
     "commit": "atomic accept route_commit && safe_boundary && !in_valid; otherwise pulse commit_rejected and keep active config; accepted pulse commit_ack; no deferred pending write",
     "latency": "one registered stage",
     "integration": "each lane feeds TXCAL with in_valid=lane_valid[i]; gating is essential to prevent TX DC insertion into disabled lanes; physical mapping and RF safety external"
-  }
+  },
+  "v06_active_override": "Historical FD profile numbers below are standalone legacy arithmetic evidence only. Active replay is RXCAL -> Target; see replay_processing_chain.json. No active FD coefficient/profile/flush dependency."
 }

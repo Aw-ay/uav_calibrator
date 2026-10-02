@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "module": "aux_record_admission",
+  "clock": "RF 125 MHz",
+  "input_protocol": "ready/valid completed descriptor; request_ready means adapter slot is available, not that descriptor fields are valid. Invalid consumed descriptors pulse rejected and increment a saturating counter.",
+  "ownership": "Require bound, local bank 0..3, PENDING and not FROZEN, exact live owner_epoch/generation/capture_id/start_seq. OWNER_LOST status is rejected. No statistics, publish, discard, RAW ACK or replay lease is issued.",
+  "length": "Use live bank sample_count, require 1<=actual<=requested<=16384. If actual differs or bank truncated is set, preserve actual length and set TRUNCATED.",
+  "id_policy": "Allocate once for each valid consumed descriptor. 32-bit IDs start at 1 and never reset on source switch, epoch changes, bank reset, cancel or block. MAX_METADATA_ID defaults to UINT32_MAX; final ID accepted then exhausted until cold/session reset. Zero maximum disables allocation.",
+  "reset_policy": "rst is cold/session reset only. Before restarting IDs, downstream must invalidate/drain old records and establish a new acquisition session/time epoch; this module has no persistent storage. Never wire bank soft reset to rst.",
+  "capacity": "capacity_available is prospective capacity, not a reserved credit. Upstream admission controller must reserve the single slot or remain blocked until its earlier window completes. Current module is not yet wired into the instrument trigger path.",
+  "output": "Atomic paired header and 96-byte sidecar via the existing encoder. Ownership is checked on acceptance; held output remains immutable across owner changes and requires downstream revalidation before RAW read/publish."
+}

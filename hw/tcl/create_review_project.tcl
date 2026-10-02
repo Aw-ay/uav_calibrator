@@ -21,6 +21,9 @@ foreach name {capture_ram_probe dma_probe rfdc_probe} {
 add_files -fileset constrs_1 -norecurse [file join $root hw constraints board_pending.xdc]
 set_property top calibrator_instrument_core [get_filesets sources_1]
 set_property top tb_calibrator_instrument_core [get_filesets sim_1]
+foreach legacy {fractional_delay.sv fractional_delay_pipelined.sv fractional_delay_profile.sv fractional_delay_coeff_rom.sv frozen_record_reader.sv record_formatter.sv} {
+ foreach f [get_files -quiet */$legacy] {set_property USED_IN_SYNTHESIS false $f}
+}
 update_compile_order -fileset sources_1
 update_compile_order -fileset sim_1
 puts "REVIEW_PROJECT_CREATED TOP=[get_property TOP [get_filesets sources_1]]"

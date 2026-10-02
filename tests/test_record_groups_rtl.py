@@ -13,7 +13,7 @@ class RecordGroupsTests(unittest.TestCase):
    (temp/'headers.hex').write_text('\n'.join(f[:128][::-1].hex() for f in frames))
    expected=b''.join(frames)
    (temp/'expected.hex').write_text('\n'.join(f'{v:02x}' for v in expected))
-   sources=['rtl/generated/calibrator_contract_pkg.sv','rtl/control/cdc_mailbox.sv','rtl/capture/frozen_record_reader.sv','rtl/capture/record_formatter.sv','rtl/capture/record_dma_bridge.sv','rtl/data/axis_record_fifo.sv','rtl/data/record_upload_path.sv','rtl/data/record_descriptor_arbiter.sv','rtl/data/record_upload_groups.sv','tb/system/tb_record_upload_groups.sv']
+   sources=['rtl/generated/calibrator_contract_pkg.sv','rtl/generated/crc32c_parallel_pkg.sv','rtl/control/cdc_mailbox.sv','rtl/capture/b_port_reader_128.sv','rtl/capture/dma_payload_packer.sv','rtl/capture/record_formatter_128.sv','rtl/capture/record_dma_bridge.sv','rtl/data/axis_record_fifo.sv','rtl/data/record_upload_path.sv','rtl/data/record_descriptor_arbiter.sv','rtl/data/record_upload_groups.sv','tb/system/tb_record_upload_groups.sv']
    run=subprocess.run(['C:/iverilog/bin/iverilog.exe','-g2012','-s','tb_record_upload_groups','-o',str(temp/'sim'),*[str(ROOT/s) for s in sources]],capture_output=True,text=True)
    self.assertEqual(run.returncode,0,run.stdout+run.stderr)
    run=subprocess.run(['C:/iverilog/bin/vvp.exe',str(temp/'sim'),f'+ROOT={temp.as_posix()}',f'+BYTES={len(expected)}'],capture_output=True,text=True)

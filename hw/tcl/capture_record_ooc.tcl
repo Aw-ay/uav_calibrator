@@ -4,7 +4,7 @@ set out [file join $root reports capture_record_ooc]
 file mkdir $out
 create_project -in_memory -part xczu27dr-fsve1156-2-i
 read_ip [file join $root build ip_probe_2025_2 calibrator_ip_probe.srcs sources_1 ip capture_ram_probe capture_ram_probe.xci]
-foreach f {rtl/generated/calibrator_contract_pkg.sv rtl/control/cdc_mailbox.sv rtl/capture/capture_bank_manager.sv rtl/capture/capture_ram.sv rtl/capture/capture_bank_array.sv rtl/capture/frozen_record_reader.sv rtl/capture/record_formatter.sv rtl/capture/record_dma_bridge.sv rtl/data/axis_record_fifo.sv rtl/data/record_descriptor_arbiter.sv rtl/data/record_upload_path.sv rtl/data/record_upload_groups.sv rtl/capture/capture_record_system.sv} {
+foreach f {rtl/generated/calibrator_contract_pkg.sv rtl/generated/crc32c_parallel_pkg.sv rtl/control/cdc_mailbox.sv rtl/capture/capture_bank_manager.sv rtl/capture/capture_ram.sv rtl/capture/capture_bank_array.sv rtl/capture/b_port_reader_128.sv rtl/capture/dma_payload_packer.sv rtl/capture/record_formatter_128.sv rtl/capture/record_dma_bridge.sv rtl/data/axis_record_fifo.sv rtl/data/record_descriptor_arbiter.sv rtl/data/record_upload_path.sv rtl/data/record_upload_groups.sv rtl/capture/capture_record_system.sv} {
  read_verilog -sv [file join $root $f]
 }
 # Exercise reachable capture logic. Production default remains fail-closed zero;

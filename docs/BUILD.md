@@ -10,6 +10,8 @@ hw/ip保存三个现有probe的XCI配置，无检查点。RFDC probe仅用于接
 vivado -mode batch -source hw/tcl/create_review_project.tcl
 ```
 
+已有工程更新源码及编译顺序：`vivado -mode batch -source hw/tcl/update_review_project.tcl`。新建与更新脚本均排除退役FD及旧64位reader/formatter。
+
 该命令仅组织源码及配置，不综合或布局布线。原create_project/create_probe_ips为历史流程；probe脚本会综合RAM/DMA，不是轻量打开命令。
 
 轻量合同检查：

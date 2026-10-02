@@ -12,8 +12,11 @@
 // Shared hard rst_n requires external DMA isolation + both-domain quiescence;
 // it discards FIFO contents and is not an independent clock-domain reset protocol.
 module capture_record_system #(
- parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=0,FIFO_ADDR_W=12,STATS_PORT_ENABLED=0
-)(
+ parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=0,FIFO_ADDR_W=12,STATS_PORT_ENABLED=0,ENABLE_FINE=0
+ )(
+ input wire [15:0] analysis_pin,output wire [15:0] analysis_leased,record_leased,
+ input wire ack_analysis,input wire [3:0] ack_analysis_bank,input wire [63:0] ack_analysis_epoch,ack_analysis_generation,
+ input wire [15:0] fine_read_enable,fine_read_lease,input wire [207:0] fine_read_address,output wire [2047:0] fine_read_data,
  output wire [15:0] replay_leased,
  input wire clk_rf,clk_mem,rst_n,arm_enable,reset_request,replay_quiescent,
  input wire sample_valid,input wire [63:0] sample_seq,input wire [255:0] group_data,
@@ -118,7 +121,9 @@ module capture_record_system #(
   // Admission valid stops immediately; an already selected descriptor drains.
   assign desc_ready[g]=upload_ready[g]&&eligible;
  end endgenerate
- capture_bank_manager #(.ADDR_W(14),.PRE_SAMPLES(PRE_SAMPLES),.DETECTOR_LATENCY(DETECTOR_LATENCY)) owner(
+ capture_bank_manager #(.ADDR_W(14),.PRE_SAMPLES(PRE_SAMPLES),.DETECTOR_LATENCY(DETECTOR_LATENCY),.ENABLE_FINE(ENABLE_FINE)) owner(
+  .analysis_pin(analysis_pin),.analysis_leased(analysis_leased),.record_leased(record_leased),
+  .ack_analysis(ack_analysis),.ack_analysis_bank(ack_analysis_bank),.ack_analysis_epoch(ack_analysis_epoch),.ack_analysis_generation(ack_analysis_generation),
   .clk(clk_rf),.rst(rf_rst),.arm_enable(arm_enable),.reset_request(reset_request),
   .readers_quiescent(idle_rf&&replay_quiescent),.quiesce(quiesce),
   .sample_valid(sample_valid),.sample_seq(sample_seq),
@@ -135,12 +140,19 @@ module capture_record_system #(
   .rejected_returns(rejected_returns),.dropped_triggers(dropped_triggers),.primary_admitted(primary_admitted),.aux_admitted(aux_admitted));
  // Owner write_enable already suppresses writes during reset. Keep frozen A/B
  // reads alive until their consumers report quiescence; do not gate by quiesce.
+ assign fine_read_data=record_data;
+ wire [15:0] b_enable=record_enable|(ENABLE_FINE?fine_read_enable:16'd0);
+ wire [15:0] b_lease=record_lease|(ENABLE_FINE?fine_read_lease:16'd0);
+ wire [207:0] b_address;
+ for(genvar f=0;f<16;f=f+1)begin
+  assign b_address[f*13+:13]=(ENABLE_FINE&&fine_read_lease[f])?fine_read_address[f*13+:13]:record_address[f*13+:13];
+ end
  capture_bank_array #(.ADDR_W(14)) storage(
   .clk_rf(clk_rf),.clk_mem(clk_mem),.quiesce_rf(!rst_n),.quiesce_mem(!rst_n),
   .group_data(group_data),.write_enable(write_enable),.write_address(sample_seq[13:0]),
-  .frozen_rf(frozen|(STATS_PORT_ENABLED?pending:16'd0)),.frozen_mem(record_lease),
+  .frozen_rf(frozen|(STATS_PORT_ENABLED?pending:16'd0)),.frozen_mem(b_lease),
   .replay_enable(a_enable),.replay_address(a_address),.replay_data(a_data),.replay_valid(a_valid),
-  .record_enable(record_enable),.record_address(record_address),.record_data(record_data),.record_valid());
+  .record_enable(b_enable),.record_address(b_address),.record_data(record_data),.record_valid());
  record_upload_groups #(.FIFO_ADDR_W(FIFO_ADDR_W)) upload(
   .clk_rf(clk_rf),.clk_mem(clk_mem),.rst_n(rst_n),
   .desc_valid(upload_valid),.desc_ready(upload_ready),.desc_headers(headers),.desc_starts(starts),.desc_counts(counts),

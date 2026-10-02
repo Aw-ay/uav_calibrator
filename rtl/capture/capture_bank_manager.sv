@@ -3,9 +3,11 @@
 // eop_stop is absolute exclusive end INCLUDING post samples. Sequence wrap at u64
 // rollover requires a quiesced epoch restart. One record and one replay lease/bank.
 module capture_bank_manager #(
- parameter integer ADDR_W=14, PRE_SAMPLES=250, DETECTOR_LATENCY=0
+ parameter integer ADDR_W=14, PRE_SAMPLES=250, DETECTOR_LATENCY=0, ENABLE_FINE=0
 )(
- output wire [15:0] replay_leased,
+ output wire [15:0] replay_leased,record_leased,analysis_leased,
+ input wire [15:0] analysis_pin,input wire ack_analysis,input wire [3:0] ack_analysis_bank,
+ input wire [63:0] ack_analysis_epoch,ack_analysis_generation,
  input wire clk,rst,arm_enable,reset_request,readers_quiescent,output wire quiesce,
  input wire sample_valid,input wire [63:0] sample_seq,
  input wire primary_trigger,input wire [63:0] primary_onset,primary_pulse_id,
@@ -27,10 +29,10 @@ module capture_bank_manager #(
  localparam [2:0] ARMING=0,ARMED=1,CAPTURE=2,PENDING=3,FROZEN=4;
  reg [2:0] state[0:15];reg [63:0] starts[0:15],gens[0:15],pulses[0:15],lasts[0:15],stops[0:15];
  reg [ADDR_W:0] history[0:15],counts[0:15];
- reg [15:0] stop_known,stats_done,record_ref,replay_ref;
- assign replay_leased=replay_ref;
+ reg [15:0] stop_known,stats_done,record_ref,replay_ref,analysis_ref;
+ assign replay_leased=replay_ref;assign record_leased=record_ref;assign analysis_leased=analysis_ref;
  reg resetting,reset_seen;
- integer i,g,b,pick[0:3],reject_delta;reg eligible;reg [1:0] refs;
+ integer i,g,b,pick[0:3],reject_delta;reg eligible;reg [2:0] refs;
  reg [63:0] onset_temp,start_temp,stop_temp;reg stop_now;
  assign quiesce=resetting|reset_request|rst;
  genvar n;generate for(n=0;n<16;n=n+1) begin: descriptors
@@ -53,13 +55,13 @@ module capture_bank_manager #(
  primary_admitted<=0;aux_admitted<=0;
  if(rst) begin
  owner_epoch<=0;resetting<=0;reset_seen<=0;rejected_returns<=0;dropped_triggers<=0;
- stop_known<=0;stats_done<=0;record_ref<=0;replay_ref<=0;truncated<=0;qualified<=0;
+ stop_known<=0;stats_done<=0;record_ref<=0;replay_ref<=0;analysis_ref<=0;truncated<=0;qualified<=0;
  for(i=0;i<16;i=i+1) begin state[i]<=ARMING;history[i]<=0;counts[i]<=0;starts[i]<=0;gens[i]<=0;pulses[i]<=0;lasts[i]<=0;stops[i]<=0;end
  end else if((reset_request && !reset_seen) || resetting) begin
  reset_seen<=reset_request;
  resetting<=1;
  if(readers_quiescent) begin
- resetting<=0;owner_epoch<=owner_epoch+1;stop_known<=0;stats_done<=0;record_ref<=0;replay_ref<=0;truncated<=0;qualified<=0;
+ resetting<=0;owner_epoch<=owner_epoch+1;stop_known<=0;stats_done<=0;record_ref<=0;replay_ref<=0;analysis_ref<=0;truncated<=0;qualified<=0;
  for(i=0;i<16;i=i+1) begin state[i]<=ARMING;history[i]<=0;counts[i]<=0;end
  end
  // A held request still suppresses RAM writes after drain; do not build history.
@@ -98,13 +100,14 @@ module capture_bank_manager #(
  stats_done[i]<=1;qualified[i]<=stats_good[i]&&!truncated[i];
  end
  if(state[i]==PENDING && stats_done[i] && discard_pending[i]) begin
- state[i]<=ARMING;history[i]<=0;stats_done[i]<=0;qualified[i]<=0;
+ if(ENABLE_FINE&&analysis_pin[i])begin state[i]<=FROZEN;analysis_ref[i]<=1;record_ref[i]<=0;replay_ref[i]<=0;end
+ else begin state[i]<=ARMING;history[i]<=0;stats_done[i]<=0;qualified[i]<=0;end
  end
  if(state[i]==PENDING && stats_done[i] && publish[i] && !discard_pending[i]) begin
  // Pins are installed on the transition that makes the descriptor visible.
- record_ref[i]<=1;replay_ref[i]<=replay_pin[i]&&qualified[i];state[i]<=FROZEN;
+ record_ref[i]<=1;analysis_ref[i]<=ENABLE_FINE&&analysis_pin[i];replay_ref[i]<=replay_pin[i]&&qualified[i];state[i]<=FROZEN;
  end
- refs={replay_ref[i],record_ref[i]};
+ refs={analysis_ref[i],replay_ref[i],record_ref[i]};
  if(ack_record && ack_record_bank==i) begin
  if(state[i]==FROZEN && record_ref[i] && ack_record_epoch==owner_epoch && ack_record_generation==gens[i]) refs[0]=0;
  else reject_delta=reject_delta+1;
@@ -113,8 +116,12 @@ module capture_bank_manager #(
  if(state[i]==FROZEN && replay_ref[i] && ack_replay_epoch==owner_epoch && ack_replay_generation==gens[i]) refs[1]=0;
  else reject_delta=reject_delta+1;
  end
+ if(ENABLE_FINE && ack_analysis && ack_analysis_bank==i) begin
+ if(state[i]==FROZEN && analysis_ref[i] && ack_analysis_epoch==owner_epoch && ack_analysis_generation==gens[i]) refs[2]=0;
+ else reject_delta=reject_delta+1;
+ end
  if(state[i]==FROZEN) begin
- record_ref[i]<=refs[0];replay_ref[i]<=refs[1];
+ analysis_ref[i]<=refs[2];record_ref[i]<=refs[0];replay_ref[i]<=refs[1];
  if(refs==0) begin state[i]<=ARMING;history[i]<=0;stats_done[i]<=0;qualified[i]<=0;end
  end
  end

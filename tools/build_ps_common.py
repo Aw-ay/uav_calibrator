@@ -21,7 +21,8 @@ def run(args):
         raise RuntimeError(result.stdout + result.stderr)
     return result.stdout
 
-sources = [ROOT/'sw/common/frame_decode.c', ROOT/'sw/common/dma_slots.c', ROOT/'sw/common/event_control.c', ROOT/'sw/common/calibration_table.c', ROOT/'sw/common/command_control.c', ROOT/'sw/common/waveform_control.c', ROOT/'sw/common/pdw_control.c', ROOT/'sw/common/source_event_control.c', ROOT/'sw/common/rf_fault_control.c', ROOT/'sw/common/fault_event_decode.c', ROOT/'sw/common/unified_event_reader.c', ROOT/'sw/common/tx_lifecycle_decode.c', ROOT/'sw/common/replay_identity_decode.c']
+sources = [ROOT/'sw/common/frame_decode.c', ROOT/'sw/common/dma_slots.c', ROOT/'sw/common/event_control.c', ROOT/'sw/common/calibration_table.c', ROOT/'sw/common/command_control.c', ROOT/'sw/common/waveform_control.c', ROOT/'sw/common/pdw_control.c', ROOT/'sw/common/source_event_control.c', ROOT/'sw/common/rf_fault_control.c', ROOT/'sw/common/fault_event_decode.c', ROOT/'sw/common/unified_event_reader.c', ROOT/'sw/common/tx_lifecycle_decode.c', ROOT/'sw/common/replay_identity_decode.c', ROOT/'sw/common/aux_metadata_decode.c']
+sources += [ROOT/'sw/common/fine_control.c',ROOT/'sw/common/capture_budget.c',ROOT/'sw/common/digital_capture_control.c']
 status = 'FAIL'
 try:
     run([BIN/'aarch64-none-elf-gcc.exe', '--version'])
@@ -38,7 +39,10 @@ try:
     library = OUT/'libcalibrator_receive.a'
     run([BIN/'aarch64-none-elf-ar.exe', 'rcs', library, *objects])
     symbols = run([BIN/'aarch64-none-elf-nm.exe', '-g', '--defined-only', library])
-    for symbol in ['cal_replay_identity_decode','cal_tx_lifecycle_decode','cal_unified_event_init','cal_unified_event_fetch','cal_unified_event_pop','cal_fault_event_decode','cal_rf_fault_peek_begin','cal_rf_fault_pop_begin','cal_rf_fault_decode','cal_source_event_peek_begin','cal_source_event_pop_begin','cal_source_event_decode','cal_command_irq_enable','cal_command_irq_status','cal_command_begin','cal_command_poll','cal_dds_begin','cal_awg_load_begin','cal_awg_write','cal_awg_commit','cal_awg_play','cal_awg_crc32c','cal_pdw_peek_begin','cal_pdw_pop_begin','cal_pdw_snapshot_decode']:
+    for symbol in ['cal_fine_peek_begin','cal_fine_pop_begin','cal_fine_snapshot_decode','cal_capture_budget_plan_online','cal_replay_budgeted_begin_online','cal_capture_budget_plan','cal_replay_budgeted_begin','cal_aux_capture_begin','cal_aux_meta_peek_begin','cal_aux_meta_pop_begin']:
+        if not any(line.split()[-2:] == ['T', symbol] for line in symbols.splitlines()):
+            raise RuntimeError('Missing digital capture API: ' + symbol)
+    for symbol in ['cal_aux_metadata_decode','cal_replay_identity_decode','cal_tx_lifecycle_decode','cal_unified_event_init','cal_unified_event_fetch','cal_unified_event_pop','cal_fault_event_decode','cal_rf_fault_peek_begin','cal_rf_fault_pop_begin','cal_rf_fault_decode','cal_source_event_peek_begin','cal_source_event_pop_begin','cal_source_event_decode','cal_command_irq_enable','cal_command_irq_status','cal_command_begin','cal_command_poll','cal_dds_begin','cal_awg_load_begin','cal_awg_write','cal_awg_commit','cal_awg_play','cal_awg_crc32c','cal_pdw_peek_begin','cal_pdw_pop_begin','cal_pdw_snapshot_decode']:
         if not any(line.split()[-2:] == ['T', symbol] for line in symbols.splitlines()):
             raise RuntimeError('Missing A53 archive API: ' + symbol)
     status = 'PASS'

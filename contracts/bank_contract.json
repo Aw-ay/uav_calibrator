@@ -112,5 +112,6 @@
     "sidecar_hardware_implemented": false
   },
   "numbering": "frame stream_group_id1..4; Python behavioral group_index0..3 maps +1",
-  "verification_scope": "bank_model is behavioral, not real RAM pipeline or CDC model"
+  "verification_scope": "bank_model is behavioral, not real RAM pipeline or CDC model",
+  "statistics_budget_contract": "contracts/capture_latency_budget.json"
 }

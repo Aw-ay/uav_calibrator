@@ -1,8 +1,18 @@
 // Onset snapshot -> producer ownership -> actual header generation -> RAW upload.
 // Producer errors remain explicit held records; accepting an error is not a RAW ACK.
 module calibrator_capture_system #(
- parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=1,FIFO_ADDR_W=12,PHYSICAL_MASKS_IN_TEMPLATE=0
+ parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=1,FIFO_ADDR_W=12,PHYSICAL_MASKS_IN_TEMPLATE=0,ONLINE_STATS=0,ENABLE_FINE=0
 )(
+ input wire fine_command_valid,fine_command_pop,input wire [63:0] fine_command_token,
+ output wire fine_command_ready,fine_response_valid,fine_response_ok,fine_available_rf,
+ output wire [1151:0] fine_response_data,
+ input wire [5:0] online_sample_good,input wire [13:0] onset_eop_hold,
+ input wire body_end_valid,input wire [63:0] body_end_pulse_id,body_end_owner_epoch,body_end_seq,
+ input wire aux_request_valid,aux_qualified,aux_meta_pop,
+ input wire [31:0] aux_request_count,input wire [63:0] aux_request_tx_token,aux_sample_gsc,aux_meta_pop_key,
+ input wire [127:0] aux_context,input wire [1023:0] aux_template_header,
+ output wire aux_request_ready,aux_request_accepted,aux_request_rejected,aux_meta_valid,aux_meta_pop_ok,aux_busy,
+ output wire [767:0] aux_meta_data,
  output wire pdw_valid,output wire [255:0] pdw_key,output wire [1023:0] pdw_header,output wire [511:0] pdw_stats,output wire [191:0] pdw_peaks,
  output wire [15:0] replay_leased,
  input wire clk_rf,clk_mem,rst_n,arm_enable,reset_request,replay_quiescent,
@@ -51,9 +61,23 @@ module calibrator_capture_system #(
  wire request_valid,request_ready,want_replay;
  wire [255:0] request_key,frozen_noise;wire [1023:0] config_data;wire [3071:0] headers;
  wire [5:0] bank_ids,bad_channels;wire [191:0] bank_generations;
- assign producers_idle=tracker_idle&&admission_idle;
+ wire stats_onset_ready,tracker_onset_ready,online_idle,online_valid;
+ wire [191:0] online_tops;wire [511:0] online_stats;wire [191:0] online_peaks;wire [7:0] online_error;
+ assign onset_ready=tracker_onset_ready&&stats_onset_ready;
+ assign producers_idle=tracker_idle&&admission_idle&&online_idle;
+ generate if(ONLINE_STATS)begin: online_acquisition
+  capture_online_statistics online(.clk(clk_rf),.rst(rst),.sample_valid(sample_valid),.sample_seq(sample_seq),.group_data(group_data),.sample_good(online_sample_good),
+   .onset_valid(onset_valid&&tracker_onset_ready),.onset_ready(stats_onset_ready),.onset_key({owner_epoch,onset_pulse_id}),.onset_seq(onset_seq),
+   .onset_noise(onset_noise[191:0]),.onset_eop_hold(onset_eop_hold),
+   .body_end_valid(body_end_valid),.body_end_key({body_end_owner_epoch,body_end_pulse_id}),.body_end_seq(body_end_seq),
+   .cancel_valid(producer_error_valid),.cancel_key({producer_error_key[191:128],producer_error_key[255:192]}),
+   .query_key({request_key[191:128],request_key[255:192]}),.query_valid(online_valid),.query_ready(request_valid&&request_ready),
+   .query_tops(online_tops),.query_stats(online_stats),.query_peaks(online_peaks),.query_error(online_error),.idle(online_idle));
+ end else begin: legacy_statistics
+  assign stats_onset_ready=1;assign online_idle=1;assign online_valid=0;assign online_stats=0;assign online_peaks=0;assign online_tops=0;assign online_error=0;
+ end endgenerate
  capture_producer_tracker tracker(.clk(clk_rf),.rst(rst),.block_new_work(block_new_work),
-  .onset_valid(onset_valid),.onset_ready(onset_ready),.onset_accepted(onset_accepted),.onset_rejected(onset_rejected),
+  .onset_valid(onset_valid&&stats_onset_ready),.onset_ready(tracker_onset_ready),.onset_accepted(onset_accepted),.onset_rejected(onset_rejected),
   .onset_seq(onset_seq),.onset_gsc(onset_gsc),.onset_pulse_id(onset_pulse_id),.config_version(config_version),
   .onset_config(onset_config),.onset_metadata(onset_metadata),.onset_noise(onset_noise),.onset_bad_channels(onset_bad_channels),
   .onset_want_replay(onset_want_replay),.request_want_replay(producer_want_replay),
@@ -71,5 +95,5 @@ module calibrator_capture_system #(
   .in_onset_seq(producer_onset_seq),.in_onset_gsc(producer_onset_gsc),.in_want_replay(producer_want_replay),
   .out_valid(request_valid),.out_ready(request_ready),.out_key(request_key),.out_noise(frozen_noise),.out_config(config_data),.out_headers(headers),
   .out_bank_ids(bank_ids),.out_bad_channels(bad_channels),.out_generations(bank_generations),.out_want_replay(want_replay),.header_error(header_error),.idle(admission_idle));
- calibrator_capture_pipeline #(.PRE_SAMPLES(PRE_SAMPLES),.DETECTOR_LATENCY(DETECTOR_LATENCY),.FIFO_ADDR_W(FIFO_ADDR_W)) backend(.*);
+ calibrator_capture_pipeline #(.PRE_SAMPLES(PRE_SAMPLES),.DETECTOR_LATENCY(DETECTOR_LATENCY),.FIFO_ADDR_W(FIFO_ADDR_W),.PHYSICAL_MASKS_IN_TEMPLATE(PHYSICAL_MASKS_IN_TEMPLATE),.ONLINE_STATS(ONLINE_STATS),.ENABLE_FINE(ENABLE_FINE)) backend(.*);
 endmodule

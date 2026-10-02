@@ -1,0 +1,65 @@
+{
+  "schema_version": "0.6",
+  "status": "V0_6_CHANGESET_PROPOSED_NOT_IMPLEMENTED",
+  "default_mode": "SELECTED_HV",
+  "modes": [
+    "SELECTED_HV",
+    "PRIMARY_ALL_DIAGNOSTIC",
+    "ALL8_SNAPSHOT",
+    "AUX_ONLY"
+  ],
+  "primary": "Always capture all3 ranges; all3 receive Fine jobs; normal RAW DMA still uploads only selected H/V, diagnostic mode may upload all3",
+  "aux": "independent quota and round-robin eligible record; never silently drop approved master timing to service AUX",
+  "arbiter": "whole-record nonpreemptive round-robin with reserved safety/event channels; source held until final beat handshake",
+  "default_unselected_release": "after Fine analysis_ref completes/cancels and no diagnostic/replay/upload refs remain; no immediate rearm merely because range was unselected",
+  "dma": {
+    "clock_hz": 200000000,
+    "axis_bits": 128,
+    "ideal_Bps": 3200000000,
+    "sg": true,
+    "mm2s": false,
+    "cyclic_mode": false,
+    "slot_bytes": 262144,
+    "slots": 512,
+    "pool_bytes": 134217728,
+    "max_actual_record_bytes": 131216,
+    "descriptor_alignment_bytes": 64,
+    "buffer_alignment_bytes": 64,
+    "sustainable_Bps_measured": null,
+    "simulation_example_Bps": 2400000000,
+    "ownership": "FREE -> DRIVER_OWNED -> DMA_ACTIVE -> COMPLETE -> USER_OWNED -> FREE; tail advances only to fully prepared free descriptors",
+    "length": "driver/BD actual length and header/trailer agree; slot allocation length is not actual record length",
+    "b_reader": "128-bit natural-word pipelined reader; target one word/clk_mem; READ_LATENCY_B measured",
+    "fine_dma_parallelism": "different physical banks may Fine and DMA concurrently; same bank mutually exclusive; jobs nonpreemptive"
+  },
+  "fifo": {
+    "depth_beats": 4096,
+    "width_bits": 128,
+    "clock_hz": 200000000,
+    "payload_bytes": 65536,
+    "packet_mode": false,
+    "note": "AXIS FIFO cushions DMA/DDR stalls only; B prefetch FIFO is separate 8-16 word reader-local storage"
+  },
+  "queue_admission": "validate capture samples<=16384 AND record_bytes<=slot_bytes; frozen readiness at window completion, not pulse onset",
+  "loss": "Finite bursts only under assumed service; no continuous all8 4GB/s promise. DDR storage average must meet retained rate.",
+  "bandwidth_example": {
+    "window_us": 126,
+    "prf_hz": 3300,
+    "record_bytes_per_hv": 126144,
+    "selected_hv_Bps": 416275200,
+    "all8_Bps": 1665100800,
+    "is_assumption_not_board_result": true
+  },
+  "fine": {
+    "engine_count": 1,
+    "clock_hz": 200000000,
+    "primary_ranges": "HIGH/MID/LOW all Fine",
+    "hv": "independent edge/power/spectral paths within one engine",
+    "ram_passes_normal": 1,
+    "raw_window_unchanged": true,
+    "result": "independent 128-byte Fine PDW sidecar",
+    "max_full_range_read_us": 40.96,
+    "three_range_read_us": 122.88,
+    "ideal_prf_3300_read_duty": 0.4055
+  }
+}

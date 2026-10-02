@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "scope": "Fine digital acceptance in current working tree; not board acceptance or all v0.6 tasks",
+  "delivery": "docs/v06_fine_integration.md",
+  "evidence": "reports/v06_fine_delivery.json",
+  "matrix": [
+    {
+      "package_id": "V38",
+      "name": "Independent coarse/Fine queues",
+      "status": "PASS_DIGITAL_DEFINED_TESTS",
+      "tests": [
+        "tests/test_calibrator_instrument_core.py",
+        "tests/test_fine_result_transport.py",
+        "tests/test_fine_control.py"
+      ]
+    },
+    {
+      "package_id": "V42",
+      "name": "Three Fine ranges, selected RAW",
+      "status": "PASS_DIGITAL_DEFINED_TESTS",
+      "tests": [
+        "tests/test_calibrator_instrument_core.py",
+        "tests/test_fine_bank_service.py"
+      ]
+    },
+    {
+      "package_id": "V69",
+      "name": "Natural masks and chronological IQ",
+      "status": "PASS_DIGITAL_DEFINED_TESTS",
+      "tests": [
+        "tests/test_b_port_reader_128.py",
+        "tests/test_fine_engine.py"
+      ]
+    },
+    {
+      "package_id": "V70",
+      "name": "Independent H/V priors and half-power",
+      "status": "PASS_DIGITAL_DEFINED_TESTS",
+      "tests": [
+        "tests/test_receive_online_statistics.py",
+        "tests/test_fine_engine.py",
+        "tests/test_calibrator_instrument_core.py"
+      ]
+    },
+    {
+      "package_id": "V71",
+      "name": "Crossing/fitting/fusion and invalid quality",
+      "status": "PASS_DIGITAL_DEFINED_TESTS",
+      "tests": [
+        "tests/test_fine_edge_solver.py",
+        "tests/test_fine_engine.py"
+      ]
+    },
+    {
+      "package_id": "V72",
+      "name": "One natural RAM pass",
+      "status": "PASS_DIGITAL_DEFINED_TESTS",
+      "tests": [
+        "tests/test_fine_engine.py",
+        "tests/test_fine_bank_service.py"
+      ]
+    },
+    {
+      "package_id": "V73",
+      "name": "CW signed/zero, up/down chirp, HV phase",
+      "status": "PASS_DIGITAL_DEFINED_TESTS",
+      "tests": [
+        "tests/test_fine_reference.py",
+        "tests/test_fine_fixed.py",
+        "tests/test_fine_finalize.py",
+        "tests/test_fine_engine.py"
+      ]
+    },
+    {
+      "package_id": "V74",
+      "name": "Defined 3.3kHz full-depth workload",
+      "status": "PASS_DIGITAL_DEFINED_TESTS",
+      "tests": [
+        "tests/test_fine_sustained.py"
+      ]
+    },
+    {
+      "package_id": "V75",
+      "name": "Different-bank Fine and DMA",
+      "status": "PASS_DIGITAL_DEFINED_TESTS",
+      "tests": [
+        "tests/test_fine_sustained.py"
+      ]
+    },
+    {
+      "package_id": "V76",
+      "name": "Same-bank A replay and B Fine",
+      "status": "PASS_DIGITAL_DEFINED_TESTS",
+      "tests": [
+        "tests/test_fine_sustained.py"
+      ]
+    },
+    {
+      "package_id": "V77",
+      "name": "Six return orders and stale/duplicate identity",
+      "status": "PASS_DIGITAL_DEFINED_TESTS",
+      "tests": [
+        "tests/test_fine_bank_ownership.py",
+        "tests/test_fine_bank_service.py"
+      ]
+    },
+    {
+      "package_id": "V81",
+      "name": "Accepted replay start/data isolated from Fine/DMA",
+      "status": "PASS_DIGITAL_DEFINED_TESTS",
+      "tests": [
+        "tests/test_fine_replay_isolation.py"
+      ]
+    }
+  ],
+  "tool_scope": "Python independent float/integer reference and Icarus RTL; complete31-case engine also Vivado2025.2 XSim; C host tests and Cortex-A53 compile. No MATLAB execution or hardware acceptance claimed.",
+  "V74_scope": "12 pulses x3 ranges x16384 samples, analytic waveform and timely RAW return, measured50101/60606 mem cycles; arbitrary ringing/DMA stalls not guaranteed3.3kHz.",
+  "V81_scope": "Actual instrument paired baseline Fine dispatch suppressed/DMA zero versus active Fine/random DMA stalls; exact actual_start_gsc and93 RAW IQ/GSC beats. Other replay timing tests remain in regression.",
+  "V82_scope": "Fine48DSP/200MHz module remains verified at2ca0959. Active FD exit and updated complete core verification are tracked by docs/v06_replay_no_fd.md and reports/v06_no_fd_delivery.json; no post-route or board closure."
+}

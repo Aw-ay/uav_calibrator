@@ -1,0 +1,633 @@
+{
+  "status": "V0_6_CHANGESET_PROPOSED_NOT_IMPLEMENTED",
+  "modules": [
+    {
+      "name": "rfadc_stream_adapter",
+      "group": "frontend",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "八路独立ADC的native到canonical适配；每路500MS/s复数；按真实tile/stream映射，不把I/Q或lane误当物理ADC。",
+      "acceptance": "单调递增I/Q独立序列逐lane、逐H/V、逐量程无误；不能将word数当复样点数。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/frontend/rfadc_stream_adapter.sv"
+    },
+    {
+      "name": "native_overload_monitor",
+      "group": "frontend",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "抽取前4lane过载/near-clip聚合，结合RFDC过阈值事件并按时间归属脉冲。",
+      "acceptance": "在两次抽取保留样点之间注入一次过载，记录必须保留；未知ADC硬过载不能用DDC幅度无过载替代。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/frontend/native_overload_monitor.sv"
+    },
+    {
+      "name": "channel_epoch_aligner",
+      "group": "frontend",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "八路序号/时间/MTS检查。共同时钟失效使全组invalid；AUX源切换或单独失效仅标AUX，不能暂停六路测量。",
+      "acceptance": "ADC3/7源切换期间ADC0/1/2/4/5/6样点编号连续；共享clock失效正确更新epoch。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/frontend/channel_epoch_aligner.sv"
+    },
+    {
+      "name": "rx_decim4_wrapper",
+      "group": "frontend",
+      "implementation": "RTL_WRAPPER_AMD_IP",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "四组HB19 D2 + FIR75 D2，全程clk_rf125MHz，4->2->1复SPC；独立8路I/Q历史，无跨频率gearbox。",
+      "acceptance": "所选FIR定点golden、145参考差异、全部八路连续性和OOC资源/时序；不得凭系数响应测试声称硬件通过。",
+      "uses_ip": [
+        "FIR_COMPILER"
+      ],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/frontend/rx_decim4_wrapper.sv"
+    },
+    {
+      "name": "fixed_round_sat",
+      "group": "arithmetic",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "显式有符号缩放、convergent舍入、饱和与粘滞溢出。",
+      "acceptance": "正负边界、tie-to-even、负数符号扩展与模型一致。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/arithmetic/fixed_round_sat.sv"
+    },
+    {
+      "name": "global_sample_time",
+      "group": "time",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf",
+        "clk_ctrl"
+      ],
+      "scope": "BASE",
+      "responsibility": "64bit GSC以500MHz刻度记账，clk_rf125MHz每拍加4；四lane为base+[0..3]；epoch/PPS快照和跨域原子读取。",
+      "acceptance": "不随DMAready停顿；64bit读不撕裂；PPS精度标记与2ns单位分开。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/time/global_sample_time.sv"
+    },
+    {
+      "name": "pulse_detector",
+      "group": "capture",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "功率域噪声与门控阈值、滞回、EOP保持、最大脉宽、RX状态有效性。",
+      "acceptance": "脉冲跨block/跨bank、低SNR、长尾与未检测区不伪造。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/capture/pulse_detector.sv"
+    },
+    {
+      "name": "range_qualifier",
+      "group": "capture",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "H/V三档在线峰值、能量、过载、档间线性一致性及条件SNR统计。",
+      "acceptance": "common前端压缩不可观测时报告疑似/不确定；不读取仿真真值；EOP输出带valid。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/capture/range_qualifier.sv"
+    },
+    {
+      "name": "range_selector_eop",
+      "group": "capture",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "在三档最后写入和资格流水完成后按已校准实际增益顺序选整脉冲共同H/V；全无效INVALID；normal只发布所选组，诊断保留策略独立。",
+      "acceptance": "后沿过载被计入，绝不无条件降到LOW；一个脉冲不换档。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/capture/range_selector_eop.sv"
+    },
+    {
+      "name": "pulse_context_latch",
+      "group": "capture",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "冻结pulse_id、bank_generation、窗口、系数版本、时钟epoch与命令版本。",
+      "acceptance": "已排队脉冲不被新配置改写；输出descriptor与实际payload一致。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/capture/pulse_context_latch.sv"
+    },
+    {
+      "name": "capture_bank_manager",
+      "group": "capture",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf",
+        "clk_mem"
+      ],
+      "scope": "BASE",
+      "responsibility": "Four groups x four rotating banks; three independent refs analysis/upload/replay; all primary ranges may remain frozen for Fine; rearm only after refs and in-flight accesses clear.",
+      "acceptance": "all six consumer completion orders, stale generation tokens, Fine/DMA/replay concurrency, reset drain; no overwrite before all refs zero.",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/capture/capture_bank_manager.sv"
+    },
+    {
+      "name": "capture_bank_ram",
+      "group": "capture",
+      "implementation": "RTL_WRAPPER_AMD_IP",
+      "clocks": [
+        "clk_rf",
+        "clk_mem"
+      ],
+      "scope": "BASE",
+      "responsibility": "Mixed-width TDP per bank: A capture/replay only, B Fine or DMA read; independent physical B ports across 16 banks.",
+      "acceptance": "actual generated BMG latency characterized; natural {odd,even} B word; concurrent A/B frozen read and different-bank B reads.",
+      "uses_ip": [
+        "BLOCK_MEMORY_GENERATOR"
+      ],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/capture/capture_bank_ram.sv"
+    },
+    {
+      "name": "capture_pdw_writer",
+      "group": "capture",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "基础ToA/PW/peak/energy/flags与EOP事件；只称CAPTURE_PDW。",
+      "acceptance": "无需等待host精分析；UNKNOWN或invalid字段有标志。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/capture/capture_pdw_writer.sv"
+    },
+    {
+      "name": "event_mailbox",
+      "group": "control",
+      "implementation": "RTL_WRAPPER_AMD_IP",
+      "clocks": [
+        "clk_rf",
+        "clk_mem",
+        "clk_ctrl"
+      ],
+      "scope": "BASE",
+      "responsibility": "多个生产域各用CDC FIFO，汇入ctrl域事件队列；快照16个32bit字后显式POP。",
+      "acceptance": "IRQ为水位/故障电平；重复读不误POP；溢出计数；不丢高优先级fault。",
+      "uses_ip": [
+        "XPM_FIFO_ASYNC"
+      ],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/control/event_mailbox.sv"
+    },
+    {
+      "name": "b_port_reader_128",
+      "group": "data",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_mem"
+      ],
+      "scope": "BASE",
+      "responsibility": "Full-width 128-bit pipelined B reader with measured RAM latency, in-flight credit and prefetch; outputs natural words and validity mask.",
+      "acceptance": "steady one word/clk_mem when ready; odd start/count/wrap masks; randomized stalls; no fixed request/response/64-bit serialization bubbles.",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/data/b_port_reader_128.sv"
+    },
+    {
+      "name": "iq_frame_formatter",
+      "group": "data",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_mem"
+      ],
+      "scope": "BASE",
+      "responsibility": "128-bit native RAW formatter: fixed128B header, compact payload, optional16B trailer; accepts payload data/keep directly.",
+      "acceptance": "no internal 64->128 repack bottleneck; odd payload/trailer ABI, CRC and backpressure byte-exact.",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/data/iq_frame_formatter.sv"
+    },
+    {
+      "name": "crc32c_stream",
+      "group": "data",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_mem"
+      ],
+      "scope": "RECOMMENDED",
+      "responsibility": "可选流式payload CRC32C；结果放尾部，不能在header中假装提前已知。",
+      "acceptance": "已知向量、非整拍TKEEP和背压一致；关闭时CRC_UNAVAILABLE标志。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/data/crc32c_stream.sv"
+    },
+    {
+      "name": "replay_descriptor_queue",
+      "group": "replay",
+      "implementation": "RTL_WRAPPER_AMD_IP",
+      "clocks": [
+        "clk_rf",
+        "clk_ctrl"
+      ],
+      "scope": "BASE",
+      "responsibility": "固定容量目标命令/脉冲回放队列，保留时间、所需数据和系数版本。",
+      "acceptance": "队满明确拒绝；没有host回传依赖；不能改变已接受时刻。",
+      "uses_ip": [
+        "XPM_FIFO_SYNC"
+      ],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/replay/replay_descriptor_queue.sv"
+    },
+    {
+      "name": "replay_legality_checker",
+      "group": "replay",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "检查data_ready、guard、计划RX/TX占用、RF状态和存储/读端口资源。拒绝source_role=RF_LOOPBACK/settling/unknown的回放，防止自激。",
+      "acceptance": "delay>PRI按时隙而不是一概拒绝；未知雷达时序不承诺未来无冲突。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/replay/replay_legality_checker.sv"
+    },
+    {
+      "name": "replay_reader_scheduler",
+      "group": "replay",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "用GSC绝对时间预取选中档A口数据，统一扣固定实现延迟；欠载中止并记日志。",
+      "acceptance": "从冻结A口预取，目标输出时刻反推读时刻；考虑pretrigger位置和latency，too-late拒绝；RAM_READ_DONE/TX_PIPELINE_DONE/RF_DONE独立。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/replay/replay_reader_scheduler.sv"
+    },
+    {
+      "name": "rx_cal_executor",
+      "group": "arithmetic",
+      "implementation": "CUSTOM_RTL_OR_IP_WRAPPER",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "FULL_A",
+      "responsibility": "本机接收逆校准；初版复增益/公共整数时延，扩展2x2与因果FIR。",
+      "acceptance": "不双补FIR群延迟；不能实时实施无预延迟的负延迟。",
+      "uses_ip": [
+        "COMPLEX_MULTIPLIER",
+        "FIR_COMPILER"
+      ],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/arithmetic/rx_cal_executor.sv"
+    },
+    {
+      "name": "fractional_delay",
+      "group": "arithmetic",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "REMOVED_V0_6_ACTIVE_PATH",
+      "responsibility": "Historical waveform fractional-delay block; not instantiated by v0.6 active DRFM.",
+      "acceptance": "nonzero replay fraction rejected before RAM read; active source list contains no FD63 instance/flush/profile dependency.",
+      "uses_ip": [],
+      "status": "REMOVED_FROM_ACTIVE_PATH",
+      "proposed_file": "rtl/arithmetic/fractional_delay.sv"
+    },
+    {
+      "name": "target_complex_operator",
+      "group": "arithmetic",
+      "implementation": "CUSTOM_RTL_OR_IP_WRAPPER",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "FULL_A",
+      "responsibility": "目标复增益、2x2极化与Doppler混频；累加位增长和输出限幅。",
+      "acceptance": "目标模型与本机校准分开；相位政策防止两程Doppler重复补偿。",
+      "uses_ip": [
+        "COMPLEX_MULTIPLIER",
+        "DDS_COMPILER"
+      ],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/arithmetic/target_complex_operator.sv"
+    },
+    {
+      "name": "dds_burst_control",
+      "group": "source",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "GSC起始、PW/PRI/count、包络、相位策略与LFM调谐字递推。",
+      "acceptance": "脉间相参按定义；配置不在半个pulse内改变。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/source/dds_burst_control.sv"
+    },
+    {
+      "name": "dds_nco_wrapper",
+      "group": "source",
+      "implementation": "RTL_WRAPPER_AMD_IP",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "48bit相位候选、16bit sin/cos，streaming PINC支持chirp；valid与包络同步。",
+      "acceptance": "相位/频率方向及延迟对齐；不能把RFDC载频NCO当全部基带发生器。",
+      "uses_ip": [
+        "DDS_COMPILER"
+      ],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/source/dds_nco_wrapper.sv"
+    },
+    {
+      "name": "awg_reader",
+      "group": "source",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf",
+        "clk_ctrl"
+      ],
+      "scope": "BASE",
+      "responsibility": "读本地冻结H/V IQ表，PS只写inactive bank；CRC与提交后生效。",
+      "acceptance": "输出不直接受PS DDR背压；不接受半表更新。",
+      "uses_ip": [
+        "BLOCK_MEMORY_GENERATOR",
+        "AXI_BRAM_CONTROLLER"
+      ],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/source/awg_reader.sv"
+    },
+    {
+      "name": "tx_source_mux",
+      "group": "source",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "MUTE/LIVE/DRFM/DDS/AWG选择及边界原子切换。",
+      "acceptance": "全部模式走共用TX校准；单天线OTA禁用LIVE。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/source/tx_source_mux.sv"
+    },
+    {
+      "name": "tx_cal_executor",
+      "group": "arithmetic",
+      "implementation": "CUSTOM_RTL_OR_IP_WRAPPER",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "FULL_A",
+      "responsibility": "TX源MUX后、通道路由后按每DAC独立执行本机预补偿；八路基础复增益，矩阵/宽带多抽头另预算；所有源同一校准策略。",
+      "acceptance": "校准表过期/无效不声称精密模式；DDS与DRFM相同参考面。",
+      "uses_ip": [
+        "COMPLEX_MULTIPLIER",
+        "FIR_COMPILER"
+      ],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/arithmetic/tx_cal_executor.sv"
+    },
+    {
+      "name": "tx_interp4_wrapper",
+      "group": "backend",
+      "implementation": "RTL_WRAPPER_AMD_IP",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "八条复数TX FIR：FIR75 L2后HB19 L2，125->250->500MS/s，1->2->4复SPC，全部clk_rf125MHz；增益与尾部显式。",
+      "acceptance": "输入常值输出增益正确；插值滤波尾与RFguard一致。",
+      "uses_ip": [
+        "FIR_COMPILER"
+      ],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/backend/tx_interp4_wrapper.sv"
+    },
+    {
+      "name": "rfdac_stream_adapter",
+      "group": "backend",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "规范4复样点转换为具体RFDC DAC I/Q interleaved；持续安全零值。",
+      "acceptance": "ready后每拍供数；TVALID不被用作静音；欠载/未初始化不输出随机RAM。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/backend/rfdac_stream_adapter.sv"
+    },
+    {
+      "name": "tx_reference_analyzer",
+      "group": "monitor",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "独立AUX_MID两路的TX耦合测量或冗余资格判断；全程采样，与主测量同时运行；默认不能作DRFM信号源。",
+      "acceptance": "PA后耦合链需独立校准；采样时间归属实际TX事件。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/monitor/tx_reference_analyzer.sv"
+    },
+    {
+      "name": "rf_safety_interlock",
+      "group": "control",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf",
+        "clk_ctrl"
+      ],
+      "scope": "BASE",
+      "responsibility": "RX/TURNAROUND/TX/RECOVERY/SAFE，PA/T-R/限幅保护先后次序；硬故障锁存。",
+      "acceptance": "Linux卡死/超时/PLL失锁均进入安全；时钟完全消失依靠额外物理关断条件。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/control/rf_safety_interlock.sv"
+    },
+    {
+      "name": "config_shadow_commit",
+      "group": "control",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_ctrl",
+        "clk_rf"
+      ],
+      "scope": "BASE",
+      "responsibility": "AXI-Lite shadow、commit/ack、安全边界与系数版本pin；只允许inactive写。",
+      "acceptance": "AXI AW/W独立到达，WSTRB正确；64bit/矩阵不撕裂；忙时明确拒绝。",
+      "uses_ip": [
+        "XPM_CDC_HANDSHAKE"
+      ],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/control/config_shadow_commit.sv"
+    },
+    {
+      "name": "fault_status_registers",
+      "group": "control",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_ctrl",
+        "clk_rf",
+        "clk_mem"
+      ],
+      "scope": "BASE",
+      "responsibility": "W1C故障、饱和/丢帧计数、能力位、时延表、构建ID、DMA状态。",
+      "acceptance": "W1C与新事件同拍保留新事件；计数跨域使用快照。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/control/fault_status_registers.sv"
+    },
+    {
+      "name": "coeff_reload_bridge",
+      "group": "control",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_ctrl",
+        "clk_rf"
+      ],
+      "scope": "FULL_A",
+      "responsibility": "PS装载inactive系数RAM并在安全边界按AMD reload/config协议提交。",
+      "acceptance": "不能改写仍被旧回放descriptor引用的coeff；错误CRC/长度不激活。",
+      "uses_ip": [
+        "FIR_COMPILER",
+        "XPM_FIFO_ASYNC"
+      ],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/control/coeff_reload_bridge.sv"
+    },
+    {
+      "name": "fine_measurement_engine",
+      "group": "analysis",
+      "implementation": "CUSTOM_RTL_OR_IP",
+      "clocks": [
+        "clk_mem"
+      ],
+      "scope": "BASE_V06",
+      "responsibility": "One shared 200MHz Fine engine. H/V independent half-power edges and body statistics; HIGH/MID/LOW all analyzed; one B-RAM pass plus local delay buffer.",
+      "acceptance": "V70-V74; no A-port access; Fine does not crop RAW or gate accepted replay.",
+      "uses_ip": [
+        "CORDIC"
+      ],
+      "status": "DESIGN_TARGET",
+      "proposed_file": "rtl/analysis/fine_measurement_engine.sv"
+    },
+    {
+      "name": "aux_source_controller",
+      "group": "control",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf",
+        "clk_ctrl"
+      ],
+      "scope": "BASE",
+      "responsibility": "只切换ADC3/7独立模拟输入；MID量程不变；保留ADC/DDC/FIR持续运行。",
+      "acceptance": "主六路不停止；切换settling/flush及source_epoch正确；无模拟硬件时不虚报成功。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/control/aux_source_controller.sv"
+    },
+    {
+      "name": "tx_channel_router",
+      "group": "backend",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_rf",
+        "clk_ctrl"
+      ],
+      "scope": "BASE",
+      "responsibility": "一组H/V基线源映射到8DAC路径，随后各DAC独立TXCAL和FIR；闲置通道持续零；不是8套任意源或DRFM。",
+      "acceptance": "每DAC源ID、增益/校准和静音状态可追溯，联锁不得绕过。",
+      "uses_ip": [],
+      "status": "DESIGN_ONLY",
+      "proposed_file": "rtl/backend/tx_channel_router.sv"
+    },
+    {
+      "name": "b_port_access_fabric",
+      "group": "data",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_mem"
+      ],
+      "scope": "BASE_V06",
+      "responsibility": "Route Fine/DMA reader requests to independent physical bank B ports; same bank single owner, different bank concurrency.",
+      "acceptance": "Fine(bankX)||DMA(bankY) works for X!=Y; same-bank conflict cannot issue dual addresses; reset drain safe.",
+      "uses_ip": [],
+      "status": "DESIGN_TARGET",
+      "proposed_file": "rtl/data/b_port_access_fabric.sv"
+    },
+    {
+      "name": "dma_payload_packer",
+      "group": "data",
+      "implementation": "CUSTOM_RTL",
+      "clocks": [
+        "clk_mem"
+      ],
+      "scope": "BASE_V06",
+      "responsibility": "Compact natural B-word lane masks into logical contiguous RAW payload only on DMA branch.",
+      "acceptance": "all odd/even start/count/wrap cases byte exact at one 128b beat/clk steady-state.",
+      "uses_ip": [],
+      "status": "DESIGN_TARGET",
+      "proposed_file": "rtl/data/dma_payload_packer.sv"
+    },
+    {
+      "name": "fine_result_queue",
+      "group": "analysis",
+      "implementation": "CUSTOM_RTL_CDC",
+      "clocks": [
+        "clk_mem",
+        "clk_ctrl"
+      ],
+      "scope": "BASE_V06",
+      "responsibility": "Queue immutable 128-byte Fine PDW sidecars for PS PEEK/POP; overflow counted and never backpressures acquisition/replay.",
+      "acceptance": "token semantics, CDC, repeated peek, bad pop, overflow and reset tests.",
+      "uses_ip": [
+        "XPM_FIFO_ASYNC"
+      ],
+      "status": "DESIGN_TARGET",
+      "proposed_file": "rtl/analysis/fine_result_queue.sv"
+    }
+  ],
+  "removed_modules": [
+    {
+      "name": "sample_rate_gearbox",
+      "reason": "125/250MHz boundary eliminated; native word-layout adapter remains"
+    }
+  ]
+}

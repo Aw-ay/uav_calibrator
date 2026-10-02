@@ -55,12 +55,16 @@ module tb_calibrator_dataplane_system #(parameter CANCEL_ONLY=0);
    raw_count=raw_count+1;
   end
   if(check_replay&&out_valid)begin
-   expected_replay=(dsp_count>=31&&dsp_count<38)?{16'hffff,16'(16382+dsp_count-31),16'd1,16'(16381+dsp_count-31)}:64'd0;
+   expected_replay={16'hffff,16'(16382+dsp_count),16'd1,16'(16381+dsp_count)};
    if(!out_qualified||out_hv!==expected_replay)$fatal(1,"shared RAM DSP result %0d %h %h",dsp_count,out_hv,expected_replay);
    dsp_count=dsp_count+1;
   end
  end
  calibrator_dataplane_system #(.PRE_SAMPLES(3),.DETECTOR_LATENCY(1),.FIFO_ADDR_W(2),.AWG_DEPTH(128)) dut(
+ .fine_command_valid(1'b0),.fine_command_pop(1'b0),.fine_command_token(64'd0),.fine_command_ready(),.fine_response_valid(),.fine_response_ok(),.fine_available_rf(),.fine_response_data(),
+
+ .online_sample_good(6'h3f),.onset_eop_hold(14'd125),.body_end_valid(1'b0),.body_end_pulse_id(64'd0),.body_end_owner_epoch(64'd0),.body_end_seq(64'd0),
+ .aux_request_valid(1'b0),.aux_qualified(1'b0),.aux_meta_pop(1'b0),.aux_request_count(32'd0),.aux_request_tx_token(64'd0),.aux_sample_gsc(64'd0),.aux_meta_pop_key(64'd0),.aux_context(128'd0),.aux_template_header(1024'd0),
  .replay_leased(leased),
  .clk_rf(rf),
  .clk_mem(mem),
@@ -157,7 +161,7 @@ module tb_calibrator_dataplane_system #(parameter CANCEL_ONLY=0);
  .r_clock_ok(1'b1),
  .r_latency_validated(1'b1),
  .r_fractional_supported('0),
- .r_downstream_latency_ticks(64'd168),
+ .r_downstream_latency_ticks(64'd12),
  .r_rejected_valid(rejected),
  .r_rejected_task(),
  .r_reject_reason(),
@@ -376,7 +380,7 @@ module tb_calibrator_dataplane_system #(parameter CANCEL_ONLY=0);
   submit_valid=1;tick();submit_valid=0;if(!submit_ok)$fatal(1,"replay enqueue");check_replay=1;
   wait(dsp_done||rejected);if(rejected)$fatal(1,"real owner replay rejected %0d",dut.r_reject_reason);
   repeat(4)tick();check_replay=0;
-  if(raw_count!=7||dsp_count!=69||frozen!=0||leased!=0||rejected_tokens!=0)$fatal(1,"shared RAM replay drain raw=%0d dsp=%0d frozen=%h",raw_count,dsp_count,frozen);
+  if(raw_count!=7||dsp_count!=7||frozen!=0||leased!=0||rejected_tokens!=0)$fatal(1,"shared RAM replay drain raw=%0d dsp=%0d frozen=%h",raw_count,dsp_count,frozen);
   repeat(65)tick();if(!saw_tx_sample||!saw_dac_output)$fatal(1,"replay did not traverse TXCAL and interpolation");
   binding_valid=0;#1;if(dac_data!=0)$fatal(1,"binding loss must zero DAC");
   reset_request=1;

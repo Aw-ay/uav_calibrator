@@ -10,3 +10,11 @@ def render():
     return '\n'.join(lines+['endpackage',''])
 if __name__=='__main__':
     (ROOT/'rtl/replay/replay_control_layout_pkg.sv').write_text(render())
+    task=json.loads((ROOT/'contracts/replay_contract.json').read_text())['replay_task']
+    (ROOT/'sw/common/include/replay_task_layout.h').write_text('\n'.join([
+        '/* Generated task byte offsets. */','#ifndef CAL_REPLAY_TASK_LAYOUT_H','#define CAL_REPLAY_TASK_LAYOUT_H',
+        f"#define CAL_REPLAY_TASK_BYTES {task['size_bytes']}u"]+
+        [f"#define CAL_REPLAY_{f['name'].upper()}_OFFSET {f['offset_bytes']}u" for f in task['fields']]+['#endif','']))
+    (ROOT/'sw/matlab/replay_task_layout.m').write_text('\n'.join([
+        'function x = replay_task_layout()','% Generated zero-based byte offsets.',f"x.bytes = {task['size_bytes']};"]+
+        [f"x.{f['name']} = {f['offset_bytes']};" for f in task['fields']]+['end','']))

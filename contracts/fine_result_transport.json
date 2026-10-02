@@ -1,0 +1,46 @@
+{
+  "schema_version": 2,
+  "status": "INTEGRATED_COMMAND_GATEWAY_EXTENSION",
+  "queue_depth": 64,
+  "producer_clock": "clk_mem",
+  "consumer_clock": "ctrl/RF command path via safe CDC",
+  "commands": {
+    "CMD_FINE_PDW_PEEK": {
+      "opcode": 25,
+      "input_words": 0,
+      "result_words": 36,
+      "layout": "u32 count, u32 dropped, u64 token, 128-byte Fine PDW"
+    },
+    "CMD_FINE_PDW_POP": {
+      "opcode": 26,
+      "input_words": 2,
+      "input": "u64 token",
+      "success": "pop only exact current head token"
+    }
+  },
+  "irq": {
+    "name": "FINE_PDW_AVAILABLE",
+    "bit": 5,
+    "mask_hex": "0x20",
+    "semantics": "queue nonempty level after CDC; masked IRQ never clears queue"
+  },
+  "overflow": "drop Fine sidecar and saturating/monotonic dropped count; never backpressure capture, RAW DMA or accepted replay",
+  "compatibility_gate": "Local revision2 preserves AUX22/23/24, assigns Fine25/26 and IRQ5. tests/test_v06_contracts.py rejects actual opcode/IRQ conflicts.",
+  "compatibility_resolution": {
+    "package_revision": 1,
+    "package_opcodes": [
+      22,
+      23
+    ],
+    "local_reserved_opcodes": {
+      "AUX_CAPTURE": 22,
+      "AUX_META_PEEK": 23,
+      "AUX_META_POP": 24
+    },
+    "reason": "Local stage27 AUX predates this migration but postdates package GitHub base.",
+    "implementation_status": "CONNECTED_PEEK25_POP26_IRQ5"
+  },
+  "failure_accounting": "An engine failure returns the exact analysis lease, emits no corrupt sidecar, and increments dropped. A simultaneous queue overflow and analysis failure counts two losses, saturating at u32 maximum.",
+  "reset": "Capture soft RESET drains analysis ownership and preserves queued Fine results/tokens; shared cold reset flushes the queue and restarts tokens at1.",
+  "identity": "Monotonic nonzero u64 queue token, independent of RAW identity; after UINT64_MAX no token reuse until cold reset."
+}

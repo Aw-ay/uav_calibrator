@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "status": "V0_6_PLANNED_COMMAND_GATEWAY_EXTENSION",
+  "queue_depth": 64,
+  "producer_clock": "clk_mem",
+  "consumer_clock": "ctrl/RF command path via safe CDC",
+  "commands": {
+    "CMD_FINE_PDW_PEEK": {
+      "opcode": 22,
+      "input_words": 0,
+      "result_words": 36,
+      "layout": "u32 count, u32 dropped, u64 token, 128-byte Fine PDW"
+    },
+    "CMD_FINE_PDW_POP": {
+      "opcode": 23,
+      "input_words": 2,
+      "input": "u64 token",
+      "success": "pop only exact current head token"
+    }
+  },
+  "irq": {
+    "name": "FINE_PDW_AVAILABLE",
+    "bit": 5,
+    "mask_hex": "0x20",
+    "semantics": "queue nonempty level after CDC; masked IRQ never clears queue"
+  },
+  "overflow": "drop Fine sidecar and saturating/monotonic dropped count; never backpressure capture, RAW DMA or accepted replay",
+  "compatibility_gate": "implementation must re-check opcodes22/23 and IRQ bit5 remain unused in actual branch before code generation; any conflict requires contract version update, not silent renumbering"
+}

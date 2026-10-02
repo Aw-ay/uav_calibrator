@@ -1,0 +1,322 @@
+{
+  "status": "ABI5_RETAINED_V0_6_FINE_SIDECAR_SEPARATE",
+  "byte_order": "little",
+  "header_bytes": 128,
+  "header": [
+    {
+      "name": "magic",
+      "type": "u32",
+      "offset_bytes": 0,
+      "size_bytes": 4,
+      "meaning": "0x43414C31"
+    },
+    {
+      "name": "schema_version",
+      "type": "u16",
+      "offset_bytes": 4,
+      "size_bytes": 2,
+      "meaning": "5; reject v2/v3 unless explicit legacy decoder is selected"
+    },
+    {
+      "name": "header_bytes",
+      "type": "u16",
+      "offset_bytes": 6,
+      "size_bytes": 2,
+      "meaning": "128"
+    },
+    {
+      "name": "record_bytes",
+      "type": "u32",
+      "offset_bytes": 8,
+      "size_bytes": 4,
+      "meaning": "header+payload+optional trailer"
+    },
+    {
+      "name": "payload_bytes",
+      "type": "u32",
+      "offset_bytes": 12,
+      "size_bytes": 4,
+      "meaning": "sample_count*8"
+    },
+    {
+      "name": "pulse_id",
+      "type": "u64",
+      "offset_bytes": 16,
+      "size_bytes": 8,
+      "meaning": "capture_id monotonic within stream_group and epoch; primary diagnostic subframes can share pulse_id; AUX associations via metadata_id/tx_event_id"
+    },
+    {
+      "name": "record_sequence",
+      "type": "u64",
+      "offset_bytes": 24,
+      "size_bytes": 8,
+      "meaning": "monotonic uploaded subframe number"
+    },
+    {
+      "name": "epoch_id",
+      "type": "u32",
+      "offset_bytes": 32,
+      "size_bytes": 4,
+      "meaning": "changes on time-base invalidation"
+    },
+    {
+      "name": "config_id",
+      "type": "u32",
+      "offset_bytes": 36,
+      "size_bytes": 4,
+      "meaning": "latched at pulse start"
+    },
+    {
+      "name": "gsc_first",
+      "type": "u64",
+      "offset_bytes": 40,
+      "size_bytes": 8,
+      "meaning": "physical sample grid after one declared latency correction; available_time is separate"
+    },
+    {
+      "name": "fraction_ticks_q16",
+      "type": "i32",
+      "offset_bytes": 48,
+      "size_bytes": 4,
+      "meaning": "signed fractional GSC tick; does not imply accuracy"
+    },
+    {
+      "name": "sample_stride_ticks",
+      "type": "u32",
+      "offset_bytes": 52,
+      "size_bytes": 4,
+      "meaning": "4 in125MS/s baseline"
+    },
+    {
+      "name": "sample_rate_num",
+      "type": "u32",
+      "offset_bytes": 56,
+      "size_bytes": 4,
+      "meaning": "125000000"
+    },
+    {
+      "name": "sample_rate_den",
+      "type": "u32",
+      "offset_bytes": 60,
+      "size_bytes": 4,
+      "meaning": "1"
+    },
+    {
+      "name": "sample_count",
+      "type": "u32",
+      "offset_bytes": 64,
+      "size_bytes": 4,
+      "meaning": "1..16384; count storage at least15bits"
+    },
+    {
+      "name": "quality_flags",
+      "type": "u32",
+      "offset_bytes": 68,
+      "size_bytes": 4,
+      "meaning": "overload/loss/calibration/CRC/ref-plane"
+    },
+    {
+      "name": "range_id",
+      "type": "u8",
+      "offset_bytes": 72,
+      "size_bytes": 1,
+      "meaning": "0 invalid,1HIGH,2MID,3LOW; AUX also2MID; source/group distinguish it"
+    },
+    {
+      "name": "channel_mask",
+      "type": "u8",
+      "offset_bytes": 73,
+      "size_bytes": 1,
+      "meaning": "H/V bits"
+    },
+    {
+      "name": "format_id",
+      "type": "u16",
+      "offset_bytes": 74,
+      "size_bytes": 2,
+      "meaning": "HV_I16_Q16_LE / PL_FILTERED_RAW"
+    },
+    {
+      "name": "scale_id",
+      "type": "u32",
+      "offset_bytes": 76,
+      "size_bytes": 4,
+      "meaning": "code scale database reference"
+    },
+    {
+      "name": "rx_cal_id",
+      "type": "u32",
+      "offset_bytes": 80,
+      "size_bytes": 4,
+      "meaning": "0 if RAW not applied; active candidate linked in sidecar"
+    },
+    {
+      "name": "tx_cal_id",
+      "type": "u32",
+      "offset_bytes": 84,
+      "size_bytes": 4,
+      "meaning": "event association; no implication RX corrected"
+    },
+    {
+      "name": "fir_id",
+      "type": "u32",
+      "offset_bytes": 88,
+      "size_bytes": 4,
+      "meaning": "quantized coefficients+scale+latency version"
+    },
+    {
+      "name": "metadata_id",
+      "type": "u32",
+      "offset_bytes": 92,
+      "size_bytes": 4,
+      "meaning": "join to navigation and source configuration"
+    },
+    {
+      "name": "rf_center_hz",
+      "type": "u64",
+      "offset_bytes": 96,
+      "size_bytes": 8,
+      "meaning": "configured RF centre"
+    },
+    {
+      "name": "nco_frequency_hz",
+      "type": "i64",
+      "offset_bytes": 104,
+      "size_bytes": 8,
+      "meaning": "configured signed mixer value"
+    },
+    {
+      "name": "header_crc32c",
+      "type": "u32",
+      "offset_bytes": 112,
+      "size_bytes": 4,
+      "meaning": "optional; CRC disabled explicitly flagged"
+    },
+    {
+      "name": "stream_group_id",
+      "type": "u8",
+      "offset_bytes": 116,
+      "size_bytes": 1,
+      "meaning": "1HIGH,2MID,3LOW,4AUX_MID"
+    },
+    {
+      "name": "physical_adc_mask",
+      "type": "u8",
+      "offset_bytes": 117,
+      "size_bytes": 1,
+      "meaning": "HIGH0x11 MID0x22 LOW0x44 AUX0x88"
+    },
+    {
+      "name": "source_role",
+      "type": "u8",
+      "offset_bytes": 118,
+      "size_bytes": 1,
+      "meaning": "0safe/unknown,1external_measurement,2external_redundant,3RF_loopback"
+    },
+    {
+      "name": "source_flags",
+      "type": "u8",
+      "offset_bytes": 119,
+      "size_bytes": 1,
+      "meaning": "bit0settling,bit1cal_invalid,bit2discontinuity,bit3not_replayable"
+    },
+    {
+      "name": "source_epoch",
+      "type": "u32",
+      "offset_bytes": 120,
+      "size_bytes": 4,
+      "meaning": "changes on input source switch; independent of global sample clock epoch"
+    },
+    {
+      "name": "reserved",
+      "type": "bytes",
+      "offset_bytes": 124,
+      "size_bytes": 4,
+      "meaning": "zero"
+    }
+  ],
+  "payload": {
+    "layout_per_sample": [
+      "H_I_i16",
+      "H_Q_i16",
+      "V_I_i16",
+      "V_Q_i16"
+    ],
+    "bytes_per_sample": 8,
+    "reference_plane": "PL_FILTERED_RAW",
+    "max_samples": 16384
+  },
+  "trailer": {
+    "optional": true,
+    "bytes": 16,
+    "fields": [
+      "u32 trailer_magic",
+      "u32 payload_crc32c",
+      "u32 payload_bytes_confirmed",
+      "u32 reserved"
+    ],
+    "crc_polynomial": "CRC-32C, reflected 0x82F63B78, init/xorout 0xFFFFFFFF",
+    "note": "header flag controls presence; CRC computed during readout and appended, never needs a pre-read scan",
+    "magic_hex": "0x43524331",
+    "reserved_rule": "must transmit0"
+  },
+  "max_record_bytes_without_trailer": 131200,
+  "max_record_bytes_with_trailer": 131216,
+  "dma_slot_bytes_proposed": 262144,
+  "snapshot_vs_host_fine_pdw": "RAW header remains capture record ABI5; v0.6 FPGA Fine PDW is a separate 128-byte sidecar joined by pulse_id/owner_epoch/generation/range_id and does not crop RAW payload",
+  "stream_groups": {
+    "1": {
+      "name": "HIGH_HV",
+      "physical_adc_mask": 17
+    },
+    "2": {
+      "name": "MID_HV",
+      "physical_adc_mask": 34
+    },
+    "3": {
+      "name": "LOW_HV",
+      "physical_adc_mask": 68
+    },
+    "4": {
+      "name": "AUX_MID_HV",
+      "physical_adc_mask": 136
+    }
+  },
+  "association": "Primary groups may sharepulse_id; AUX loopback has independentcapture_id and tx_event_id sidecar; never pretend separate TX/RX windows were simultaneous",
+  "sampling_vs_transport": "All eight always sample/filter; retained frames subject to finitebanks and DMA bandwidth; losses explicit",
+  "abi_version": 5,
+  "axis_packing": {
+    "data_bits": 128,
+    "keep_bits": 16,
+    "byte_order": "little",
+    "record_tlast": "last actual byte of header+IQ+optional trailer, never IQ payload-end when trailer follows",
+    "odd_iq_with_trailer": "byte-pack continuously: last8 IQ bytes + first8 trailer bytes; final8 trailer bytes TKEEP0x00ff TLAST1",
+    "padding": "no undocumented padding; unused last-beat bytes zero and excluded from record_bytes/CRC",
+    "backpressure": "TDATA/TKEEP/TLAST/TVALID stable; arbiter locks entire record until final accepted beat"
+  },
+  "header_crc_rule": "When enabled, CRC32C over128 header bytes with offset112..115 set to0; bit1 indicates disabled. CRC trailer covers IQ payload only.",
+  "quality_flag_bits": {
+    "0": "INVALID",
+    "1": "CRC_DISABLED",
+    "2": "HAS_CRC_TRAILER",
+    "3": "ADC_OVER_RANGE",
+    "4": "NATIVE_NEAR_CLIP",
+    "5": "FIR_ARITH_SAT",
+    "6": "IQ16_SAT",
+    "7": "SAMPLE_GAP",
+    "8": "SOURCE_SETTLING",
+    "9": "TRUNCATED",
+    "10": "CAL_UNQUALIFIED",
+    "11": "LINEARITY_UNKNOWN",
+    "12": "TIME_INVALID",
+    "13": "HISTORY_INCOMPLETE"
+  },
+  "raw_quality_policy": "RAW contains IQ only; per-window invalid flags required. Optional sidecar quality intervals must be named by metadata_id; do not imply per-sample flags are in64bit payload.",
+  "source_role_values": {
+    "0": "SAFE_UNKNOWN",
+    "1": "EXTERNAL_MEASUREMENT",
+    "2": "EXTERNAL_REDUNDANT",
+    "3": "RF_LOOPBACK"
+  },
+  "b_port_read_note": "odd logical start handled internally by natural B word + valid mask; DMA packer restores compact logical sample bytes; frame payload format unchanged"
+}

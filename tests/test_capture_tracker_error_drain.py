@@ -13,8 +13,8 @@ def vectors():
 
 if __name__=='__main__':
     directory=vectors()
-    sources=['rtl/generated/calibrator_contract_pkg.sv','rtl/control/cdc_mailbox.sv']
-    sources += ['rtl/capture/'+n+'.sv' for n in ['capture_bank_manager','capture_ram','capture_bank_array','frozen_record_reader','record_formatter','record_dma_bridge','capture_record_system','pulse_context_join','pulse_context_pool','noise_window_energy','range_linearity','capture_range_select','range_qualification','pulse_qualification_engine','qualification_bank_commit','qualification_publish_bridge','qualification_record_source','capture_reset_coordinator','capture_statistics_reader','calibrator_capture_pipeline','frame_header_builder','capture_admission_bridge','capture_producer_tracker','calibrator_capture_system']]
+    sources=['rtl/generated/calibrator_contract_pkg.sv','rtl/generated/crc32c_parallel_pkg.sv','rtl/generated/aux_metadata_pkg.sv','rtl/capture/aux_window_tracker.sv','rtl/capture/aux_record_metadata.sv','rtl/capture/aux_record_admission.sv','rtl/capture/aux_capture_path.sv','rtl/control/cdc_mailbox.sv']
+    sources += ['rtl/capture/'+n+'.sv' for n in ['capture_bank_manager','capture_ram','capture_bank_array','b_port_reader_128','dma_payload_packer','record_formatter_128','record_dma_bridge','capture_record_system','pulse_context_join','pulse_context_pool','noise_window_energy','range_linearity','capture_range_select','range_qualification','pulse_qualification_engine','qualification_bank_commit','qualification_publish_bridge','qualification_record_source','capture_reset_coordinator','capture_statistics_reader','calibrator_capture_pipeline','frame_header_builder','capture_admission_bridge','capture_producer_tracker','calibrator_capture_system']]
     sources += ['rtl/data/'+n+'.sv' for n in ['axis_record_fifo','record_upload_path','record_descriptor_arbiter','record_upload_groups']]
     sources += ['tb/system/tb_capture_tracker_error_drain.sv']
     with tempfile.TemporaryDirectory() as temp:

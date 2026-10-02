@@ -1,0 +1,19 @@
+{
+  "status": "STANDALONE_DIGITAL_MODULE_NOT_INSTRUMENT_INTEGRATED",
+  "clock": "clk_rf 125MHz; all inputs already synchronized",
+  "rtl": "rtl/frontend/aux_receive_guard.sv",
+  "profile": "HB19_FIR75_D4_L4_CLK125",
+  "minimum_flush_samples": 58,
+  "flush_bound": "ceil(((19-1)+2*(75-1))/4) + 15 registered pipeline clocks + one boundary clock. Must revalidate after RX architecture changes.",
+  "flush_start": "after trusted source ACK and board-specified settling interval; count frontend sample_valid ticks",
+  "source_role": {"disabled": 0, "external_mid": 2, "tx_loopback": 3},
+  "switch_control_codes": {"disabled": 0, "external_mid": 1, "tx_loopback": 2},
+  "ownership": "AUX source epoch independent; H/V calibration shadow IDs freeze only on an accepted switch; epoch max rejects further switches rather than wrapping. Hard reset starts a new coordinated epoch domain.",
+  "qualification": "Source qualified, exact feedback, no latched feedback loss, both calibration validity inputs, frontend sample_valid and AUX H/V sample_good. source_role is invalid0 whenever aux_valid is false.",
+  "feedback_loss": "After ACK, sampled mismatch during settling, flush or ready latches invalid until a new accepted commit and full settling/flush; ready masks immediately. Restored feedback alone cannot recover.",
+  "calibration": "IDs are references for later calibration/metadata; guard does not apply calibration arithmetic. calibration_valid is an authoritative RF-domain validity input, not a shadow load strobe.",
+  "data_time": "Pass through existing frontend H/V data, sample_seq and GSC; no ADC backpressure, FIR reset or enable change.",
+  "drop_count": "Saturating number of frontend sample_valid ticks not admitted as aux_valid; includes unbound, switching, quality and calibration invalidity. Not a dropped-record counter.",
+  "physical_bindings": "ACK, feedback, settling and timeout are logical board-adapter inputs; no GPIO or physical switch code inferred.",
+  "remaining": ["instrument top wiring", "independent AUX window/capture ownership", "TX token metadata", "PS command endpoint", "board switch and RF validation"]
+}

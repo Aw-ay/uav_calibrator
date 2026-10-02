@@ -3,6 +3,9 @@
 // remain outside this reusable core. All board evidence inputs are RF-domain.
 module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_W=12,AWG_DEPTH=16384)(
  input wire ctrl_clk,rf_clk,mem_clk,rst_n,
+ // RF-domain logical AUX binding: role32, source_epoch32, Hcal32, Vcal32.
+ // The board source guard supplies qualification; unbound must drive zero.
+ input wire aux_source_qualified,input wire [127:0] aux_context,
  // Trusted RF-domain logical sink adapter. Unbound=0 never claims consumption.
  input wire tx_sink_binding_valid,tx_sink_fence_ready,tx_sink_ack_valid,input wire [63:0] tx_sink_ack_token,
  output wire tx_sink_fence_valid,tx_sink_protocol_error,output wire [63:0] tx_sink_fence_token,
@@ -24,6 +27,14 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
  output wire run_enable,config_loaded,output wire [63:0] gsc
 );
  import instrument_control_pkg::*;
+ wire aux_request_ready,aux_request_accepted,aux_request_rejected,aux_meta_valid,aux_meta_pop_ok,aux_busy;
+ wire [767:0] aux_meta_data;reg [1023:0] aux_template;
+ always @*begin
+  aux_template=config_image[CFG_METADATA_BIT+:1024];
+  aux_template[calibrator_contract_pkg::FRAME_CONFIG_ID_OFFSET*8+:32]=config_image[CFG_CONFIG_VERSION_BIT+:32];
+  aux_template[calibrator_contract_pkg::FRAME_FIR_ID_OFFSET*8+:32]=config_image[CFG_R_CURRENT_FIR_ID_BIT+:32];
+  aux_template[calibrator_contract_pkg::FRAME_PHYSICAL_ADC_MASK_OFFSET*8+:8]=(8'b1<<logical_to_physical[9+:3])|(8'b1<<logical_to_physical[21+:3]);
+ end
  wire rst=!rst_n;
  wire cmd_valid,cmd_ready,result_valid,result_ready;
  wire [15:0] cmd_opcode,cmd_words,result_words;wire [31:0] cmd_sequence;
@@ -46,10 +57,11 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
  end
  wire [31:0] unified_event_count,unified_event_word;reg [31:0] unified_event_dropped;
  wire unified_event_latched,unified_event_latch,unified_event_pop;wire [3:0] unified_event_word_index;
- command_gateway_axi gateway(.*);
+ wire fine_command_ready,fine_response_valid,fine_response_ok,fine_available_rf;wire [1151:0] fine_response_data;
+ command_gateway_axi #(.ENABLE_FINE(1)) gateway(.*);
  wire pdw_valid;wire [255:0] pdw_key;wire [1023:0] pdw_header;wire [511:0] pdw_stats;wire [191:0] pdw_peaks;
  wire [31:0] pdw_count,pdw_dropped;wire [63:0] pdw_token;wire [511:0] pdw_data;wire pdw_pop_ok;
- qualified_pdw_queue #(.PRE_SAMPLES(PRE_SAMPLES),.ADDR_W($clog2(PDW_QUEUE_DEPTH))) pdw_queue(
+ qualified_pdw_queue #(.PRE_SAMPLES(PRE_SAMPLES),.ADDR_W($clog2(PDW_QUEUE_DEPTH)),.BODY_STATS(1)) pdw_queue(
   .clk(rf_clk),.rst(rst),.in_valid(pdw_valid),.event_key(pdw_key),.event_header(pdw_header),.event_stats(pdw_stats),.event_peaks(pdw_peaks),
   .post_samples(config_image[CFG_POST_SAMPLES_BIT+:CFG_POST_SAMPLES_WIDTH]),
   .pop_valid(action_valid&&action_opcode==instrument_control_pkg::CMD_PDW_POP),.pop_token(action_payload[63:0]),
@@ -57,7 +69,7 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
  // Independent normal EVENT buffer: legacy PEEK/POP does not consume it.
  wire [31:0] unified_normal_count,unified_normal_dropped;
  wire [63:0] unified_normal_token;wire [511:0] unified_normal_data;wire unified_normal_ready;
- qualified_pdw_queue #(.PRE_SAMPLES(PRE_SAMPLES),.ADDR_W($clog2(PDW_QUEUE_DEPTH))) unified_pdw_queue(
+ qualified_pdw_queue #(.PRE_SAMPLES(PRE_SAMPLES),.ADDR_W($clog2(PDW_QUEUE_DEPTH)),.BODY_STATS(1)) unified_pdw_queue(
   .clk(rf_clk),.rst(rst),.in_valid(pdw_valid),.event_key(pdw_key),.event_header(pdw_header),.event_stats(pdw_stats),.event_peaks(pdw_peaks),
   .post_samples(config_image[CFG_POST_SAMPLES_BIT+:CFG_POST_SAMPLES_WIDTH]),
   .pop_valid(unified_normal_ready&&unified_normal_count!=0),.pop_token(unified_normal_token),
@@ -226,9 +238,10 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
  wire candidate_valid=(cmd_payload[CONFIG_WORDS*32-1:0]&~CONFIG_MASK[CONFIG_WORDS*32-1:0])==0&&
   cmd_payload[CFG_CONFIG_VERSION_BIT+:32]!=0&&cmd_payload[CFG_DETECTOR_RANGE_BIT+:2]<3&&
   cmd_payload[CFG_ON_POWER_BIT+:33]>cmd_payload[CFG_OFF_POWER_BIT+:33]&&
+  cmd_payload[CFG_EOP_HOLD_BIT+:14]<=256&&
   cmd_payload[CFG_MAX_BODY_BIT+:14]!=0&&cmd_payload[CFG_MAX_BODY_BIT+:14]<=15000&&
   (PRE_SAMPLES+{16'd0,cmd_payload[CFG_POST_SAMPLES_BIT+:16]}+{18'd0,cmd_payload[CFG_MAX_BODY_BIT+:14]})<=16384;
- wire safe_config=source_idle&&d_idle_rf&&d_r_idle&&d_t_sources_drained&&d_frozen==0&&d_pending==0&&!d_reset_busy;
+ wire safe_config=source_idle&&d_idle_rf&&d_r_idle&&d_t_sources_drained&&d_frozen==0&&d_pending==0&&!d_reset_busy&&!aux_busy;
  wire acquisition_ready=common_clock_good&&time_valid&&((logical_good&8'h77)==8'h77);
  reg [1023:0] capture_metadata;
  always @*begin
@@ -244,6 +257,8 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
   .native_seq(native_seq),.native_gsc(gsc),.common_clock_good(common_clock_good),.mts_locked(mts_locked),.mapping_valid(mapping_valid),.logical_to_physical(logical_to_physical),
   .near_clip_threshold(config_image[CFG_NEAR_CLIP_THRESHOLD_BIT+:CFG_NEAR_CLIP_THRESHOLD_WIDTH]),.threshold_validated(config_image[CFG_THRESHOLD_VALIDATED_BIT+:CFG_THRESHOLD_VALIDATED_WIDTH]),.hard_overrange_event(hard_overrange_event),.hard_overrange_known(hard_overrange_known),
   .sample_valid(sample_valid),.sample_seq(sample_seq),.sample_gsc(sample_gsc),.group_data(group_data),.logical_good(logical_good),.logical_saturated(),.physical_good(),.physical_saturated());
+ wire body_end_valid,body_end_precise,body_end_truncated;wire [3:0] body_end_reason;
+ wire [63:0] body_end_pulse_id,body_end_owner_epoch,body_end_seq;wire [13:0] onset_eop_hold;
  receive_event_producer #(.PRE_SAMPLES(PRE_SAMPLES)) producer(.clk(rf_clk),.rst(rst),.enable(run_enable),.block_new_work(d_block_new_work),.time_valid(time_valid),
   .sample_valid(sample_valid),.sample_seq(sample_seq),.sample_gsc(sample_gsc),.group_data(group_data),.logical_good(logical_good),
   .detector_range(config_image[CFG_DETECTOR_RANGE_BIT+:CFG_DETECTOR_RANGE_WIDTH]),
@@ -294,9 +309,19 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
  // single-inflight gateway. Keep the inactive table and let PS retry in MUTE.
  wire awg_commit_blocked=(action_payload[1:0]==2)&&d_t_awg_ctrl_loaded&&
   (run_enable||(d_t_active_mode!=0)||!d_r_idle||!d_t_sources_drained||detector_active);
- calibrator_dataplane_system #(.PRE_SAMPLES(PRE_SAMPLES),.DETECTOR_LATENCY(2),.FIFO_ADDR_W(FIFO_ADDR_W),.AWG_DEPTH(AWG_DEPTH),.PHYSICAL_MASKS_IN_TEMPLATE(1)) dataplane(
+ calibrator_dataplane_system #(.PRE_SAMPLES(PRE_SAMPLES),.DETECTOR_LATENCY(2),.FIFO_ADDR_W(FIFO_ADDR_W),.AWG_DEPTH(AWG_DEPTH),.PHYSICAL_MASKS_IN_TEMPLATE(1),.ONLINE_STATS(1),.ENABLE_FINE(1)) dataplane(
+  .fine_command_valid(action_valid&&(action_opcode==instrument_control_pkg::CMD_FINE_PDW_PEEK||action_opcode==instrument_control_pkg::CMD_FINE_PDW_POP)),
+  .fine_command_pop(action_opcode==instrument_control_pkg::CMD_FINE_PDW_POP),.fine_command_token(action_payload[63:0]),
+  .fine_command_ready(fine_command_ready),.fine_response_valid(fine_response_valid),.fine_response_ok(fine_response_ok),.fine_available_rf(fine_available_rf),.fine_response_data(fine_response_data),
+  .aux_request_valid(action_valid&&action_opcode==instrument_control_pkg::CMD_AUX_CAPTURE),
+  .aux_request_count(action_payload[31:0]),.aux_request_tx_token(action_payload[95:32]),
+  .aux_qualified(aux_source_qualified&&run_enable&&time_valid&&mapping_valid&&logical_good[3]&&logical_good[7]&&aux_context[31:8]==0),
+  .aux_context(aux_context),.aux_sample_gsc(sample_gsc),.aux_template_header(aux_template),
+  .aux_meta_pop(action_valid&&action_opcode==instrument_control_pkg::CMD_AUX_META_POP),.aux_meta_pop_key(action_payload[63:0]),
+  .aux_request_ready(aux_request_ready),.aux_request_accepted(aux_request_accepted),.aux_request_rejected(aux_request_rejected),
+  .aux_meta_valid(aux_meta_valid),.aux_meta_data(aux_meta_data),.aux_meta_pop_ok(aux_meta_pop_ok),.aux_busy(aux_busy),
   .replay_leased(d_replay_leased),
-  .clk_rf(rf_clk),
+  .online_sample_good({logical_good[6:4],logical_good[2:0]}&{6{time_valid}}),.clk_rf(rf_clk),
   .clk_mem(mem_clk),
   .rst_n(rst_n),
   .arm_enable(run_enable),
@@ -316,6 +341,7 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
   .onset_metadata(onset_metadata),
   .onset_noise(onset_noise),
   .onset_bad_channels(onset_bad_channels),
+  .onset_eop_hold(onset_eop_hold),.body_end_valid(body_end_valid),.body_end_pulse_id(body_end_pulse_id),.body_end_owner_epoch(body_end_owner_epoch),.body_end_seq(body_end_seq),
   .onset_want_replay(onset_want_replay),
   .eop_event_valid(eop_event_valid),
   .eop_event_pulse_id(eop_event_pulse_id),
@@ -391,7 +417,7 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
   .r_time_valid(time_valid),
   .r_clock_ok(common_clock_good),
   .r_latency_validated(latency_validated),
-  .r_fractional_supported(1'b1),
+  .r_fractional_supported(1'b0),
   .r_downstream_latency_ticks(downstream_latency_ticks),
   .r_rejected_valid(d_r_rejected_valid),
   .r_rejected_task(d_r_rejected_task),
@@ -553,9 +579,14 @@ module calibrator_instrument_core #(parameter integer PRE_SAMPLES=250,FIFO_ADDR_
  always @*begin
   outcome_valid=0;outcome_code=0;outcome_words=0;outcome_payload=0;
   case(action_opcode)
+   CMD_FINE_PDW_PEEK:begin outcome_valid=fine_response_valid||(action_valid&&!fine_command_ready);outcome_code=action_valid&&!fine_command_ready?8'd3:8'd0;outcome_words=36;outcome_payload[1151:0]=fine_response_data;end
+   CMD_FINE_PDW_POP:begin outcome_valid=fine_response_valid||(action_valid&&!fine_command_ready);outcome_code=action_valid&&!fine_command_ready?8'd3:(fine_response_ok?8'd0:8'd4);end
    instrument_control_pkg::CMD_RESET:outcome_valid=d_reset_done;
    instrument_control_pkg::CMD_MODE:begin outcome_valid=(action_valid&&!mode_payload_ok)||d_t_mode_accepted||d_t_mode_rejected;outcome_code=!mode_payload_ok?8'd2:(d_t_mode_rejected?8'd4:8'd0);end
    instrument_control_pkg::CMD_RX_PROFILE:begin outcome_valid=d_r_profile_accepted||d_r_profile_rejected;outcome_code=d_r_profile_rejected?8'd4:8'd0;end
+   instrument_control_pkg::CMD_AUX_CAPTURE:begin outcome_valid=aux_request_accepted||aux_request_rejected;outcome_code=aux_request_rejected?8'd4:8'd0;end
+   instrument_control_pkg::CMD_AUX_META_PEEK:begin outcome_valid=action_valid;outcome_words=25;outcome_payload[31:0]={29'd0,aux_busy,aux_request_ready,aux_meta_valid};outcome_payload[799:32]=aux_meta_valid?aux_meta_data:768'd0;end
+   instrument_control_pkg::CMD_AUX_META_POP:begin outcome_valid=action_valid;outcome_code=aux_meta_pop_ok?8'd0:8'd4;end
    instrument_control_pkg::CMD_TX_PROFILE:begin outcome_valid=d_t_config_accepted||d_t_config_rejected;outcome_code=d_t_config_rejected?8'd4:8'd0;end
    instrument_control_pkg::CMD_REPLAY:begin outcome_valid=d_r_submit_accepted||d_r_submit_rejected;outcome_code=d_r_submit_rejected?8'd4:8'd0;outcome_words=1;outcome_payload[7:0]=d_r_submit_reason;end
    instrument_control_pkg::CMD_DDS:begin outcome_valid=(action_valid&&!dds_payload_ok)||d_t_dds_accepted||d_t_dds_rejected;outcome_code=!dds_payload_ok?8'd2:(d_t_dds_rejected?8'd4:8'd0);end

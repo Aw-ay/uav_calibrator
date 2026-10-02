@@ -17,6 +17,8 @@ wire [63:0] counts;
 wire [63:0] epoch;
 wire [31:0] stale,drops;wire quiesce,admit,aux_admit;
 capture_bank_manager #(.ADDR_W(3),.PRE_SAMPLES(1),.DETECTOR_LATENCY(1)) dut(
+ .analysis_pin(16'd0),.ack_analysis(1'b0),.ack_analysis_bank(4'd0),.ack_analysis_epoch(64'd0),.ack_analysis_generation(64'd0),.analysis_leased(),.record_leased(),
+
 .clk(clk),.rst(rst),.arm_enable(1'b1),.reset_request(reset_request),.readers_quiescent(readers_quiescent),.quiesce(quiesce),
 .sample_valid(sample_valid),.sample_seq(sample_seq),.primary_trigger(trig),.primary_onset(onset),.primary_pulse_id(pulse_id),
 .aux_trigger(aux_trig),.aux_onset(aux_onset),.aux_pulse_id(pulse_id),

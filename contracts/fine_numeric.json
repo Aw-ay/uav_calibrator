@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "status": "INTEGRATED_FINE_DIGITAL_CORE_MODULE_VERIFIED",
+  "reference": "tools/fine_reference.py",
+  "fixed_kernels": "tools/fine_fixed.py",
+  "half_power": "frozen noise + TOP_signal/2, TOP already net; no second subtraction",
+  "edges": {
+    "search_radius_samples": 8,
+    "pair": "rise P[k]<P50<=P[k+1]; fall P[k]>=P50>P[k+1]",
+    "selection": "first valid rise / last valid fall",
+    "local_fit": "k-3..k+4, clipped to RAW; at least4 points; root must stay in crossing bracket",
+    "variance": "two-point noise propagation; OLS uses max(power-noise variance, fit residual variance); inverse-variance fusion is a heuristic ignoring covariance",
+    "minimum_snr_linear": 4,
+    "stable_body": "ceil(rise)+4 through floor(fall)-4, inclusive"
+  },
+  "spectral": {
+    "segments": 8,
+    "binning": "frozen coarse interval into8 equal coordinate bins; exact populated pair midpoint mean for each bin",
+    "frequency_reference": "residual frequency at RAW sample index0/gsc_first; fixed RFDC NCO sign binding remains physical",
+    "chirp": "Hz/s; LS phase increment vs pair midpoint; no per-sample atan2",
+    "minimum_body_samples": 9,
+    "maximum_segment_delta_turn": 0.25,
+    "maximum_frequency_fraction_fs": 0.49,
+    "ambiguity": "invalidate excessive phase jumps; do not invent Nyquist/chirp unwrap",
+    "minimum_populated_segments": 2,
+    "coherence": "4*abs(sum complex product)^2 >= sum power(first)*sum power(second), i.e. coherence squared >=1/4; unequal H/V gains do not falsely fail"
+  },
+  "phase": {
+    "input_bits": 48,
+    "vector_bits": 48,
+    "angle_bits": 33,
+    "output": "signed turns*2^31 canonical [-2^30,2^30)",
+    "iterations": 31,
+    "normalization": "largest absolute input has highest bit44 before vectoring; arithmetic shifts",
+    "atan_table_q31": [
+      268435456,
+      158466703,
+      83729454,
+      42502378,
+      21333666,
+      10677233,
+      5339919,
+      2670123,
+      1335082,
+      667543,
+      333772,
+      166886,
+      83443,
+      41722,
+      20861,
+      10430,
+      5215,
+      2608,
+      1304,
+      652,
+      326,
+      163,
+      81,
+      41,
+      20,
+      10,
+      5,
+      3,
+      1,
+      1,
+      0
+    ],
+    "zero_vector": "invalid output with explicit error; never a valid zero phase",
+    "latency_cycles_from_accept_to_valid": 33,
+    "zero_latency_cycles": 0,
+    "verified_random_oracle_max_error_q31_lsb": 6
+  },
+  "quality_bits": {
+    "edge_per_pol": {
+      "LOW_SNR": 0,
+      "NO_RISE": 1,
+      "NO_FALL": 2,
+      "FLAT_EDGE": 3,
+      "MULTI_CROSSING": 4,
+      "RINGING": 5,
+      "INSUFFICIENT_LOCAL_DATA": 6,
+      "BAD_SOURCE": 7,
+      "VARIANCE_OVERFLOW": 8
+    },
+    "spectral_per_pol": {
+      "TOO_SHORT": 0,
+      "INSUFFICIENT_SEGMENTS": 1,
+      "ZERO_VECTOR": 2,
+      "PHASE_AMBIGUOUS": 3,
+      "BAD_EDGES": 4,
+      "LOW_COHERENCE": 5
+    }
+  },
+  "limits": "Digital fixed-point behavior, one-pass access, 32-sample cache and 48-DSP engine are verified separately from this numerical contract. Numerical Q16 resolution and tested CORDIC error do not imply physical calibration accuracy. See docs/v06_fine_integration.md for measured workload and board acceptance boundaries.",
+  "fixed_edge": {
+    "input": "unsigned32 physical power<=2^31; P50=N+(TOP_signal>>1)",
+    "fit": "signed48 slope/intercept/root numerators; exact bounded signed256 rational variance reference",
+    "outputs": "unsigned32 Q16 indices, unsigned64 Q32 variances; round nearest with exact half away from zero; variance min1 LSB",
+    "fusion": "round((two_q16*variance_fit_q32+fit_q16*variance_two_q32)/(variance_two_q32+variance_fit_q32)); signed128 checked numerator",
+    "overflow": "variance outside unsigned64 invalidates edge with VARIANCE_OVERFLOW, no wrap"
+  },
+  "fixed_spectral": {
+    "pair": "signed33 I/Q complex products; signed48 per-segment and HV accumulators",
+    "centers": "exact pair midpoint mean rounded to unsigned32 Q16",
+    "least_squares": "signed256 checked reference numerators/denominators; frequency i32 at gsc_first, chirp i64; nearest ties away from zero",
+    "body": "use emitted Q16 edge indices, ceil rise +4 through floor fall -4",
+    "mean_power": "floor(sum unsigned46 power/count), unsigned32",
+    "snr": "floor(max(mean-N,0)*65536/N), saturate unsigned32; known N=0 saturates with explicit model saturation indication"
+  },
+  "implementation": "rtl/fine/fine_engine.sv; docs/v06_fine_integration.md"
+}

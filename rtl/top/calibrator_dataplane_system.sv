@@ -3,8 +3,18 @@
 // Configuration transactions and normalized sample/onset producers remain explicit
 // external interfaces. This is not the PS/RFDC board wrapper.
 module calibrator_dataplane_system #(
- parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=1,FIFO_ADDR_W=12,AWG_DEPTH=16384,PHYSICAL_MASKS_IN_TEMPLATE=0
+ parameter integer PRE_SAMPLES=250,DETECTOR_LATENCY=1,FIFO_ADDR_W=12,AWG_DEPTH=16384,PHYSICAL_MASKS_IN_TEMPLATE=0,ONLINE_STATS=0,ENABLE_FINE=0
 )(
+ input wire fine_command_valid,fine_command_pop,input wire [63:0] fine_command_token,
+ output wire fine_command_ready,fine_response_valid,fine_response_ok,fine_available_rf,
+ output wire [1151:0] fine_response_data,
+ input wire [5:0] online_sample_good,input wire [13:0] onset_eop_hold,
+ input wire body_end_valid,input wire [63:0] body_end_pulse_id,body_end_owner_epoch,body_end_seq,
+ input wire aux_request_valid,aux_qualified,aux_meta_pop,
+ input wire [31:0] aux_request_count,input wire [63:0] aux_request_tx_token,aux_sample_gsc,aux_meta_pop_key,
+ input wire [127:0] aux_context,input wire [1023:0] aux_template_header,
+ output wire aux_request_ready,aux_request_accepted,aux_request_rejected,aux_meta_valid,aux_meta_pop_ok,aux_busy,
+ output wire [767:0] aux_meta_data,
  output wire pdw_valid,output wire [255:0] pdw_key,output wire [1023:0] pdw_header,output wire [511:0] pdw_stats,output wire [191:0] pdw_peaks,
  output wire [15:0] replay_leased,
  input wire  clk_rf,
@@ -298,7 +308,27 @@ module calibrator_dataplane_system #(
   .token_valid(r_token_valid),.token_owner_epoch(r_token_owner_epoch),.token_generation(r_token_generation),
   .token_group(r_token_group),.token_bank(r_token_bank),.token_consumer(r_token_consumer),.token_ready(token_ready),
   .ack_replay(ack_replay),.ack_replay_bank(ack_replay_bank),.ack_replay_epoch(ack_replay_epoch),.ack_replay_generation(ack_replay_generation),.rejected_tokens(rejected_tokens));
- calibrator_capture_system #(.PRE_SAMPLES(PRE_SAMPLES),.DETECTOR_LATENCY(DETECTOR_LATENCY),.FIFO_ADDR_W(FIFO_ADDR_W),.PHYSICAL_MASKS_IN_TEMPLATE(PHYSICAL_MASKS_IN_TEMPLATE)) capture(
+ calibrator_capture_system #(.PRE_SAMPLES(PRE_SAMPLES),.DETECTOR_LATENCY(DETECTOR_LATENCY),.FIFO_ADDR_W(FIFO_ADDR_W),.PHYSICAL_MASKS_IN_TEMPLATE(PHYSICAL_MASKS_IN_TEMPLATE),.ONLINE_STATS(ONLINE_STATS),.ENABLE_FINE(ENABLE_FINE)) capture(
+  .fine_command_valid(fine_command_valid),.fine_command_pop(fine_command_pop),.fine_command_token(fine_command_token),
+  .fine_command_ready(fine_command_ready),.fine_response_valid(fine_response_valid),.fine_response_ok(fine_response_ok),.fine_available_rf(fine_available_rf),.fine_response_data(fine_response_data),
+  .online_sample_good(online_sample_good),.onset_eop_hold(onset_eop_hold),
+  .body_end_valid(body_end_valid),.body_end_pulse_id(body_end_pulse_id),.body_end_owner_epoch(body_end_owner_epoch),.body_end_seq(body_end_seq),
+  .aux_request_valid(aux_request_valid),
+  .aux_qualified(aux_qualified),
+  .aux_meta_pop(aux_meta_pop),
+  .aux_request_count(aux_request_count),
+  .aux_request_tx_token(aux_request_tx_token),
+  .aux_sample_gsc(aux_sample_gsc),
+  .aux_meta_pop_key(aux_meta_pop_key),
+  .aux_context(aux_context),
+  .aux_template_header(aux_template_header),
+  .aux_request_ready(aux_request_ready),
+  .aux_request_accepted(aux_request_accepted),
+  .aux_request_rejected(aux_request_rejected),
+  .aux_meta_valid(aux_meta_valid),
+  .aux_meta_pop_ok(aux_meta_pop_ok),
+  .aux_busy(aux_busy),
+  .aux_meta_data(aux_meta_data),
   .replay_leased(replay_leased),
   .clk_rf(clk_rf),
   .clk_mem(clk_mem),

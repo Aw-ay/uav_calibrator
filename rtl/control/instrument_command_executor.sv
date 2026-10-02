@@ -15,6 +15,11 @@ module instrument_command_executor(
   length_ok=0;
   case(cmd_opcode)
     CMD_CONFIG:length_ok=cmd_words==CMD_CONFIG_WORDS;
+    CMD_FINE_PDW_PEEK:length_ok=cmd_words==CMD_FINE_PDW_PEEK_WORDS;
+    CMD_FINE_PDW_POP:length_ok=cmd_words==CMD_FINE_PDW_POP_WORDS;
+    CMD_AUX_CAPTURE:length_ok=cmd_words==CMD_AUX_CAPTURE_WORDS;
+    CMD_AUX_META_PEEK:length_ok=cmd_words==CMD_AUX_META_PEEK_WORDS;
+    CMD_AUX_META_POP:length_ok=cmd_words==CMD_AUX_META_POP_WORDS;
     CMD_ARM:length_ok=cmd_words==CMD_ARM_WORDS;
     CMD_STOP:length_ok=cmd_words==CMD_STOP_WORDS;
     CMD_RESET:length_ok=cmd_words==CMD_RESET_WORDS;
@@ -73,7 +78,7 @@ module instrument_command_executor(
       else begin rf_arm<=cmd_payload[0];rf_request<=cmd_payload[1];action_valid<=1;action_opcode<=cmd_opcode;action_payload<=cmd_payload;end
      end
      default:begin
-      if(!config_loaded&&cmd_opcode!=CMD_STATUS&&cmd_opcode!=CMD_RESET&&cmd_opcode!=CMD_PDW_PEEK&&cmd_opcode!=CMD_PDW_POP&&cmd_opcode!=CMD_SOURCE_EVENT_PEEK&&cmd_opcode!=CMD_SOURCE_EVENT_POP&&cmd_opcode!=CMD_RF_FAULT_PEEK&&cmd_opcode!=CMD_RF_FAULT_POP)begin result_valid<=1;result_code<=3;end
+      if(!config_loaded&&cmd_opcode!=CMD_FINE_PDW_PEEK&&cmd_opcode!=CMD_FINE_PDW_POP&&cmd_opcode!=CMD_STATUS&&cmd_opcode!=CMD_RESET&&cmd_opcode!=CMD_PDW_PEEK&&cmd_opcode!=CMD_PDW_POP&&cmd_opcode!=CMD_SOURCE_EVENT_PEEK&&cmd_opcode!=CMD_SOURCE_EVENT_POP&&cmd_opcode!=CMD_RF_FAULT_PEEK&&cmd_opcode!=CMD_RF_FAULT_POP)begin result_valid<=1;result_code<=3;end
       else begin
        waiting<=1;action_valid<=1;action_opcode<=cmd_opcode;action_payload<=cmd_payload;
        if(cmd_opcode==CMD_RESET)begin reset_request<=1;run_enable<=0;rf_arm<=0;rf_request<=0;end

@@ -3,6 +3,7 @@ module tb_instrument_waveform_commands;
  import command_gateway_pkg::*;
  import instrument_control_pkg::*;
  import replay_control_layout_pkg::*;
+ reg aux_source_qualified=0;reg [127:0] aux_context=0;
  reg ctrl_clk,rf_clk,mem_clk,rst_n;
  reg [31:0] s_axi_awaddr;reg s_axi_awvalid;wire s_axi_awready;
  reg [31:0] s_axi_wdata;reg [3:0] s_axi_wstrb;reg s_axi_wvalid;wire s_axi_wready;

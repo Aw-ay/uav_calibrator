@@ -1,7 +1,12 @@
 {
   "schema_version": 1,
-  "status": "LOGICAL_RTL_SIMULATION_VERIFIED_NOT_TOP_INTEGRATED",
-  "sources": ["replay_contract.json", "bank_contract.json", "channel_roles.json", "module_catalog.json"],
+  "status": "V06_ACTIVE_CORE_NO_FRACTION",
+  "sources": [
+    "replay_contract.json",
+    "bank_contract.json",
+    "channel_roles.json",
+    "module_catalog.json"
+  ],
   "task_abi": "Opaque 192-byte little-endian replay_task, bit zero is byte zero LSB. Field bit offsets are generated from replay_contract.json by tools/generate_replay_control_layout.py into rtl/replay/replay_control_layout_pkg.sv. Test rejects generated ABI drift.",
   "queue": {
     "clock": "clk, synchronous rst; control-domain requests must cross an external atomic CDC mailbox",
@@ -17,11 +22,35 @@
   "checker": {
     "input_context": "current_owner_epoch/generation/config_id/fir_id/source_epoch and qualification/lease/source feedback must come from the bank selected by head_task; task_profiles_valid verifies retained rx_cal_id, tx_cal_id, target_matrix_id, reference_plane_id and doppler_phase_id and all other referenced versions, not just existence of a current profile.",
     "source": "Primary external role=1 only in groups1..3; AUX external role=2 only group4 with explicit allow_aux_replay. Roles0/3/unknown and !source_stable are forbidden. AUX remains disabled by default at integration.",
-    "time": "Unsigned u64 500MHz GSC ticks; 4 ticks per 125MHz sample. first_output_gsc=target_gsc-reference_sample_index*4-downstream_latency_ticks. Require first>=gsc+8, matching low2 phase, no arithmetic wrap, and last sample within u64. No PRI ceiling. Integer reference scheduling mirrors frozen_replay_reader; nonzero fraction_q32 requires explicit fractional_supported and validated downstream timing.",
+    "time": "Unsigned u64 500MHz GSC ticks; 4 ticks per 125MHz sample. first_output_gsc=target_gsc-reference_sample_index*4-downstream_latency_ticks. Require first>=gsc+8, matching low2 phase, no arithmetic wrap, and last sample within u64. No PRI ceiling. Integer reference scheduling mirrors frozen_replay_reader; v0.6 unconditionally rejects nonzero fraction_q32 with reason6 before any RAM read, even if the legacy fractional_supported input is1.",
     "safety": "data_ready and qualified cover full frozen capture plus statistics; guard_clear and planned_slot_clear must cover entire physical TX interval including tails/turnaround; unknown future schedule must not be represented as clear. rf_safe, binding_valid and resources_ready are current trusted hardware/resource decisions.",
-    "reason_codes": {"0":"OK","2":"UNSAFE_OR_UNBOUND","3":"UNQUALIFIED_OR_SOURCE","4":"CONTEXT_OR_PROFILE","5":"BOUNDS","6":"LATENCY_OR_FRACTION","7":"TIME_RANGE","8":"ALIGNMENT","9":"LATE","13":"GUARD_OR_SLOT","14":"RESOURCE"},
+    "reason_codes": {
+      "0": "OK",
+      "2": "UNSAFE_OR_UNBOUND",
+      "3": "UNQUALIFIED_OR_SOURCE",
+      "4": "CONTEXT_OR_PROFILE",
+      "5": "BOUNDS",
+      "6": "LATENCY_OR_FRACTION",
+      "7": "TIME_RANGE",
+      "8": "ALIGNMENT",
+      "9": "LATE",
+      "13": "GUARD_OR_SLOT",
+      "14": "RESOURCE"
+    },
     "while_active": "Checker gates admission only. Existing reader retains its runtime abort/time-continuity logic, and RF safety interlock must remain continuously connected downstream."
   },
-  "tests": {"command":"python tests/test_replay_control.py","tool":"C:/iverilog/bin/iverilog.exe and vvp.exe","bench":"tb/unit/tb_replay_control.sv","result":"PASS","log":"../reports/replay_control.log"},
-  "remaining": ["Root CDC and bank-context mux wiring", "Pinned-profile registry and complete TX-slot/guard resolver", "Reader accepted-token retirement connection", "Vivado synthesis/resource/timing verification", "Production board RF binding remains UNBOUND"]
+  "tests": {
+    "command": "python tests/test_replay_control.py",
+    "tool": "C:/iverilog/bin/iverilog.exe and vvp.exe",
+    "bench": "tb/unit/tb_replay_control.sv",
+    "result": "PASS",
+    "log": "../reports/replay_control.log"
+  },
+  "remaining": [
+    "Root CDC and bank-context mux wiring",
+    "Pinned-profile registry and complete TX-slot/guard resolver",
+    "Reader accepted-token retirement connection",
+    "Vivado synthesis/resource/timing verification",
+    "Production board RF binding remains UNBOUND"
+  ]
 }

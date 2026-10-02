@@ -1,6 +1,8 @@
 # UAV Calibrator / ZU27DR
 
-SystemVerilog + Vivado 2025.2 标定仪工程，设计基线 v0.5。
+SystemVerilog + Vivado 2025.2 标定仪工程，设计基线 v0.6（DRFM / Fine / DMA）。
+
+最新来源为本机开发提交1440e1f（2026-09-30）：自然B128上传、在线统计、三档Fine、AUX及任务Doppler已接入；活动FD63已移除。详见[当前状态](docs/STATUS.md)。
 
 **数字核心开发版本，尚未完成真实 PS/RFDC 板级集成、布局布线和实物验收。**
 

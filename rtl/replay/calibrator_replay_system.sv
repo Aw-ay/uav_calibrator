@@ -1,4 +1,4 @@
-// Actual RAW dispatcher and FULL_A RXCAL/FD63/target processing.
+// Actual RAW dispatcher and FULL_A RXCAL/target processing.
 module calibrator_replay_system #(parameter integer QUEUE_DEPTH=4)(
  input wire clk,rst,submit_valid,lifecycle_ready,input wire [1535:0] submit_task,
  output wire submit_accepted,submit_rejected,output wire [7:0] submit_reason,
@@ -28,17 +28,29 @@ module calibrator_replay_system #(parameter integer QUEUE_DEPTH=4)(
 );
 
  import replay_control_layout_pkg::*;
+ wire task_dispatching;
  wire reader_active,dispatcher_idle,dsp_profile_ready,dsp_profile_rejected;
+ wire [63:0] raw_processing_data;
  reg local_profile_rejected,profile_loaded;
  wire processing_ready=lifecycle_ready&&source_ready&&!dsp_busy&&!profile_commit;
  wire epoch_cancel=(reader_active||dsp_busy)&&active_task[OWNER_EPOCH_BIT+:64]!=current_owner_epoch;
  wire processing_fault=hard_fault||abort_request||!rf_safe||!binding_valid||!time_valid||!clock_ok||epoch_cancel||(token_valid&&token_status!=0);
  assign profile_ready=dsp_profile_ready&&!reader_active&&!task_started;
  wire dsp_profile_commit=profile_commit&&profile_ready;
- wire load_profile=dsp_profile_commit&&(&shadow_cal_valid)&&shadow_fd_version==table_version;
+ wire load_profile=dsp_profile_commit&&(&shadow_cal_valid);
+ // Preload at the actual dispatch edge, not its registered accepted pulse.
+ // This preserves earliest legal scheduling after removing the FD pipeline.
+ // Task-owned phase is evaluated at the target operator input edge. The offset
+ // to the selected output reference plane is explicit task data, not inferred
+ // from the RAW reader's different total downstream latency.
+ wire task_phase_valid;wire signed [17:0] task_phase_i,task_phase_q;
+ task_doppler_phase doppler(.clk(clk),.rst(rst),.load(task_dispatching),.cancel(processing_fault||(dsp_done&&!task_dispatching)),
+  .gsc(gsc),.reference_gsc(lookup_task[DOPPLER_REFERENCE_GSC_BIT+:64]),
+  .offset_ticks(lookup_task[DOPPLER_OUTPUT_OFFSET_TICKS_BIT+:64]),
+  .step(lookup_task[DOPPLER_STEP_Q48_BIT+:48]),.initial_phase(lookup_task[DOPPLER_INITIAL_Q48_BIT+:48]),
+  .valid(task_phase_valid),.phase_i(task_phase_i),.phase_q(task_phase_q),.phase_gsc());
  wire profile_match=profile_loaded&&lookup_task[RX_CAL_ID_BIT+:32]==active_rx_cal_id&&
-  lookup_task[TARGET_MATRIX_ID_BIT+:32]==active_target_matrix_id&&lookup_task[DOPPLER_PHASE_ID_BIT+:32]==active_doppler_phase_id&&
-  lookup_task[FRACTION_Q32_BIT+:32]=={active_fd_phase,24'd0};
+  lookup_task[TARGET_MATRIX_ID_BIT+:32]==active_target_matrix_id&&lookup_task[DOPPLER_PHASE_ID_BIT+:32]==active_doppler_phase_id;
  assign profile_rejected=dsp_profile_rejected||local_profile_rejected;
  assign idle=dispatcher_idle&&!dsp_busy;
  always @(posedge clk)begin
@@ -48,7 +60,7 @@ module calibrator_replay_system #(parameter integer QUEUE_DEPTH=4)(
    local_profile_rejected<=profile_commit&&!profile_ready;
    if(load_profile)begin
     profile_loaded<=1;active_rx_cal_id<=shadow_rx_cal_id;active_target_matrix_id<=shadow_target_matrix_id;
-    active_doppler_phase_id<=shadow_doppler_phase_id;active_fd_version<=shadow_fd_version;active_fd_phase<=shadow_fd_phase;
+    active_doppler_phase_id<=shadow_doppler_phase_id;active_fd_version<=0;active_fd_phase<=0;
    end
   end
  end
@@ -56,8 +68,8 @@ module calibrator_replay_system #(parameter integer QUEUE_DEPTH=4)(
   .task_profiles_valid(task_profiles_valid&&profile_match),.processing_ready(processing_ready),.idle(dispatcher_idle),.reader_active(reader_active),.*);
  replay_processing_chain processing(.clk(clk),.rst(rst),.profile_commit(dsp_profile_commit),.hard_fault(processing_fault),
   .shadow_cal_valid(shadow_cal_valid),.shadow_dc(shadow_dc),.shadow_gain(shadow_gain),.shadow_matrix(shadow_matrix),
-  .shadow_fd_phase(shadow_fd_phase),.shadow_fd_version(shadow_fd_version),.phase_valid(phase_valid),.phase_i(phase_i),.phase_q(phase_q),
-  .in_valid(raw_valid),.in_last(raw_last),.in_hv(raw_data),.profile_ready(dsp_profile_ready),.profile_accepted(profile_accepted),.profile_rejected(dsp_profile_rejected),
+  .shadow_fd_phase(shadow_fd_phase),.shadow_fd_version(shadow_fd_version),.phase_valid(task_phase_valid),.phase_i(task_phase_i),.phase_q(task_phase_q),
+  .in_valid(raw_valid),.in_last(raw_last),.in_hv(raw_processing_data),.profile_ready(dsp_profile_ready),.profile_accepted(profile_accepted),.profile_rejected(dsp_profile_rejected),
   .source_ready(source_ready),.busy(dsp_busy),.done(dsp_done),.cancelled(dsp_cancelled),.out_hv(out_hv),.out_valid(out_valid),.out_qualified(out_qualified),
   .arithmetic_saturated(arithmetic_saturated),.table_version(table_version));
 endmodule

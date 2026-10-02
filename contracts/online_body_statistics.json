@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "status": "ACTIVE_INSTRUMENT_QUALIFICATION_PATH_MODULE_AND_INTEGRATION_TESTED",
+  "module": "rtl/capture/online_body_statistics.sv",
+  "reference": "tools/online_statistics_model.py",
+  "clock_hz": 125000000,
+  "contexts": 4,
+  "identity": "owner_epoch u64 + pulse_id u64; duplicate live/held identity rejected",
+  "input": {
+    "channels": [
+      "H_HIGH",
+      "H_MID",
+      "H_LOW",
+      "V_HIGH",
+      "V_MID",
+      "V_LOW"
+    ],
+    "power": "receive_power_pipeline: six signed IQ16 square/sum values, two registered stages, range 0..2^31",
+    "sequence": "absolute u64 RF sample sequence on every clock, including invalid samples; gap/rollover fails all active contexts",
+    "noise": "six unsigned32 power values frozen at accepted onset; qualification/known flags remain external",
+    "hold": "resolved1..256; config hold0 must be resolved to detector default125 before admission; >256 rejected"
+  },
+  "causality": {
+    "commit_delay_cycles": 272,
+    "max_eop_hold_samples": 256,
+    "reserved_transport_cycles": 16,
+    "required_end": "detector body end exclusive; capture stop including POST must not be substituted",
+    "normal_bounds": "[onset_seq, body_end_seq)",
+    "late_end": "explicit failed result, never revise already committed samples with future knowledge",
+    "ram": "one shared512-entry delayed POWER/context-quality stream; no captured-IQ A/B port and no bank copy",
+    "verified_producer_transport_cycles": 2,
+    "ready_bound_rf_cycles_after_exclusive_body_end": 275
+  },
+  "arithmetic": {
+    "energy_bits_per_channel": 46,
+    "peak_bits_per_channel": 32,
+    "max_body_samples": 16384,
+    "top_signal": "maximum complete four-sample moving average of max(power-frozen_noise,0)",
+    "top_rounding": "unsigned34 sum divided by4, floor; no partial startup windows",
+    "short_body": "count<4 implies TOP incomplete; downstream Fine must not qualify it as a complete TOP estimate",
+    "p50": "frozen_noise + floor(top_signal/2), computed by Fine, no second noise subtraction"
+  },
+  "errors": {
+    "invalid_end": 1,
+    "late_end": 2,
+    "unterminated_capacity": 4,
+    "sequence_discontinuity": 8
+  },
+  "result": "per-slot immutable until explicit ready; bad/error prevents precision qualification; four retained results stop further admission without stalling ADC",
+  "verification": [
+    "test_online_statistics_model.py",
+    "test_online_body_statistics.py",
+    "test_receive_power_pipeline.py",
+    "test_receive_online_statistics.py",
+    "test_capture_online_statistics.py",
+    "test_calibrator_instrument_core.py",
+    "test_capture_budget.py",
+    "test_digital_capture_control.py"
+  ],
+  "not_yet_proven": [
+    "updated full digital core synthesis/CDC",
+    "board timing/physical latency",
+    "Fine TOP consumption and analysis reference lifecycle"
+  ],
+  "binding": {
+    "core": "calibrator_instrument_core enables ONLINE_STATS=1; A-port scan disabled",
+    "legacy": "ONLINE_STATS=0 explicit diagnostic/test backend retained",
+    "ownership": "atomic onset reservation; exact epoch/pulse query; cancel on retained producer error; results held until qualification admission",
+    "pdw": "BODY_STATS=1 uses exclusive body count, body peak and energy; RAW header sample_count remains PRE+body+POST",
+    "budget_api": "cal_capture_budget_plan_online and cal_replay_budgeted_begin_online; max(RAW pending, body_end+275 RF cycles), then caller queue/publish bounds"
+  }
+}

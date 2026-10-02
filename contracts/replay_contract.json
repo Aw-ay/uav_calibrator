@@ -1,6 +1,6 @@
 {
   "schema_version": "0.5",
-  "status": "PROPOSED_INTERNAL_ABI_NOT_RTL",
+  "status": "DIGITAL_IMPLEMENTED_TASK_DOPPLER_EXTENSION_STAGE27",
   "byte_order": "little",
   "default_zero_reserved_bytes": true,
   "capture_descriptor": {
@@ -289,7 +289,7 @@
         "type": "u32",
         "offset_bytes": 116,
         "size_bytes": 4,
-        "meaning": "fraction in[0,1),core8ns interval; implementation pending"
+        "meaning": "ABI reserved; v0.6 requires0, nonzero rejects before RAM"
       },
       {
         "name": "output_dac_mask",
@@ -318,6 +318,34 @@
         "offset_bytes": 132,
         "size_bytes": 4,
         "meaning": "pinned phase policy"
+      },
+      {
+        "name": "doppler_step_q48",
+        "type": "u64",
+        "offset_bytes": 136,
+        "size_bytes": 8,
+        "meaning": "low48 modulo turns per 500MHz GSC tick; negative signed values encoded modulo 2^48; high16 zero"
+      },
+      {
+        "name": "doppler_initial_q48",
+        "type": "u64",
+        "offset_bytes": 144,
+        "size_bytes": 8,
+        "meaning": "low48 initial turns at reference GSC; high16 zero"
+      },
+      {
+        "name": "doppler_reference_gsc",
+        "type": "u64",
+        "offset_bytes": 152,
+        "size_bytes": 8,
+        "meaning": "full GSC where initial phase applies"
+      },
+      {
+        "name": "doppler_output_offset_ticks",
+        "type": "u64",
+        "offset_bytes": 160,
+        "size_bytes": 8,
+        "meaning": "validated ticks from target operator input to selected output reference plane; zero means target input plane"
       }
     ]
   },
@@ -375,7 +403,6 @@
     "order": [
       "replay_reader_scheduler",
       "rx_cal_executor",
-      "fractional_delay",
       "target_complex_operator",
       "tx_source_mux",
       "tx_channel_router",
@@ -386,16 +413,13 @@
     "source_rule": "RF_LOOPBACK/settling/unknown are not legal precision replay sources",
     "deadline": "must wait fullcapture and stats; schedule by output reference, too-late rejects; no promise of immediatelive relaying",
     "fractional_delay": {
-      "approved_architecture": null,
-      "resource_placeholder_taps": 63,
-      "placeholder_not_validated_filter": true,
-      "band_hz": [
-        -50000000,
-        50000000
-      ]
+      "supported": false,
+      "task_field_rule": "fraction_q32 must equal0; nonzero rejected before RAM",
+      "reason": "v0.6 removes active waveform fractional delay"
     },
     "pin": "RAW refs and coeff/task refs distinct lifetimes; releaseRAW only after final actual RAM read no future reread",
-    "RF_safety": "single antenna halfduplex; TX tails/guards/physicalPA/tr_switch; clockloss externally safe"
+    "RF_safety": "single antenna halfduplex; TX tails/guards/physicalPA/tr_switch; clockloss externally safe",
+    "budget": "contracts/capture_latency_budget.json; scan readiness and downstream DSP delay are separate"
   },
   "multiple_replay_note": "current model one outstanding replay consumer per bank. Repeated tasks need task-set/refcount, extra read scheduling and explicit tests."
 }

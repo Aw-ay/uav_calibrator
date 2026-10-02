@@ -21,7 +21,7 @@ wire ram_response_valid=(ram_group>=1&&ram_group<=4&&ram_bank<4)?(read_valid[rea
 wire[63:0] ram_data=(ram_group>=1&&ram_group<=4&&ram_bank<4)?read_data[read_slot*64+:64]:64'd0;
 calibrator_replay_system dut(.lifecycle_ready(lifecycle_admission_ready),.profile_commit(profile_commit),.shadow_cal_valid(2'b11),.shadow_dc(shadow_dc),.shadow_gain({18'd0,18'd65536,18'd0,18'd65536}),.shadow_matrix(shadow_matrix),.shadow_fd_phase(8'd0),.shadow_fd_version(32'h9d1dc12a),.shadow_rx_cal_id(32'd101),.shadow_target_matrix_id(32'd102),.shadow_doppler_phase_id(32'd103),.phase_valid(1'b1),.phase_i(18'sd65536),.phase_q(18'sd0),.profile_ready(profile_ready),.profile_accepted(profile_accepted),.profile_rejected(profile_rejected),.source_ready(source_ready),.dsp_busy(dsp_busy),.dsp_done(dsp_done),.dsp_cancelled(dsp_cancelled),.out_valid(out_valid),.out_hv(out_hv),.out_qualified(out_qualified),.arithmetic_saturated(arithmetic_saturated),.table_version(table_version),.clk(clk),.rst(rst),.submit_valid(submit_valid),.submit_task(submit_task),.submit_accepted(submit_accepted),.submit_rejected(submit_rejected),.submit_reason(submit_reason),
 .lookup_valid(lookup_valid),.lookup_task(lookup_task),.lookup_ready(lookup_ready),.gsc(gsc),.current_owner_epoch(current_owner_epoch),.current_generation(current_generation),.current_config_id(32'd11),.current_fir_id(32'd12),.current_source_epoch(32'd13),
-.bank_frozen(1'b1),.data_ready(1'b1),.qualified(1'b1),.lease_pinned(1'b1),.source_stable(1'b1),.allow_aux_replay(1'b0),.task_profiles_valid(1'b1),.guard_clear(1'b1),.planned_slot_clear(1'b1),.rf_safe(1'b1),.binding_valid(binding_valid),.resources_ready(1'b1),.time_valid(1'b1),.clock_ok(1'b1),.latency_validated(1'b1),.fractional_supported(1'b0),.downstream_latency_ticks(64'd168),.hard_fault(hard_fault),.abort_request(abort_request),
+.bank_frozen(1'b1),.data_ready(1'b1),.qualified(1'b1),.lease_pinned(1'b1),.source_stable(1'b1),.allow_aux_replay(1'b0),.task_profiles_valid(1'b1),.guard_clear(1'b1),.planned_slot_clear(1'b1),.rf_safe(1'b1),.binding_valid(binding_valid),.resources_ready(1'b1),.time_valid(1'b1),.clock_ok(1'b1),.latency_validated(1'b1),.fractional_supported(1'b0),.downstream_latency_ticks(64'd12),.hard_fault(hard_fault),.abort_request(abort_request),
 .rejected_valid(rejected_valid),.rejected_task(rejected_task),.reject_reason(reject_reason),.reject_ready(reject_ready),.task_started(task_started),.active_task(active_task),.raw_valid(raw_valid),.raw_data(raw_data),.raw_last(raw_last),.ram_en(ram_en),.ram_addr(ram_addr),.ram_group(ram_group),.ram_bank(ram_bank),.ram_response_valid(ram_response_valid),.ram_data(ram_data),
 .actual_start(actual_start),.actual_finish(actual_finish),.actual_start_gsc(actual_start_gsc),.actual_finish_gsc(actual_finish_gsc),.token_valid(token_valid),.token_ready(token_ready),.token_owner_epoch(token_owner_epoch),.token_generation(token_generation),.token_group(token_group),.token_bank(token_bank),.token_consumer(token_consumer),.token_status(token_status),.queued_count(queued_count),.idle(idle));
 // Real replay path with shared lifecycle; TX-tail and physical sink are
@@ -58,9 +58,9 @@ task enqueue(input integer bank,input integer id,input integer count,input[63:0]
 integer received=0;reg checking=1;reg[63:0] expected;
 always @(posedge clk)begin #1;
  if(out_valid&&checking)begin
-  expected=(received>=31&&received<35)?64'h1000+received-31:64'd0;
-  if(received==31)ck(gsc-4==active_task[TARGET_GSC_BIT+:64],"DSP-only reference GSC includes11 register stages plus31 sample delay");
-  ck(out_qualified&&out_hv===expected,"RAM through RXCAL FD63 identity matrix exact sample");received=received+1;
+  expected=64'h1000+received;
+  if(received==0)ck(gsc-4==active_task[TARGET_GSC_BIT+:64],"DSP-only reference GSC includes3 RF intervals without FD group delay");
+  ck(out_qualified&&out_hv===expected,"RAM through RXCAL identity matrix exact sample");received=received+1;
  end
 end
 initial begin
@@ -70,8 +70,8 @@ initial begin
  profile_commit=1;tick();profile_commit=0;#1;ck(profile_accepted&&source_ready,"explicit immutable profile loaded");
  enqueue(0,1,4,gsc+240);while(!task_started)tick();
  shadow_dc=64'h100;profile_commit=1;tick();profile_commit=0;#1;ck(profile_rejected,"profile cannot change while reader waits for target");shadow_dc=0;
- while(!token_valid)tick();ck(token_status==0&&dsp_busy,"RAW completion precedes FD tail completion");token_ready=1;tick();token_ready=0;ck(!idle&&dsp_busy,"RAW token does not release DSP processing ownership");
- while(!dsp_done)tick();ck(received==66&&!dsp_busy,"4 actual samples plus62 zero flush and full register drain");checking=0;
+ while(!token_valid)tick();ck(token_status==0&&dsp_busy,"RAW completion precedes pipeline completion");token_ready=1;tick();token_ready=0;ck(!idle&&dsp_busy,"RAW token does not release DSP processing ownership");
+ while(!dsp_done)tick();ck(received==4&&!dsp_busy,"exact4 actual samples and real pipeline drain");checking=0;
  submit_task=make_task(1,9,4,gsc+240);submit_task[RX_CAL_ID_BIT+:32]=999;submit_valid=1;tick();submit_valid=0;
  while(!rejected_valid)tick();ck(reject_reason==4&&!token_valid&&!ram_en,"task profile ID mismatch never reads RAM");reject_ready=1;tick();reject_ready=0;
  enqueue(0,2,8,gsc+240);while(!raw_valid)tick();drop_response=1;
@@ -86,8 +86,8 @@ initial begin
  while(!token_valid)tick();ck(token_status==10&&!dsp_busy&&!raw_valid,"cancel before first sample has no DSP done");
  token_ready=1;tick();token_ready=0;abort_request=0;
  repeat(10)tick();ck(observed_count==4,"all actual replay tasks observed after drain");
- $display("PASS shared lifecycle real replay system actual RAM FD63 Target normal underflow epoch and before-first-sample cancellation");
- $display("PASS calibrator replay system: real RAM RXCAL FD63 target samples, separate tails, underflow and epoch cancellation");$finish;
+ $display("PASS shared lifecycle real replay system actual RAM Target normal underflow epoch and before-first-sample cancellation");
+ $display("PASS calibrator replay system: real RAM RXCAL target samples, separate tails, underflow and epoch cancellation");$finish;
 end
 initial begin #50000;$fatal(1,"timeout");end
 endmodule

@@ -1,0 +1,31 @@
+{
+  "stage": 26,
+  "priority": "C00/C03+C08 before AUX",
+  "hardware": "User confirmed board disconnected 2026-09-13; vendor references E:/temp/save_v2.1",
+  "platform": "Counter-only PS + SG S2MM + AXI GPIO + async AXIS converter; no RFDC or instrument core yet",
+  "control_base": "0xA0050000",
+  "dma_base": "0xA0040000",
+  "gpio": {
+    "offset_0": "control: bit0 start toggle, bit1 stop-new; bits7:2 reserved=0; bits31:8 length 1..262144",
+    "offset_8": "status: bit0 busy, bit1 done, bit2 sticky request error, bit3 stop-new active"
+  },
+  "stream": "128-bit AXIS, contiguous TKEEP, exact TLAST, byte value = offset modulo256, starts at0 each packet. Stop-new does not truncate an active packet.",
+  "clocks": {
+    "ctrl_nominal_hz": 100000000,
+    "ctrl_actual_hz": 96968727,
+    "mem_nominal_hz": 200000000,
+    "mem_actual_hz": 199998001
+  },
+  "dma": {
+    "sg": true,
+    "s2mm_only": true,
+    "address_bits": 40,
+    "slot_bytes": 262144,
+    "slots": 2,
+    "concurrency": "One active packet, alternating slots; no sustained-bandwidth claim"
+  },
+  "cache": "A53 BD macros empty in vendor driver. Dedicated aligned2MiB descriptor block mapped NORM_NONCACHE. Payload slots cache-line isolated, flushed before ToHw, invalidated after complete status and actual length checks. Explicit DSB before DMA handoff and source start.",
+  "irq": "BSP SDT S2MM-only IntrId[0], encoded0x4059, parent0xf9010000; never assume two-channel example index1. ISR ack and sticky error/count; worker requires IRQ count change before completion.",
+  "failure": "Stop new source packets, mask DMA IRQ, quarantine slots/BDs on DMA error, timeout, bad length/SOF/EOF or content. No automatic active-slot release or unsafe restart. Coordinated PL source and DMA reset/reinitialization required.",
+  "acceptance": "BSP/ELF and host mocks do not establish DDR, cache, IRQ or RF hardware acceptance. Require connected board, reviewed initialization/bitstream, UART log and fault injection. Real capture and RFDC integration pending."
+}

@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "status": "IMPLEMENTED_ACTIVE_DMA_PATH",
+  "module": "b_port_reader_128",
+  "clock_hz": 200000000,
+  "ram_word_bits": 128,
+  "ram_depth_words": 8192,
+  "logical_sample_bits": 64,
+  "logical_samples_per_word": 2,
+  "physical_layout": "word[w]={sample[2w+1],sample[2w]}",
+  "descriptor": {
+    "start_ptr_bits": 14,
+    "sample_count_bits": 15,
+    "word_start": "start_ptr>>1",
+    "head_offset": "start_ptr[0]",
+    "word_count": "ceil((head_offset+sample_count)/2)",
+    "wrap_words": 8192
+  },
+  "ram_read_latency": 1,
+  "prefetch_fifo_words_default": 8,
+  "prefetch_fifo_words_allowed": [
+    8,
+    16
+  ],
+  "credit_rule": "new request allowed only when FIFO free capacity covers outstanding responses plus configured safety margin",
+  "steady_state_target": "1 request and 1 returned 128-bit word per clk_mem after fill when downstream accepts",
+  "output": "natural 128-bit word stream plus lane valid mask/first/last/logical sequence metadata; no cross-word compaction",
+  "abort": "STOP_ISSUE -> drain/discard in-flight responses -> clear FIFO -> return token; never release bank with unknown responses",
+  "verification": [
+    "V13",
+    "V15",
+    "V67",
+    "V68",
+    "V69",
+    "V78"
+  ],
+  "latency_evidence": "reports/v06_bmg_latency.log; actual capture_ram_probe XSim 2025.2",
+  "latency_convention": "request sampled at edge n; registered downstream consumes corresponding RAM data at edge n+1"
+}

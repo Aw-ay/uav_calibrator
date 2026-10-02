@@ -3,6 +3,7 @@ module tb_calibrator_instrument_core;
  import command_gateway_pkg::*;
  import instrument_control_pkg::*;
  import replay_control_layout_pkg::*;
+ reg aux_source_qualified=0;reg [127:0] aux_context=0;
  reg ctrl_clk,rf_clk,mem_clk,rst_n;
  reg [31:0] s_axi_awaddr;reg s_axi_awvalid;wire s_axi_awready;
  reg [31:0] s_axi_wdata;reg [3:0] s_axi_wstrb;reg s_axi_wvalid;wire s_axi_wready;
@@ -60,8 +61,12 @@ module tb_calibrator_instrument_core;
   end
  end endtask
  integer bytes_seen=0,frames=0,onsets=0,ends=0,completions=0;
- integer frame_file,sample_file;string root;reg [3711:0] snapshot;integer pdw_file;reg [639:0] pdw_snapshot;reg [63:0] pdw_token;integer replay_samples=0;reg saw_dac=0;
+ integer frame_file,sample_file,fine_sample_file,fine_result_file,debug_file;integer debug_cycles=0;string root;reg [3711:0] snapshot;integer pdw_file;reg [639:0] pdw_snapshot;reg [63:0] pdw_token;integer replay_samples=0;reg saw_dac=0;
  always @(posedge rf_clk)if(rst_n)begin
+  debug_cycles=debug_cycles+1;
+  if(debug_cycles%1000==0)begin
+   $fdisplay(debug_file,"t=%0t action=%0d reset=%b owner=%h meta=%h refs=%h req=%b service=%0d engine=%0d processed=%0d received=%0d base=%0d occupancy=%0d",$time,dut.action_opcode,dut.reset_request,dut.d_owner_epoch,dut.dataplane.capture.backend.fine_path.service.metadata_valid,dut.dataplane.capture.backend.analysis_leased,dut.dataplane.capture.backend.fine_path.service.request_valid,dut.dataplane.capture.backend.fine_path.service.state,dut.dataplane.capture.backend.fine_path.service.engine.state,dut.dataplane.capture.backend.fine_path.service.engine.processed,dut.dataplane.capture.backend.fine_path.service.engine.received,dut.dataplane.capture.backend.fine_path.service.engine.sample_index,dut.dataplane.capture.backend.fine_path.service.engine.occupancy);$fflush(debug_file);
+  end
   if(dut.d_r_raw_valid)replay_samples=replay_samples+1;
   if(binding_valid&&native_dac_data!=0)saw_dac=1;
  end
@@ -72,16 +77,22 @@ module tb_calibrator_instrument_core;
  end
  always @(posedge rf_clk)if(rst_n)begin
   if(!binding_valid&&native_dac_data!==0)$fatal(1,"unbound DAC must remain zero");
-  if(dut.sample_valid)$fdisplay(sample_file,"%0d %0d %016x",dut.sample_seq,dut.sample_gsc,dut.group_data[63:0]);
+  if(dut.sample_valid&&sample_seq_for_fine())$fdisplay(fine_sample_file,"%0d %064x",dut.sample_seq,dut.group_data);
+  if(dut.dataplane.capture.backend.fine_path.service.send)$display("FINE_JOB %0164x",dut.dataplane.capture.backend.fine_path.service.dispatch);
+  if(dut.sample_valid&&sample_seq_for_fine())$fdisplay(sample_file,"%0d %0d %016x",dut.sample_seq,dut.sample_gsc,dut.group_data[63:0]);
+  if(dut.onset_valid)$display("FINE_ONSET_NOISE %064x",dut.onset_noise);
   if(dut.onset_valid)begin onsets=onsets+1;$display("ONSET %0d %0d",dut.onset_seq,dut.onset_gsc);end
   if(dut.eop_event_valid)begin ends=ends+1;$display("EOP %0d",dut.eop_event_stop);end
   if(dut.d_completion_valid)begin completions=completions+1;if(dut.d_completion_error)$fatal(1,"DMA completion error");end
   if(dut.d_producer_error_valid||dut.d_disposition_rejected)$fatal(1,"capture rejected reason %0d",dut.d_producer_error_reason);
  end
+ function automatic sample_seq_for_fine;sample_seq_for_fine=(ends==0)||(dut.sample_seq<dut.eop_event_stop+20);endfunction
  reg [1023:0] headers[0:2];reg [1023:0] q;
  initial begin
   if(!$value$plusargs("ROOT=%s",root))$fatal(1,"ROOT required");
   $readmemh({root,"/headers.hex"},headers);
+  debug_file=$fopen({root,"/fine_core_progress.txt"},"w");
+  fine_sample_file=$fopen({root,"/instrument_fine_samples.txt"},"w");
   frame_file=$fopen({root,"/instrument_frame.hex"},"w");sample_file=$fopen({root,"/instrument_samples.txt"},"w");
   rst_n=0;s_axi_awaddr=0;s_axi_wdata=0;s_axi_araddr=0;s_axi_wstrb=15;
   s_axi_awvalid=0;s_axi_wvalid=0;s_axi_bready=1;s_axi_arvalid=0;s_axi_rready=1;
@@ -150,7 +161,7 @@ module tb_calibrator_instrument_core;
   repeat(100)@(negedge rf_clk);
   if(replay_samples!=snapshot[3342:3328]||!saw_dac||dut.d_replay_leased!=0)$fatal(1,"PS replay did not traverse actual TX");
   binding_valid=0;#1;if(native_dac_data!=0)$fatal(1,"binding loss zero code");
-  command(CMD_STOP,0,0);if(run_enable)$fatal(1,"STOP not applied");
+  command(CMD_STOP,0,0);native_adc_valid=0;if(run_enable)$fatal(1,"STOP not applied");
   command(CMD_RESET,0,0);if(dut.d_owner_epoch!=1||dut.d_replay_leased!=0)$fatal(1,"reset did not drain lease");
   command(16,0,0);read_word(GW_RESULT);if(value!=1)$fatal(1,"soft reset lost historical PDW");
   if(!irq)$fatal(1,"soft reset lost PDW IRQ");
@@ -178,8 +189,28 @@ module tb_calibrator_instrument_core;
   $display("PASS REPLAY_LIFECYCLE_CORE actual RAW FD Target TX tail full64 identity and retirement survive reset");
   read_word(32'h408);if(value!=0)$fatal(1,"unexpected unified drop");
   $display("PASS UNIFIED_EVENT actual PDW legacy independence soft reset IRQ");
+  // Three analysis-only/selected sidecars survive soft reset independently of RAW/replay.
+  write_word(GW_IRQ_ENABLE,32,0);repeat(6)@(negedge ctrl_clk);if(!irq)$fatal(1,"Fine IRQ missing");
+  fine_result_file=$fopen({root,"/instrument_fine.hex"},"w");
+  for(integer f=0;f<3;f=f+1)begin : fine_commands
+   reg [1151:0] fine_snapshot;reg [63:0] token;
+   command(CMD_FINE_PDW_PEEK,0,0);read_word(GW_RESULT_LENGTH);if(value!=36)$fatal(1,"Fine response size");
+   for(integer w=0;w<36;w=w+1)begin read_word(GW_RESULT+4*w);fine_snapshot[w*32+:32]=value;end
+   if(fine_snapshot[31:0]!=3-f||fine_snapshot[63:32]!=0||fine_snapshot[159:128]!=32'h40001)$fatal(1,"Fine count/drop/tag");
+   $fdisplay(fine_result_file,"%0256x",fine_snapshot[1151:128]);token=fine_snapshot[127:64];
+   payload=token+1;command(CMD_FINE_PDW_POP,2,4);command(CMD_FINE_PDW_PEEK,0,0);read_word(GW_RESULT+8);if(value!=token[31:0])$fatal(1,"Fine wrong token changed head");
+   payload=token;command(CMD_FINE_PDW_POP,2,0);command(CMD_FINE_PDW_POP,2,4);
+  end
+  command(CMD_FINE_PDW_PEEK,0,0);read_word(GW_RESULT);if(value!=0)$fatal(1,"Fine empty");
+  repeat(6)@(negedge ctrl_clk);if(irq)$fatal(1,"Fine level not cleared");
+  $fclose(fine_result_file);$fclose(fine_sample_file);
+  $display("PASS FINE_CORE three ranges real bank B128, RAW/replay independent references, soft reset drains and preserves queue, AXI PEEK/POP/IRQ");
   $fclose(frame_file);$fclose(sample_file);
   $display("PASS instrument core PS configuration ARM native ADC FIR detector capture RAW replay TX profiles UNBOUND STOP RESET PDW_IRQ bytes=%0d",bytes_seen);$finish;
  end
- initial begin #100000;$fatal(1,"timeout opcode=%0d wait=%b onsets=%0d ends=%0d frozen=%h error=%d",dut.action_opcode,dut.executor.waiting,onsets,ends,dut.d_frozen,dut.d_record_errors);end
+ always @(posedge rf_clk)if(rst_n)begin
+  if(dut.body_end_valid)$display("BODY_END %0d",dut.body_end_seq);
+  if(dut.dataplane.capture.backend.pending_stats_enable!=0)$fatal(1,"normal production issued A-port statistics scan");
+ end
+ initial begin #10000000;$fatal(1,"timeout opcode=%0d wait=%b onsets=%0d ends=%0d frozen=%h error=%d",dut.action_opcode,dut.executor.waiting,onsets,ends,dut.d_frozen,dut.d_record_errors);end
 endmodule

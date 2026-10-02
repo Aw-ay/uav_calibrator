@@ -52,7 +52,10 @@ module record_dma_bridge(
  localparam IDLE=0,FORMAT=1,CHECK=2,READER=3,ACTIVE=4,RETURN=5;
  reg[2:0] state;reg[1023:0] header;reg[13:0] start;reg[14:0] count;reg[131:0] token;reg error;
  wire fready,fbusy,fdone,frejected,rready,rbusy,rdone,rrejected,sv,sr;
- wire[63:0] sample;
+ wire[127:0] natural_word,payload;
+ wire[1:0] lane_mask;
+ wire natural_last,payload_valid,payload_ready,payload_last;
+ wire[15:0] payload_keep;
  assign request_take=mem_run&&state==IDLE;
  assign {ram_group,ram_bank}=token[3:0];
  assign return_send=mem_run&&state==RETURN&&!return_busy;
@@ -75,10 +78,14 @@ module record_dma_bridge(
    default:state<=IDLE;
   endcase
  end
- frozen_record_reader reader(.clk(clk_mem),.rst(!mem_run),.desc_valid(mem_run&&state==READER),.desc_ready(rready),
+ b_port_reader_128 reader(.clk(clk_mem),.rst(!mem_run),.abort(1'b0),.desc_valid(mem_run&&state==READER),.desc_ready(rready),
   .start_ptr(start),.sample_count(count),.ram_en(ram_en),.ram_addr(ram_addr),.ram_data(ram_data),
-  .sample_valid(sv),.sample_ready(sr),.sample_data(sample),.done(rdone),.rejected(rrejected),.busy(rbusy));
- record_formatter formatter(.clk(clk_mem),.rst(!mem_run),.desc_valid(mem_run&&state==FORMAT),.desc_ready(fready),
-  .header_data(header),.sample_count(count),.sample_valid(sv),.sample_ready(sr),.sample_data(sample),
+  .word_valid(sv),.word_ready(sr),.word_data(natural_word),.word_mask(lane_mask),.word_first(),.word_last(natural_last),.word_index(),
+  .done(rdone),.rejected(rrejected),.busy(rbusy));
+ dma_payload_packer packer(.clk(clk_mem),.rst(!mem_run),.abort(1'b0),
+  .s_valid(sv),.s_ready(sr),.s_data(natural_word),.s_mask(lane_mask),.s_last(natural_last),
+  .m_valid(payload_valid),.m_ready(payload_ready),.m_data(payload),.m_keep(payload_keep),.m_last(payload_last));
+ record_formatter_128 formatter(.clk(clk_mem),.rst(!mem_run),.desc_valid(mem_run&&state==FORMAT),.desc_ready(fready),
+  .header_data(header),.sample_count(count),.payload_valid(payload_valid),.payload_ready(payload_ready),.payload_data(payload),.payload_keep(payload_keep),.payload_last(payload_last),
   .m_axis_tdata(m_axis_tdata),.m_axis_tkeep(m_axis_tkeep),.m_axis_tvalid(m_axis_tvalid),.m_axis_tready(m_axis_tready),.m_axis_tlast(m_axis_tlast),.done(fdone),.rejected(frejected),.busy(fbusy));
 endmodule

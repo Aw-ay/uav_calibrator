@@ -1,0 +1,23 @@
+{
+  "schema_version": 2,
+  "status": "V0_6_DESIGN_TARGET_NOT_IMPLEMENTED",
+  "module": "rtl/replay/calibrator_replay_system.sv",
+  "composition": [
+    "replay_task_dispatcher",
+    "frozen_replay_reader",
+    "replay_processing_chain"
+  ],
+  "readiness": "must depend on frozen/qualified/replay lease, RF/time/latency/profile safety; Fine/DMA readiness is explicitly excluded",
+  "fraction": "fraction_q32==0 required; nonzero reject before reader admission; fractional_supported runtime input removed or tied to unsupported capability",
+  "profile": "RX calibration ID, target matrix ID and Doppler phase ID pinned; no FD phase/version fields in active match",
+  "stream": "A-port RAW -> RXCAL -> target; no FD zero flush",
+  "latency": "digital and physical latency must be retabled; latency_validated remains external false until evidence exists",
+  "ownership": "RAW replay token retires after final A-port read; TX processing/profile lifetime may extend through downstream tail; independent Fine/upload refs cannot be cleared by replay token",
+  "verification": [
+    "V17",
+    "V79",
+    "V80",
+    "V81",
+    "V82"
+  ]
+}

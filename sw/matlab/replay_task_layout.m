@@ -1,0 +1,35 @@
+function x = replay_task_layout()
+% Generated zero-based byte offsets.
+x.bytes = 192;
+x.owner_epoch = 0;
+x.generation = 8;
+x.pulse_id = 16;
+x.start_seq = 24;
+x.gsc_first = 32;
+x.stream_group_id = 40;
+x.bank_id = 44;
+x.start_ptr = 48;
+x.sample_count = 52;
+x.config_id = 56;
+x.fir_id = 60;
+x.source_epoch = 64;
+x.quality_flags = 68;
+x.range_id = 72;
+x.physical_adc_mask = 76;
+x.source_role = 80;
+x.metadata_id = 84;
+x.target_gsc = 88;
+x.task_id = 96;
+x.rx_cal_id = 104;
+x.tx_cal_id = 108;
+x.target_matrix_id = 112;
+x.fraction_q32 = 116;
+x.output_dac_mask = 120;
+x.reference_sample_index = 124;
+x.reference_plane_id = 128;
+x.doppler_phase_id = 132;
+x.doppler_step_q48 = 136;
+x.doppler_initial_q48 = 144;
+x.doppler_reference_gsc = 152;
+x.doppler_output_offset_ticks = 160;
+end

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "module": "rtl/replay/task_doppler_phase.sv",
+  "integration": "calibrator_replay_system actual processing chain",
+  "parameter_owner": "192-byte replay_task; latch on task_started",
+  "formula": "(initial_q48 + (target_input_gsc + output_offset_ticks - reference_gsc)*step_q48) modulo 2^48",
+  "tick_hz": 500000000,
+  "step": "turns per tick Q48; signed frequency encoded modulo 2^48; high16 of u64 zero; no implicit two-way factor",
+  "reference": "offset is validated remaining delay from Target input to selected phase reference plane, not the RAW-reader total; offset <= downstream_latency_ticks. Zero offset names Target input plane.",
+  "numeric": {"phase_address_bits": 12, "amplitude_fraction_bits": 16, "amplitude_bits": 18, "phase_error_bound_radians": 0.001534, "amplitude_rounding_error_lsb": 0.5},
+  "pipeline": "three RF clocks, predicts12GSCticks; output timestamp must match current GSC+offset or valid is false; u64 reference timestamp overflow invalidates",
+  "cancel": "reset, processing fault, abort, loss of safety/time/clock, epoch loss and DSP completion disable task phase; new task loads frozen parameters",
+  "legacy": "zero fields => zero-frequency unit phase; old external phase_valid/I/Q ports are not consumed by production replay",
+  "limits": "Quantized digital phasor, not final full-band/RF phase-accuracy acceptance. Phase modulo wrap is intentional; GSC session rollover still requires system quiesce/restart.",
+  "tests": ["tests/test_task_doppler_phase.py", "tests/test_calibrator_replay_system.py"]
+}

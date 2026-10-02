@@ -1,0 +1,105 @@
+{
+  "target": "v0.6",
+  "local_base": "fbd78c8",
+  "package_github_base": "e428b1f",
+  "migration_batch": "D00-D05 DMA and active online qualification",
+  "active_dma": "B128 reader -> compact128 -> CRC128 formatter -> existing reliable FIFO/lease return",
+  "normal_A_statistics": "REMOVED_FROM_INSTRUMENT_NORMAL_PATH_DIAGNOSTIC_OPTION_RETAINED",
+  "FD63": "LEGACY_ACTIVE_D11_PENDING",
+  "Fine": "ABI_RESERVED_ENGINE_AND_TRANSPORT_PENDING",
+  "bank_refs": "LEGACY_RECORD_REPLAY_ANALYSIS_PENDING",
+  "contract_comparison": [
+    {
+      "contract": "address_map.json",
+      "state": "IDENTICAL"
+    },
+    {
+      "contract": "amd_ip_targets.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "bank_contract.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "bd_connections.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "b_port_reader.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "calibrator_replay_system.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "channel_roles.json",
+      "state": "IDENTICAL"
+    },
+    {
+      "contract": "fine_measurement.json",
+      "state": "IDENTICAL"
+    },
+    {
+      "contract": "fine_pdw_format.json",
+      "state": "IDENTICAL"
+    },
+    {
+      "contract": "fine_result_transport.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "fir_coefficients.json",
+      "state": "IDENTICAL"
+    },
+    {
+      "contract": "fir_plan.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "frame_format.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "latency_contract.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "module_catalog.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "range_selection.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "record_policy.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "register_map.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "replay_contract.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "replay_processing_chain.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "resource_budget.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "system_contract.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    },
+    {
+      "contract": "verification_matrix.json",
+      "state": "LOCAL_MERGE_REQUIRED_OR_LOCAL_EXTENSION"
+    }
+  ]
+}

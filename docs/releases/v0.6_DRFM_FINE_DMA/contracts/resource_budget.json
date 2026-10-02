@@ -1,0 +1,205 @@
+{
+  "schema_version": "0.6",
+  "status": "V0_6_ARITHMETIC_PLANNING_NOT_SYNTHESIS",
+  "target_silicon": "ZU27DR",
+  "device": {
+    "dsp48e2": 4272,
+    "ramb36": 1080,
+    "uram288": 80,
+    "luts": 425280,
+    "ffs": 850560
+  },
+  "fir_clock_hz": 125000000,
+  "dma_clock_hz": 200000000,
+  "fir_dsp_optimized": 1536,
+  "simultaneous_target_engines": 1,
+  "baseline_functional_dsp": 1728,
+  "with_25percent_planning_allowance": 2160,
+  "ordinary_symmetric_noHB_savings_planning": 2560,
+  "first_implementation_dsp_target_max": 3000,
+  "dsp_rows": [
+    {
+      "module": "RX HB19 + FIR75",
+      "dsp": 768,
+      "basis": "16 real paths, 10+38 multiply units/path"
+    },
+    {
+      "module": "TX FIR75 + HB19",
+      "dsp": 768,
+      "basis": "16 real paths; both L2 phases symmetric"
+    },
+    {
+      "module": "RXCAL diagonal complex gains",
+      "dsp": 8,
+      "basis": "selected H/V only, 2 complex multiplies x4"
+    },
+    {
+      "module": "Target 2x2 complex matrix",
+      "dsp": 16,
+      "basis": "4 complex multiplies x4; fixed target gain absorbed into matrix"
+    },
+    {
+      "module": "H/V Doppler rotation",
+      "dsp": 8,
+      "basis": "2 complex multiplies x4"
+    },
+    {
+      "module": "Per-DAC complex TX gain",
+      "dsp": 32,
+      "basis": "8 independent complex multiplies x4"
+    },
+    {
+      "module": "Eight RX power engines",
+      "dsp": 16,
+      "basis": "2 real squares per IQ16 path; shared with detector and qualifier"
+    },
+    {
+      "module": "Six inter-range correlations",
+      "dsp": 24,
+      "basis": "6 complex correlations x4 at IQ16 width"
+    },
+    {
+      "module": "Two AUX/reference correlations",
+      "dsp": 16,
+      "basis": "2 complex multiplies x8 allowing wider data-data products"
+    },
+    {
+      "module": "DDS/NCO/envelope allowance",
+      "dsp": 8,
+      "basis": "LUT phase engines + amplitude/scaling; NOT SFDR-validated"
+    },
+    {
+      "module": "Low-rate arithmetic allowance",
+      "dsp": 16,
+      "basis": "shared control/statistics arithmetic; NOT eight full analyzers"
+    },
+    {
+      "module": "Ring/reader/scheduler/CRC/DMA/CDC",
+      "dsp": 0,
+      "basis": "LUT/FF/RAM implementation assumption; no DSP mapping"
+    },
+    {
+      "module": "Shared Fine measurement engine allowance",
+      "dsp": 48,
+      "basis": "planning ceiling for one clk_mem200MHz engine: H/V powers and complex correlations plus shared finalize; NOT synthesis result"
+    }
+  ],
+  "fir_sensitivity": [
+    {
+      "name": "sparse_symmetric",
+      "fir_dsp": 1536,
+      "functional_dsp": 1728,
+      "with_25pct_allowance": 2160,
+      "functional_device_pct": 40.44943820224719,
+      "allowance_device_pct": 50.56179775280899
+    },
+    {
+      "name": "dense_symmetric_no_halfband_savings",
+      "fir_dsp": 1856,
+      "functional_dsp": 2048,
+      "with_25pct_allowance": 2560,
+      "functional_device_pct": 47.940074906367045,
+      "allowance_device_pct": 59.925093632958806
+    },
+    {
+      "name": "sparse_no_symmetry",
+      "fir_dsp": 3040,
+      "functional_dsp": 3232,
+      "with_25pct_allowance": 4040,
+      "functional_device_pct": 75.65543071161048,
+      "allowance_device_pct": 94.5692883895131
+    },
+    {
+      "name": "dense_no_symmetry",
+      "fir_dsp": 3616,
+      "functional_dsp": 3808,
+      "with_25pct_allowance": 4760,
+      "functional_device_pct": 89.13857677902621,
+      "allowance_device_pct": 111.42322097378276
+    }
+  ],
+  "calibration_sensitivity": [
+    {
+      "type": "diagonal_complex_FIR",
+      "taps": 1,
+      "calibration_dsp": 40,
+      "functional_total": 1728,
+      "with_25pct_allowance": 2160
+    },
+    {
+      "type": "diagonal_complex_FIR",
+      "taps": 15,
+      "calibration_dsp": 600,
+      "functional_total": 2288,
+      "with_25pct_allowance": 2860
+    },
+    {
+      "type": "diagonal_complex_FIR",
+      "taps": 31,
+      "calibration_dsp": 1240,
+      "functional_total": 2928,
+      "with_25pct_allowance": 3660
+    },
+    {
+      "type": "RX_2x2_TX_8x2_complex_FIR",
+      "taps": 31,
+      "calibration_dsp": 2480,
+      "functional_total": 4168,
+      "with_25pct_allowance": 5210
+    }
+  ],
+  "ram": {
+    "capture_payload_bytes": 2097152,
+    "capture_ramb36": 512,
+    "capture_ramb36_pct": 47.407407407407405,
+    "quality_sidecar_ramb36_allowance": 64,
+    "awg_256KiB_total_ramb36_allowance": 64,
+    "axis_fifo_64KiB_with_sidebands_ramb36_allowance": 20,
+    "miscellaneous_fir_coeff_cdc_ila_ramb36_allowance": [
+      100,
+      160
+    ],
+    "planned_total_ramb36": [
+      760,
+      820
+    ],
+    "planned_total_pct": [
+      70.37037037037037,
+      75.92592592592592
+    ],
+    "eight_banks_each_group_capture_ramb36": 1024,
+    "eight_banks_with_same_other_allowance": [
+      1272,
+      1332
+    ],
+    "ps_ddr_ring_bytes": 134217728,
+    "ps_ddr_ring_is_not_pl_bram": true
+  },
+  "assumptions": {
+    "rx_complex_paths": 8,
+    "tx_complex_paths": 8,
+    "selected_replay_complex_paths": 2,
+    "simultaneous_targets": 1,
+    "real_data_bits": 24,
+    "real_coefficient_bits": 18,
+    "complex_multiply_dsp": 4,
+    "fd_taps_allowance": 0,
+    "fractional_delay_architecture_not_frozen": false,
+    "custom_add_trees_in_lut_ff": true,
+    "planning_allowance_not_prediction": 0.25,
+    "fractional_waveform_delay_supported": false,
+    "fine_engine_count": 1
+  },
+  "excluded": [
+    "full-rate FFT/channel estimation/multipath removal",
+    "wideband multi-tap RX/TX calibration",
+    "eight independent DRFM target engines",
+    "DPD or full-duplex SIC",
+    "unbounded long-delay record retention"
+  ],
+  "note": "v0.6 removes 252-DSP FD placeholder and adds <=48-DSP Fine planning ceiling. New functional arithmetic sum is planning only; rerun Vivado OOC/full synthesis.",
+  "fine_engine_count": 1,
+  "fractional_delay_dsp_removed": 252,
+  "fine_engine_planning_dsp_max": 48,
+  "net_planning_dsp_change_vs_old_functional": -204
+}

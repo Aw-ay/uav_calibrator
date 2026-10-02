@@ -9,6 +9,8 @@ wire [1023:0] generation,pulse_id,start_seq;wire [63:0] counts,owner_epoch;wire 
 wire primary_trigger,primary_admitted;wire [63:0] primary_onset,primary_pulse;
 wire [15:0] eop_valid;wire [1023:0] eop_stop,eop_generation;
 capture_bank_manager #(.ADDR_W(3),.PRE_SAMPLES(1),.DETECTOR_LATENCY(1)) owner(
+ .analysis_pin(16'd0),.ack_analysis(1'b0),.ack_analysis_bank(4'd0),.ack_analysis_epoch(64'd0),.ack_analysis_generation(64'd0),.analysis_leased(),.record_leased(),
+
 .clk(clk),.rst(rst),.arm_enable(1'b1),.reset_request(1'b0),.readers_quiescent(1'b1),.quiesce(),.sample_valid(sample_valid),.sample_seq(sample_seq),
 .primary_trigger(primary_trigger),.primary_onset(primary_onset),.primary_pulse_id(primary_pulse),.aux_trigger(1'b0),.aux_onset(64'd0),.aux_pulse_id(64'd0),
 .eop_valid(eop_valid),.eop_stop(eop_stop),.eop_generation(eop_generation),.discard_pending(16'd0),.stats_valid(16'd0),.stats_generation(1024'd0),.stats_good(16'd0),.publish(16'd0),.replay_pin(16'd0),

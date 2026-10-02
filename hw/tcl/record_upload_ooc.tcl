@@ -3,7 +3,7 @@ if {[version -short] ne "2025.2"} {error "Requires Vivado 2025.2"}
 set out [file join $root reports record_upload_ooc]
 file mkdir $out
 create_project -in_memory -part xczu27dr-fsve1156-2-i
-foreach f {rtl/generated/calibrator_contract_pkg.sv rtl/control/cdc_mailbox.sv rtl/capture/frozen_record_reader.sv rtl/capture/record_formatter.sv rtl/capture/record_dma_bridge.sv rtl/data/axis_record_fifo.sv rtl/data/record_descriptor_arbiter.sv rtl/data/record_upload_path.sv rtl/data/record_upload_groups.sv} {
+foreach f {rtl/generated/calibrator_contract_pkg.sv rtl/generated/crc32c_parallel_pkg.sv rtl/control/cdc_mailbox.sv rtl/capture/b_port_reader_128.sv rtl/capture/dma_payload_packer.sv rtl/capture/record_formatter_128.sv rtl/capture/record_dma_bridge.sv rtl/data/axis_record_fifo.sv rtl/data/record_descriptor_arbiter.sv rtl/data/record_upload_path.sv rtl/data/record_upload_groups.sv} {
  read_verilog -sv [file join $root $f]
 }
 synth_design -top record_upload_groups -mode out_of_context -part xczu27dr-fsve1156-2-i

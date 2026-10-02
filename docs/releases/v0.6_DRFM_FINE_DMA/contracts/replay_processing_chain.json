@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "status": "V0_6_DESIGN_TARGET_NOT_IMPLEMENTED",
+  "module": "replay_processing_chain",
+  "clock_hz": 125000000,
+  "path": [
+    "2x rx_cal_executor",
+    "target_complex_operator"
+  ],
+  "removed": [
+    "2x fractional_delay_profile",
+    "FD phase/version profile match",
+    "62 valid zero samples injected for FD tail",
+    "FD saturation aggregation"
+  ],
+  "profile": [
+    "RX DC/gain",
+    "target matrix",
+    "Doppler phase policy/ID"
+  ],
+  "latency": "remeasure from RTL after removal; no reuse of old RXCAL1+FD8+target2 value",
+  "tail": "no FD63 62-sample flush; still obey downstream target/TXCAL/TX FIR/RFDC tails",
+  "fraction": "replay task fraction_q32 must be0 before this block is entered",
+  "verification": [
+    "V79",
+    "V80",
+    "V81",
+    "V82"
+  ]
+}

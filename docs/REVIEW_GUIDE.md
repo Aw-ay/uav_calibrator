@@ -2,6 +2,8 @@
 
 当前版本请选择 `feature/module-first-validation`，从STATUS、根目录contracts及 `rtl/top/calibrator_instrument_core.sv` 开始。两个旧分支用于比较演进，不代表当前功能。
 
+v0.6优先审查在线统计/Fine三引用及B口仲裁、128位DMA记录、无FD回放的12GSC时序与任务相位、安全载荷/有效控制分离。设计包见docs/releases/v0.6_DRFM_FINE_DMA，活动合同以根目录contracts为准。
+
 每次选择一条链路：采集生产端至bank及上传；回放队列至DSP/TX生命周期及统一EVENT；DDS/AWG至TX尾部和可选接收ACK；命令网关至CDC及PS解码。
 
 重点检查valid/ready停顿、跨域保持/复位、bank/generation/epoch所有权、绝对GSC、定点符号/舍入/饱和、64位身份、不可变事件、取消和故障路径。不能以DMA完成或DAC TVALID推导实际RF消费；不能以删除约束、改速率或无依据时序例外解决问题。

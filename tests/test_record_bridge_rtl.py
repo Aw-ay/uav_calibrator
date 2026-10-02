@@ -5,7 +5,7 @@ from frame_codec import encode_frame
 class RecordBridgeRTLTests(unittest.TestCase):
  def test_async_bridge(self):
   iv=pathlib.Path('C:/iverilog/bin/iverilog.exe');vv=iv.with_name('vvp.exe')
-  sources=[ROOT/p for p in ['rtl/generated/calibrator_contract_pkg.sv','rtl/control/cdc_mailbox.sv','rtl/data/axis_record_fifo.sv','rtl/data/record_upload_path.sv','rtl/capture/frozen_record_reader.sv','rtl/capture/record_formatter.sv','rtl/capture/record_dma_bridge.sv','tb/system/tb_record_bridge.sv']]
+  sources=[ROOT/p for p in ['rtl/generated/calibrator_contract_pkg.sv','rtl/generated/crc32c_parallel_pkg.sv','rtl/control/cdc_mailbox.sv','rtl/data/axis_record_fifo.sv','rtl/data/record_upload_path.sv','rtl/capture/b_port_reader_128.sv','rtl/capture/dma_payload_packer.sv','rtl/capture/record_formatter_128.sv','rtl/capture/record_dma_bridge.sv','tb/system/tb_record_bridge.sv']]
   self.assertTrue(all(p.exists() for p in sources),'record lease bridge implementation missing')
   with tempfile.TemporaryDirectory() as td:
    td=pathlib.Path(td);exe=td/'sim'

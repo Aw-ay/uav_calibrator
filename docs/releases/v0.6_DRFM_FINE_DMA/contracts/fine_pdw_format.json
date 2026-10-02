@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "kind": "FINE_PDW",
+  "tag_hex": "0x00040001",
+  "bytes": 128,
+  "byte_order": "little",
+  "identity": "join to RAW with pulse_id+owner_epoch+generation+range_id; RAW header ABI5 unchanged",
+  "fields": [
+    {
+      "name": "tag",
+      "type": "u32",
+      "offset_bytes": 0,
+      "size_bytes": 4
+    },
+    {
+      "name": "flags",
+      "type": "u32",
+      "offset_bytes": 4,
+      "size_bytes": 4
+    },
+    {
+      "name": "pulse_id",
+      "type": "u64",
+      "offset_bytes": 8,
+      "size_bytes": 8
+    },
+    {
+      "name": "owner_epoch",
+      "type": "u64",
+      "offset_bytes": 16,
+      "size_bytes": 8
+    },
+    {
+      "name": "generation",
+      "type": "u64",
+      "offset_bytes": 24,
+      "size_bytes": 8
+    },
+    {
+      "name": "config_id",
+      "type": "u32",
+      "offset_bytes": 32,
+      "size_bytes": 4
+    },
+    {
+      "name": "range_id",
+      "type": "u8",
+      "offset_bytes": 36,
+      "size_bytes": 1
+    },
+    {
+      "name": "bank_id",
+      "type": "u8",
+      "offset_bytes": 37,
+      "size_bytes": 1
+    },
+    {
+      "name": "selected",
+      "type": "u8",
+      "offset_bytes": 38,
+      "size_bytes": 1
+    },
+    {
+      "name": "channel_valid_mask",
+      "type": "u8",
+      "offset_bytes": 39,
+      "size_bytes": 1,
+      "meaning": "bit0 H timing, bit1 V timing, bit2 spectral H, bit3 spectral V, bit4 HV phase"
+    },
+    {
+      "name": "gsc_first",
+      "type": "u64",
+      "offset_bytes": 40,
+      "size_bytes": 8
+    },
+    {
+      "name": "h_rise_index_q16",
+      "type": "u32",
+      "offset_bytes": 48,
+      "size_bytes": 4
+    },
+    {
+      "name": "h_fall_index_q16",
+      "type": "u32",
+      "offset_bytes": 52,
+      "size_bytes": 4
+    },
+    {
+      "name": "v_rise_index_q16",
+      "type": "u32",
+      "offset_bytes": 56,
+      "size_bytes": 4
+    },
+    {
+      "name": "v_fall_index_q16",
+      "type": "u32",
+      "offset_bytes": 60,
+      "size_bytes": 4
+    },
+    {
+      "name": "h_peak_power",
+      "type": "u32",
+      "offset_bytes": 64,
+      "size_bytes": 4
+    },
+    {
+      "name": "v_peak_power",
+      "type": "u32",
+      "offset_bytes": 68,
+      "size_bytes": 4
+    },
+    {
+      "name": "h_mean_body_power",
+      "type": "u32",
+      "offset_bytes": 72,
+      "size_bytes": 4
+    },
+    {
+      "name": "v_mean_body_power",
+      "type": "u32",
+      "offset_bytes": 76,
+      "size_bytes": 4
+    },
+    {
+      "name": "h_residual_frequency_hz",
+      "type": "i32",
+      "offset_bytes": 80,
+      "size_bytes": 4
+    },
+    {
+      "name": "v_residual_frequency_hz",
+      "type": "i32",
+      "offset_bytes": 84,
+      "size_bytes": 4
+    },
+    {
+      "name": "h_chirp_rate_hz_per_s",
+      "type": "i64",
+      "offset_bytes": 88,
+      "size_bytes": 8
+    },
+    {
+      "name": "v_chirp_rate_hz_per_s",
+      "type": "i64",
+      "offset_bytes": 96,
+      "size_bytes": 8
+    },
+    {
+      "name": "hv_phase_q31_turn",
+      "type": "i32",
+      "offset_bytes": 104,
+      "size_bytes": 4,
+      "meaning": "signed turns, +1.0 turn would map to 2^31; wrap convention documented by decoder"
+    },
+    {
+      "name": "h_snr_q16",
+      "type": "u32",
+      "offset_bytes": 108,
+      "size_bytes": 4
+    },
+    {
+      "name": "v_snr_q16",
+      "type": "u32",
+      "offset_bytes": 112,
+      "size_bytes": 4
+    },
+    {
+      "name": "edge_quality",
+      "type": "u32",
+      "offset_bytes": 116,
+      "size_bytes": 4
+    },
+    {
+      "name": "spectral_quality",
+      "type": "u32",
+      "offset_bytes": 120,
+      "size_bytes": 4
+    },
+    {
+      "name": "reserved",
+      "type": "u32",
+      "offset_bytes": 124,
+      "size_bytes": 4,
+      "meaning": "must be zero"
+    }
+  ],
+  "edge_index": "relative to RAW gsc_first sample, Q16 sample units; physical time = gsc_first + index_q16*(4 GSC ticks)/65536",
+  "frequency_note": "residual baseband after configured RFDC NCO; RF sign requires measured mixer convention",
+  "raw_dependency": "Fine never changes RAW start/count/payload; sidecar loss does not invalidate RAW"
+}

@@ -10,8 +10,9 @@ module replay_task_dispatcher #(parameter integer QUEUE_DEPTH=4)(
  input wire guard_clear,planned_slot_clear,rf_safe,binding_valid,resources_ready,time_valid,clock_ok,latency_validated,fractional_supported,
  input wire [63:0] downstream_latency_ticks,input wire hard_fault,abort_request,processing_ready,
  output wire rejected_valid,output wire [1535:0] rejected_task,output wire [7:0] reject_reason,input wire reject_ready,
- output wire task_started,output reg [1535:0] active_task,
+ output wire task_started,task_dispatching,output reg [1535:0] active_task,
  output wire raw_valid,output wire [63:0] raw_data,output wire raw_last,
+ output wire [63:0] raw_processing_data,
  output wire ram_en,output wire [13:0] ram_addr,output wire [31:0] ram_group,ram_bank,
  input wire ram_response_valid,input wire [63:0] ram_data,
  output wire actual_start,actual_finish,output wire [63:0] actual_start_gsc,actual_finish_gsc,
@@ -22,6 +23,7 @@ module replay_task_dispatcher #(parameter integer QUEUE_DEPTH=4)(
  import replay_control_layout_pkg::*;
  wire legal;wire [7:0] legality_reason;wire [63:0] unused_first;
  wire dispatch_valid;wire [1535:0] dispatch_task,queue_rejected_task;
+ assign task_dispatching=dispatch_valid;
  wire queue_rejected_valid,queue_inflight,reader_ready,reader_busy,reader_rejected;
  wire [7:0] queue_reject_reason,reader_reason;
  reg failed_admission;reg [7:0] failed_reason;
@@ -66,6 +68,6 @@ module replay_task_dispatcher #(parameter integer QUEUE_DEPTH=4)(
   .task_target_gsc(dispatch_task[TARGET_GSC_BIT+:64]),.downstream_latency_ticks(downstream_latency_ticks),.task_ready(reader_ready),
   .accepted(task_started),.rejected(reader_rejected),.reason(reader_reason),.accepted_count(),.rejected_count(),.aborted_count(),.completed_count(),.busy(reader_busy),
   .ram_en(ram_en),.ram_addr(ram_addr),.ram_group(ram_group),.ram_bank(ram_bank),.ram_response_valid(ram_response_valid),.ram_data(ram_data),
-  .source_valid(raw_valid),.source_data(raw_data),.actual_start(actual_start),.actual_finish(actual_finish),.actual_start_gsc(actual_start_gsc),.actual_finish_gsc(actual_finish_gsc),.active_task_id(),
+  .source_valid(raw_valid),.source_data(raw_data),.processing_data(raw_processing_data),.actual_start(actual_start),.actual_finish(actual_finish),.actual_start_gsc(actual_start_gsc),.actual_finish_gsc(actual_finish_gsc),.active_task_id(),
   .token_valid(token_valid),.token_ready(token_ready),.token_owner_epoch(token_owner_epoch),.token_generation(token_generation),.token_group(token_group),.token_bank(token_bank),.token_consumer(token_consumer),.token_status(token_status));
 endmodule

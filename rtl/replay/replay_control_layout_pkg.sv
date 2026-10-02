@@ -28,4 +28,8 @@ package replay_control_layout_pkg;
  localparam integer REFERENCE_SAMPLE_INDEX_BIT=992;
  localparam integer REFERENCE_PLANE_ID_BIT=1024;
  localparam integer DOPPLER_PHASE_ID_BIT=1056;
+ localparam integer DOPPLER_STEP_Q48_BIT=1088;
+ localparam integer DOPPLER_INITIAL_Q48_BIT=1152;
+ localparam integer DOPPLER_REFERENCE_GSC_BIT=1216;
+ localparam integer DOPPLER_OUTPUT_OFFSET_TICKS_BIT=1280;
 endpackage

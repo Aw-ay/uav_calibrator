@@ -1,6 +1,6 @@
 // RF-domain observation queue. Full queues drop PDW only, never backpressure
 // capture/RAW. Soft capture reset is intentionally not connected to this queue.
-module qualified_pdw_queue #(parameter integer PRE_SAMPLES=250,ADDR_W=4)(
+module qualified_pdw_queue #(parameter integer PRE_SAMPLES=250,ADDR_W=4,BODY_STATS=0)(
  input wire clk,rst,in_valid,pop_valid,input wire [63:0] pop_token,
  input wire [255:0] event_key,input wire [1023:0] event_header,
  input wire [511:0] event_stats,input wire [191:0] event_peaks,
@@ -18,12 +18,14 @@ module qualified_pdw_queue #(parameter integer PRE_SAMPLES=250,ADDR_W=4)(
  wire [1:0] group_index=selected_ok?range_id[1:0]-2'd1:2'd0;
  wire [2:0] v_index={1'b0,group_index}+3'd3;
  wire [31:0] samples=event_header[FRAME_SAMPLE_COUNT_OFFSET*8+:32];
- wire stats_ok=selected_ok&&samples=={17'd0,event_stats[290:276]}&&samples!=0&&samples<=16384&&
+ wire [31:0] body_samples={17'd0,event_stats[290:276]};
+ wire stats_geometry=BODY_STATS?(body_samples!=0&&body_samples<=16384&&samples>=body_samples+PRE_SAMPLES):(samples==body_samples);
+ wire stats_ok=selected_ok&&stats_geometry&&samples!=0&&samples<=16384&&
   event_stats[297+group_index]&&!event_stats[291+group_index]&&!event_stats[291+v_index];
  wire [64:0] toa={1'b0,event_header[FRAME_GSC_FIRST_OFFSET*8+:64]}+{1'b0,PRE_TICKS};
  wire toa_ok=selected_ok&&!toa[64];
- wire width_ok=selected_ok&&samples<=16384&&samples>PRE_SAMPLES+{16'd0,post_samples};
- wire [31:0] width_ticks=(samples-PRE_SAMPLES-{16'd0,post_samples})<<2;
+ wire width_ok=BODY_STATS?stats_ok:(selected_ok&&samples<=16384&&samples>PRE_SAMPLES+{16'd0,post_samples});
+ wire [31:0] width_ticks=BODY_STATS?(body_samples<<2):((samples-PRE_SAMPLES-{16'd0,post_samples})<<2);
  wire [31:0] hp=event_peaks[group_index*32+:32],vp=event_peaks[v_index*32+:32];
  wire [63:0] energy={18'd0,event_stats[group_index*46+:46]}+{18'd0,event_stats[v_index*46+:46]};
  wire [31:0] flags=(toa_ok?EVENT_TOA_VALID:0)|(width_ok?EVENT_WIDTH_VALID:0)|

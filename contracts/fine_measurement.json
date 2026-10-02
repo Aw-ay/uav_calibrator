@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "status": "INTEGRATED_FINE_DIGITAL_CORE_MODULE_VERIFIED",
+  "clock_hz": 200000000,
+  "engine_count": 1,
+  "scope": "primary HIGH/MID/LOW all Fine; AUX policy remains separate",
+  "input": "natural B128 words, two logical HV samples/beat, lane mask; no A-port access",
+  "polarization": "H and V measured independently; common range selection does not imply common edge",
+  "power": {
+    "H": "IH^2+QH^2",
+    "V": "IV^2+QV^2",
+    "noise": "frozen onset noise snapshot per channel",
+    "raw_peak": "max raw power for diagnostic/clip evidence",
+    "top_estimator": "max over 4-sample moving-average of max(P-N,0)",
+    "half_power_raw": "P50 = N + TOP_signal/2",
+    "legacy_half_amplitude": "max(power)/4 is not half-power and is not used"
+  },
+  "online_statistics": {
+    "normal_path_no_full_A_scan": true,
+    "body_bounds": "[coarse onset, detector event_end_seq)",
+    "eop_hold_commit": "bounded causal tail buffering/rollback so confirmation hold samples are excluded",
+    "online_eop_hold_max_samples": 256,
+    "too_large_hold": "low-latency mode reject or explicit diagnostic fallback; no silent approximation"
+  },
+  "edge": {
+    "threshold": "per-pol P50 known before Fine read",
+    "two_point": true,
+    "local_fit_max_points": 8,
+    "fusion": "variance-weighted",
+    "rising": "first valid crossing in bounded coarse neighborhood",
+    "falling": "last valid crossing in bounded coarse neighborhood",
+    "delay_buffer_samples": "16..32",
+    "quality": [
+      "LOW_SNR",
+      "NO_RISE",
+      "NO_FALL",
+      "FLAT_EDGE",
+      "MULTI_CROSSING",
+      "RINGING",
+      "INSUFFICIENT_LOCAL_DATA"
+    ]
+  },
+  "body": {
+    "definition": "complete discrete samples strictly inside final edge window after guard",
+    "guard_samples_default": 4,
+    "min_samples_for_spectral": 9,
+    "configuration": "This build fixes guard=4 and segments=8 through the numerical contract; no runtime CSR changes these constants. Changing either requires a versioned numerical contract, reference and RTL update."
+  },
+  "spectral": {
+    "frequency": "residual complex-baseband frequency after fixed RFDC NCO",
+    "chirp": "slope preserved by fixed NCO",
+    "main_path": "adjacent complex products accumulated in time segments; no per-sample atan2",
+    "segments_default": 8,
+    "finalize": "shared CORDIC/least-squares using segment centers",
+    "hv_phase": "arg(sum H*conj(V)) over stable body"
+  },
+  "ram_passes_normal": 1,
+  "diagnostic_second_pass": "not implicit; host uses RAW or explicit diagnostic mode",
+  "throughput": {
+    "max_samples_per_range": 16384,
+    "ideal_us_per_range": 40.96,
+    "ideal_us_three_ranges": 122.88,
+    "prf_hz_example": 3300,
+    "ideal_read_duty_three_ranges": 0.4055,
+    "measurement_scope": "See Fine F7 test: twelve full-depth three-range analytic pulses, concurrent RAW and replay. This is a workload measurement, not a guarantee for arbitrary multiple-crossing signals."
+  },
+  "resource_planning": {
+    "dsp_max": 48,
+    "actual_synthesis_required": true
+  },
+  "verification": [
+    "V70",
+    "V71",
+    "V72",
+    "V73",
+    "V74"
+  ],
+  "implementation": "rtl/fine/fine_engine.sv; docs/v06_fine_integration.md"
+}

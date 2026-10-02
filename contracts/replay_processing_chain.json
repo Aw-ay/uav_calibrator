@@ -1,24 +1,22 @@
 {
-  "status": "IMPLEMENTED_FUNCTIONAL_BOUNDED",
+  "status": "V06_RXCAL_TARGET_NO_FD",
   "module": "replay_processing_chain",
   "clock_hz": 125000000,
   "path": [
     "2x rx_cal_executor",
-    "2x fractional_delay_profile (63 taps, 8 register stages)",
     "target_complex_operator (2 register stages)"
   ],
   "frozen_profile": [
     "RX DC/gain",
-    "matrix",
-    "FD phase/version"
+    "matrix"
   ],
-  "profile_acceptance": "idle, no pending RXCAL, fault clear, both cal-valid, immutable table version matches",
-  "doppler_phase": "external phase_valid/phase_i/phase_q correspond to the FD-output sample accepted by the target at current clock; phase generation and absolute scheduler timing are separate",
-  "latency": "RXCAL1 + FD8 + target2 register stages. Accept edge n to output edge n+10. Waveform group delay31+mu samples is separate. No physical RF latency is asserted.",
-  "tail": "after last RAW is calibrated, inject exactly62 valid zero IQ samples at FD INPUT, never before RX DC subtraction; then wait10 countdown cycles plus transition to idle",
+  "profile_acceptance": "idle, no pending real valid stages, fault clear, both cal-valid; reserved FD phase/version ignored and table_version=0",
+  "doppler_phase": "phase at Target input edge, one edge after RXCAL input acceptance; system uses task-owned GSC phase",
+  "latency": "RXCAL1 + Target2 stages: accepted edge n to output n+2. No waveform group delay. Registered RAW output edge to target output edge is3 RF intervals=12 GSC ticks.",
+  "tail": "No injected zeros. Drain the three real valid stages; normal done n+4 after final accepted edge n. Downstream TX FIR minimum42 input zeros remains independent.",
   "fault": "combinational out valid/data inhibit; unfinished histories drain; cancelled stays asserted and source_ready stays low until an explicit safe profile commit",
   "validity": "out_valid retains stream timing; out_qualified low produces zero on invalid Doppler/model evidence",
   "saturation": "sticky aggregate per task, not sample-aligned saturation metadata",
-  "test": "tests/test_replay_processing_chain.py: nonzero DC/gains, swapped H/V matrix, j phase, actual phase0 FD31 group delay, full tail, active profile reject, midstream fault and reprepare; each arithmetic block separately has exhaustive/random/allphase oracle tests",
-  "timing": "full-chain NOT_RUN; per-module evidence is separate"
+  "test": "640 independent integer vectors with ties-even/saturation/gaps; frozen profile, fault drain; real RAM and task Doppler; all32 nonzero fraction bits rejected before RAM",
+  "timing": "See reports/v06_no_fd_delivery.json; physical board timing remains pending"
 }

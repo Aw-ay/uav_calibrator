@@ -31,7 +31,9 @@ module replay_legality_checker(
           task_data[SOURCE_EPOCH_BIT+:32]!=current_source_epoch || !task_profiles_valid) reason=4;
   else if(group_id<1 || group_id>4 || bank>3 || task_data[START_PTR_BIT+:32]>16383 || count<1 || count>16384 || reference_index>=count ||
           task_data[OUTPUT_DAC_MASK_BIT+:32]==0 || task_data[OUTPUT_DAC_MASK_BIT+:32]>255) reason=5;
-  else if(!latency_validated || (task_data[FRACTION_Q32_BIT+:32]!=0 && !fractional_supported)) reason=6;
+  else if(!latency_validated || task_data[FRACTION_Q32_BIT+:32]!=0 ||
+          task_data[DOPPLER_STEP_Q48_BIT+48+:16]!=0 || task_data[DOPPLER_INITIAL_Q48_BIT+48+:16]!=0 ||
+          task_data[DOPPLER_OUTPUT_OFFSET_TICKS_BIT+:64]>downstream_latency_ticks) reason=6;
   else if(offset_ticks>{2'b0,target} || end_wide[65:64]!=0 || earliest[65:64]!=0) reason=7;
   else if(first_wide[1:0]!=gsc[1:0]) reason=8;
   else if(first_wide<earliest) reason=9;

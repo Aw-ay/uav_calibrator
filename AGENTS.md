@@ -1,3 +1,7 @@
+# 最新公开源码继续点（2026-10-02）
+
+当前公开源码同步本机开发提交1440e1f，设计目标v0.6。先读docs/STATUS.md、docs/v06_replay_no_fd.md和docs/v06_fine_integration.md。历史FD63/完整A扫描/64位上传描述已由活动v0.6实现替代。原报告及检查点不上Git，本机验证包含未提交外部RTL，公开checkout须重建自身证据。保持原三个分支，当前开发分支feature/module-first-validation。下文为历史规则与来源，发生冲突时以当前实施合同和最新状态为准。
+
 # Review / development rules
 
 Read README.md, docs/STATUS.md and docs/REVIEW_GUIDE.md first. Current implementation is on feature/module-first-validation; main and feature/complete-new-modules preserve earlier source states. This public export excludes reports and generated build artifacts throughout history. Do not invent successful test results from absent reports.

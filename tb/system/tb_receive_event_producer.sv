@@ -7,11 +7,24 @@ module tb_receive_event_producer;
  reg [63:0] owner_epoch=7,config_version=9;reg [1023:0] config_data=123,metadata=456;reg want_replay=1;
  wire onset_valid;reg onset_ready=1;wire [63:0] onset_seq,onset_gsc,onset_pulse_id;wire [1023:0] onset_config,onset_metadata;wire [255:0] onset_noise;wire [5:0] onset_bad_channels;wire onset_want_replay;
  wire eop_event_valid;wire [63:0] eop_event_pulse_id,eop_event_owner_epoch,eop_event_stop;wire [5:0] eop_event_bad_channels;wire idle,detector_active;wire [31:0] dropped_onsets;
+ wire [13:0] onset_eop_hold;
+ wire body_end_valid,body_end_precise,body_end_truncated;
+ wire [63:0] body_end_pulse_id,body_end_owner_epoch,body_end_seq;
+ wire [3:0] body_end_reason;
+ integer bodies=0;
+ always @(posedge clk)if(!rst&&body_end_valid)begin
+  if(bodies==0&&(body_end_seq!=105||body_end_pulse_id!=1||body_end_owner_epoch!=7||!body_end_precise||body_end_truncated||sample_seq>109))$fatal(1,"body end must precede POST completion");
+  if(bodies==1&&(body_end_seq!=145||body_end_pulse_id!=3))$fatal(1,"first overlap body end");
+  if(bodies==2&&(body_end_seq!=152||body_end_pulse_id!=4))$fatal(1,"second overlap body end");
+  if(bodies==3&&body_end_precise)$fatal(1,"quality abort cannot be precise");
+  bodies=bodies+1;
+ end
  receive_event_producer #(.PRE_SAMPLES(3)) dut(.*);
  integer starts=0,ends=0;
  always @(posedge clk)begin
   if(!rst&&onset_valid&&onset_ready)begin
    if(starts==0 && (onset_seq!=100||onset_gsc!=1400||onset_pulse_id!=1||onset_config!=123||onset_metadata!=456||onset_noise[197:192]!=63||onset_noise[31:0]!=1||!onset_want_replay||onset_bad_channels!=0))$fatal(1,"causal frozen onset snapshot");
+   if(onset_eop_hold!=2)$fatal(1,"frozen resolved hold");
    if(starts==0&&sample_seq!=102)$fatal(1,"onset bound must be two RF cycles");starts=starts+1;
   end
   if(!rst&&eop_event_valid)begin
@@ -44,7 +57,7 @@ module tb_receive_event_producer;
   for(integer n=190;n<195;n=n+1)sample(n,100);
   logical_good=0;sample(195,1);logical_good=255;
   for(integer n=196;n<235;n=n+1)sample(n,1);
-  if(starts!=4||ends!=4||!idle||dropped_onsets!=1)$fatal(1,"quality abort drain");
+  if(starts!=4||ends!=4||bodies!=4||!idle||dropped_onsets!=1)$fatal(1,"quality abort drain");
   $display("PASS receive event producer actual detector causal noise timestamps post window admission");$finish;
  end
 endmodule

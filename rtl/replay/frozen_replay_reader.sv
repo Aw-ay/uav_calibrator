@@ -22,6 +22,8 @@ module frozen_replay_reader (
  input wire [63:0] ram_data,
  output wire source_valid,
  output wire [63:0] source_data,
+ // Internal arithmetic payload; consumption MUST be qualified by source_valid.
+ output wire [63:0] processing_data,
  output reg actual_start, actual_finish,
  output reg [63:0] actual_start_gsc, actual_finish_gsc, active_task_id,
  output reg token_valid,
@@ -53,6 +55,9 @@ module frozen_replay_reader (
  assign token_consumer = 32'd2;
  assign source_valid = data_valid && safe && context_live;
  assign source_data = source_valid ? data_reg : 64'b0;
+ // Keep asynchronous safety fan-in off the RXCAL arithmetic input. Public
+ // source_data remains immediately muted; this payload adds no latency.
+ assign processing_data = data_reg;
  reg [7:0] admission;
  always @* begin
   admission=OK;

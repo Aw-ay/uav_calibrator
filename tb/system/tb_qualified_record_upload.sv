@@ -25,6 +25,8 @@ module tb_qualified_record_upload;
  wire [1:0] completion_group,completion_bank;
  wire [127:0] md;wire [15:0] mk;wire ml,mv;reg mr=0;wire [2:0] occupancy;
  capture_record_system #(.PRE_SAMPLES(3),.DETECTOR_LATENCY(1),.FIFO_ADDR_W(2)) dut(
+ .analysis_pin(16'd0),.ack_analysis(1'b0),.ack_analysis_bank(4'd0),.ack_analysis_epoch(64'd0),.ack_analysis_generation(64'd0),.analysis_leased(),.record_leased(),.fine_read_enable(16'd0),.fine_read_lease(16'd0),.fine_read_address(208'd0),.fine_read_data(),
+
   .clk_rf(rf),.clk_mem(mem),.rst_n(rst_n),.arm_enable(1'b1),.reset_request(reset_request),.replay_quiescent(replay_quiescent),
   .sample_valid(sample_valid),.sample_seq(sample_seq),.group_data(group_data),
   .primary_trigger(primary_trigger),.primary_onset(primary_onset),.primary_pulse_id(64'd100),

@@ -3,8 +3,8 @@ import subprocess,tempfile
 from test_qualified_record_upload import vectors
 ROOT=Path(__file__).resolve().parents[1]
 directory=vectors()
-sources=['rtl/generated/calibrator_contract_pkg.sv','rtl/control/cdc_mailbox.sv']
-sources += ['rtl/capture/'+n+'.sv' for n in ['capture_bank_manager','capture_ram','capture_bank_array','frozen_record_reader','record_formatter','record_dma_bridge','capture_record_system','pulse_context_join','pulse_context_pool','noise_window_energy','range_linearity','capture_range_select','range_qualification','pulse_qualification_engine','qualification_bank_commit','qualification_publish_bridge','qualification_record_source','capture_reset_coordinator']]
+sources=['rtl/generated/calibrator_contract_pkg.sv','rtl/generated/crc32c_parallel_pkg.sv','rtl/control/cdc_mailbox.sv']
+sources += ['rtl/capture/'+n+'.sv' for n in ['capture_bank_manager','capture_ram','capture_bank_array','b_port_reader_128','dma_payload_packer','record_formatter_128','record_dma_bridge','capture_record_system','pulse_context_join','pulse_context_pool','noise_window_energy','range_linearity','capture_range_select','range_qualification','pulse_qualification_engine','qualification_bank_commit','qualification_publish_bridge','qualification_record_source','capture_reset_coordinator']]
 sources += ['rtl/data/'+n+'.sv' for n in ['axis_record_fifo','record_upload_path','record_descriptor_arbiter','record_upload_groups']]
 with tempfile.TemporaryDirectory() as tmp:
     for top,bench in [('tb_capture_reset_coordinator','tb/unit/tb_capture_reset_coordinator.sv'),('tb_qualified_reset_drain','tb/system/tb_qualified_reset_drain.sv')]:

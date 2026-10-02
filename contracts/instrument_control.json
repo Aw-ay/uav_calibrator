@@ -254,6 +254,28 @@
     "RF_FAULT_POP": {
       "opcode": 21,
       "words": 2
+    },
+    "AUX_CAPTURE": {
+      "opcode": 22,
+      "words": 3
+    },
+    "AUX_META_PEEK": {
+      "opcode": 23,
+      "words": 0,
+      "result_words": 25
+    },
+    "AUX_META_POP": {
+      "opcode": 24,
+      "words": 2
+    },
+    "FINE_PDW_PEEK": {
+      "opcode": 25,
+      "words": 0,
+      "result_words": 36
+    },
+    "FINE_PDW_POP": {
+      "opcode": 26,
+      "words": 2
     }
   },
   "config_policy": "atomic only when disarmed, RF disarmed and all consumers/producer contexts drained, no frozen or pending banks; padding must be zero",
@@ -299,5 +321,6 @@
     "logical_outputs32",
     "observation_gsc64"
   ],
-  "rf_fault_policy": "Actual interlock fault_latched rising edges only, independent of source activity. PEEK12 words count/drop/token64/record256; exact-token POP. Flags time1 config2, invalid fields zero. Inputs bits0..9 binding,timing,hard_fault,PLL,heartbeat,PA_fb,TR_fb,RX_protected_fb,arm,request. Outputs bits0..5 PA_req,TR_req,RX_protect_req,DAC_mute,RF_permit,unbound. Snapshot is at observation after latch assertion, not root cause or physical RF timing. Held high does not repeat, clear allows a new assertion but retains history. First high after hard reset is recorded; capture soft reset preserves records. Queue16 drops new records when full without backpressure, saturating drop count; tokens start1 and never wrap."
+  "rf_fault_policy": "Actual interlock fault_latched rising edges only, independent of source activity. PEEK12 words count/drop/token64/record256; exact-token POP. Flags time1 config2, invalid fields zero. Inputs bits0..9 binding,timing,hard_fault,PLL,heartbeat,PA_fb,TR_fb,RX_protected_fb,arm,request. Outputs bits0..5 PA_req,TR_req,RX_protect_req,DAC_mute,RF_permit,unbound. Snapshot is at observation after latch assertion, not root cause or physical RF timing. Held high does not repeat, clear allows a new assertion but retains history. First high after hard reset is recorded; capture soft reset preserves records. Queue16 drops new records when full without backpressure, saturating drop count; tokens start1 and never wrap.",
+  "aux_policy": "CAPTURE words=count32,TXtoken64: current qualified sample onset, group4 only, one reserved metadata slot. PEEK25=status32(valid bit0, ready bit1,busy bit2)+96byte immutable sidecar. POP2 exact metadata_id32/epoch_id32 join. Metadata POP never returns RAW; source role/calibration qualification supplied by trusted RF-domain binding; unbound rejects."
 }

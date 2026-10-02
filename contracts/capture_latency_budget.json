@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "scope": "digital planning, not RF latency certification",
+  "rf_clock_hz": 125000000,
+  "gsc_hz": 500000000,
+  "scan": {
+    "module": "capture_statistics_reader",
+    "samples_min": 1,
+    "samples_max": 16384,
+    "cycles": "2*N+1, three main ranges read concurrently",
+    "measurement_15500": {"cycles": 31001, "gsc_ticks": 124004},
+    "measurement_16384": {"cycles": 32769, "gsc_ticks": 131076},
+    "excludes": ["producer queue", "held previous results", "qualification/publish", "PS/MMIO/CDC submission", "RAW upload/replay release"]
+  },
+  "ready": "pending_gsc + scan_wait_ticks + scan_ticks + publish_ticks",
+  "earliest_target": "ready + submit_ticks + 8 + 4*reference_index + downstream_ticks",
+  "bank_rearm": "ready + max(upload_release_ticks,replay_release_ticks) + 4*(PRE+detector_latency+2)",
+  "bounds": "bounds_valid=1 is caller evidence for finite measured limits and continuous samples during rearm. Backpressure or unknown scheduler/service bounds => UNBOUNDED. Use checked u64 additions; never wrap.",
+  "implementation": ["sw/common/capture_budget.c", "sw/common/digital_capture_control.c"],
+  "submit_gate": "cal_replay_budgeted_begin derives task count/reference/target from serialized task, writes no MMIO on budget rejection. PL live qualification/identity/lease/deadline checks remain mandatory.",
+  "tests": ["tests/test_statistics_latency.py", "tests/test_capture_budget.py", "tests/test_digital_capture_control.py"]
+}
